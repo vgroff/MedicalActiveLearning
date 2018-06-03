@@ -1,0 +1,16 @@
+2d images uses dilated convolution (different sizes(?)) with 181x181 recptive field(?).
+Features are then concatenated and fed into a classifier. Softmax layer then produces probability type things
+
+method:
+minimize a function that is similar to grabcut, with two terms: the "unary" and "pairwise" energy terms.
+Then we need a way of generating labels once we have some network parameters, and we need to update parameters given the labels.
+Somewhat confused by phi prime, wondering if typo
+
+
+
+user defines a bounding box
+objective function
+whats the energy terms? pairwise energy?
+
+read grabcut to get an idea of the energy function:
+smoothness term makes sense, not sure what the U term is for though.
