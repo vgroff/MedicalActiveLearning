@@ -8,7 +8,7 @@ class App extends Component {
     
     constructor(props) {
 	super(props)
-	this.state = {imagesX: {}, imagesY: {}, imagesZ: {}}
+	this.state = {imagesX: {}, imagesY: {}, imagesZ: {}, window:2000, level:1000}
     }
 
     changeImage(file) {
@@ -24,20 +24,30 @@ class App extends Component {
 	}.bind(this)
 	var data = fr.readAsArrayBuffer(file)
     }
-    
-    readNewImages(data) {
 
-    } 
+    setLevel(level) {
+	if (level) {
+	    this.setState({level:level})
+	}
+    }
+    
+    setWindow(window) {
+	if (window) {
+	    this.setState({window:window})
+	}
+    }
     
     render() {
 	return (<div>
-		<p>Hello</p>
-		<p>Select a file: <input onChange={(e) => {this.changeImage(e.target.files[0])}} type="file" id="file" name="files" /></p>
-		<ImageView images = {this.state.imagesX}/>
-		<ImageView images = {this.state.imagesY}/>
-		<ImageView images = {this.state.imagesZ}/>
-		</div>
-	       )
+	    <p>Hello</p>
+	    <p>Select a file: <input onChange={(e) => {this.changeImage(e.target.files[0])}} type="file" id="file" name="files" /></p>
+	    <label>Level: </label> <input onChange={(e) => {this.setLevel(parseInt(e.target.value))}}></input>
+	    <label>Window: </label> <input onChange={(e) => {this.setWindow(parseInt(e.target.value))}} ></input>
+	    <ImageView images = {this.state.imagesX} level = {this.state.level} window = {this.state.window}/>
+	    <ImageView images = {this.state.imagesY} level = {this.state.level} window = {this.state.window}/>
+	    <ImageView images = {this.state.imagesZ}  level = {this.state.level} window = {this.state.window}/>
+	    </div>
+	)
     }
 }
 export default App
@@ -48,7 +58,5 @@ export default App
  * - Consider how to deal with scaling issues - we have voxel dims that we can normalize to 1, and maybe what we return is an array of objects for each x,y,z with imgDat and pixel height/width
  * - Having image scrolling
  * TO-DO:
- * - Need a transfer function for mapping the 16bit values to whatever range needed, since they are too low to express in raw 16-bit and this is generally how it is done
- * - Need to scroll through several images
- * - Pixel sizes matter
+ * - drawing mask, brush size, representation on image etc.. different sized tools
 */

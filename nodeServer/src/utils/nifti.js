@@ -1,5 +1,5 @@
 var nifti = require('nifti-reader-js')
-
+import {Image} from "./image.js"
 
 // Take NIFTI file data and return the grayscale image values
 export function convertNifti(data) {
@@ -71,17 +71,19 @@ export function convertNifti(data) {
 		for (var x = 0; x < width; x++) {
 		    var idx = (imgStart + width * y + x);
 		    dataX[imgN][y].push(image[idx])
-		    dataY[y][imgN][x] = image[idx]
-		    dataZ[x][imgN][y] = image[idx]
+		    dataY[x][niftiHeader.dims[3] - 1 - imgN][y] = image[idx]
+		    dataZ[y][niftiHeader.dims[3] - 1 - imgN][x] = image[idx]
 		}
 	    }
 	}
+
+
 	let pixDims = niftiHeader.pixDims
-	var imgs = [
-	    {imgDat: dataX, pixHeight:pixDims[0], pixWidth:pixDims[1]},
-	    {imgDat: dataY, pixHeight:pixDims[2], pixWidth:pixDims[1]},
-	    {imgDat: dataZ, pixHeight:pixDims[2], pixWidth:pixDims[0]}
-	]
+	var xImages = dataX.map(img => new Image(img, pixDims[1], pixDims[2]))
+	var yImages = dataY.map(img => new Image(img, pixDims[3], pixDims[2]))
+	var zImages = dataZ.map(img => new Image(img, pixDims[3], pixDims[1]))
+	
+	var imgs = [xImages, yImages, zImages]
 	return imgs
     }
     else {

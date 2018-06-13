@@ -1,0 +1,9 @@
+export class Image() {
+    
+    constructor(data, pixHeight, pixWidth) {
+	this.data = data
+	this.pixHeight = pixHeight
+	this.pixWidth = pixWidth
+    }
+
+}
