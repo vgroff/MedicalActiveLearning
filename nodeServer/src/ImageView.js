@@ -6,6 +6,7 @@ export class ImageView extends Component {
     constructor(props) {
 	super(props)
 	this.state = {currImageIndex:-1, nextImageIndex:0}
+	this.mouseDown = false
     }
     
     componentDidMount() {
@@ -33,10 +34,35 @@ export class ImageView extends Component {
 	}
     }
 
-    markPixel(x, y) {
-	var rect = this.refs.canvas.getBoundingClientRect()
-	this.props.images[this.state.nextImageIndex].addToMask(x - rect.left, y - rect.top, 1)
-	this.forceUpdate()
+    markMask() {
+	if (this.props.images.length) {
+	    var rect = this.refs.canvas.getBoundingClientRect()
+	    this.props.images[this.state.currImageIndex].addToMask()
+	    this.forceUpdate()
+	}
+    }
+
+    handleMouseMove(x, y) {
+	if (this.props.images.length) {
+	    var rect = this.refs.canvas.getBoundingClientRect()
+	    this.props.images[this.state.currImageIndex].updateTempMask(x - rect.left, y - rect.top, 1, this.props.brushSize)
+	    if (this.mouseDown === true) {
+		this.markMask()
+	    }
+	    this.forceUpdate()
+	}
+    }
+
+    handleMouseDown(x, y) {
+	this.mouseDown = true
+	this.markMask(x,y)
+    }
+
+    handleMouseOut() {
+	if (this.props.images.length) {
+	    this.props.images[this.state.currImageIndex].updateTempMask(0,0,1,0)
+	    this.forceUpdate()
+	}
     }
     
     render() {
@@ -44,8 +70,11 @@ export class ImageView extends Component {
 	return (
 	    <div>
 	    <canvas ref="canvas"
-	    onWheel={(e) => {e.preventDefault(); this.nextImage(Math.abs(e.deltaY)/e.deltaY);}} 
-	    onClick={(e) => {this.markPixel(e.clientX, e.clientY)}}/>
+	    onWheel={(e) => {e.preventDefault(); this.nextImage(Math.abs(e.deltaY)/e.deltaY);}}
+	    onMouseMove={(e) => {this.handleMouseMove(e.clientX, e.clientY)}}
+	    onMouseDown={(e) => {this.handleMouseDown(e.clientX, e.clientY)}}
+	    onMouseUp={(e) => {this.mouseDown = false}}
+	    onMouseOut={(e) => {this.handleMouseOut()}}/>
 	    </div>)
     }
 }

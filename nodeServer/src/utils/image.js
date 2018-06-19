@@ -16,13 +16,16 @@ export class Image {
 	this.pixWidth = pixWidth
 	this.scale = 1
 	this.mask = []
+	this.tempMask = []
 	for (var i = 0; i < data.length; i++) {
 	    this.mask.push([])
+	    this.tempMask.push([])
 	    for (var j = 0 ; j < data[0].length; j++) {
 		this.mask[i].push(0)
+		this.tempMask[i].push(0)
 	    }
 	}
-	this.maskColours = ["#FFFFFF"]
+	this.maskColours = ["#FF0000"]
     }
 
     drawImage(canvas, level, window) {
@@ -65,18 +68,59 @@ export class Image {
 		ctx.fillStyle = rgbToHex(grayVal, grayVal, grayVal); // Set the color to the one specified
 		ctx.fillRect(Math.floor(col * pixWidth * scale), Math.floor(row * pixHeight*scale), Math.ceil(pixWidth*scale), Math.ceil(pixHeight*scale)); // Actually draw the rectangle
 
+		// TEMP: colour the mask (could be an option?)
 		if (this.mask[row][col] !== 0) {
-		    ctx.fillStyle = this.maskColours[this.mask[row][col] - 1]; // Set the color to the one specified
+		    ctx.fillStyle = "#FFFFFF"; // Set the color to the one specified
 		    ctx.fillRect(Math.floor(col * pixWidth * scale), Math.floor(row * pixHeight*scale), Math.ceil(pixWidth*scale), Math.ceil(pixHeight*scale));
+		}
+
+		let mask = this.tempMask
+		if (row > 0 && mask[row][col] !== mask[row - 1][col]) {
+		    if (mask[row][col] !== 0) {
+			ctx.fillStyle = this.maskColours[mask[row][col] - 1]; // Set the color to the one specified
+			ctx.fillRect(Math.floor(col * pixWidth * scale), Math.floor(row * pixHeight*scale), Math.ceil(pixWidth*scale), Math.ceil(0.33*pixHeight*scale));
+		    }
+		    if (mask[row - 1][col] !== 0) {
+			ctx.fillStyle = this.maskColours[mask[row - 1][col] - 1]; // Set the color to the one specified
+			ctx.fillRect(Math.floor(col * pixWidth * scale), Math.floor((row-0.33) * pixHeight*scale), Math.ceil(pixWidth*scale), Math.ceil(0.33*pixHeight*scale));
+		    }
+		}
+		if (col > 0 && mask[row][col] !== mask[row][col - 1]) {
+		    if (mask[row][col] !== 0) {
+			ctx.fillStyle = this.maskColours[mask[row][col] - 1]; // Set the color to the one specified
+			ctx.fillRect(Math.floor(col * pixWidth * scale), Math.floor(row * pixHeight*scale), Math.ceil(0.33*pixWidth*scale), Math.ceil(pixHeight*scale));
+		    }
+		    if (mask[row][col - 1] !== 0) {
+			ctx.fillStyle = this.maskColours[mask[row][col - 1] - 1]; // Set the color to the one specified
+			ctx.fillRect(Math.floor((col-0.33) * pixWidth * scale), Math.floor(row * pixHeight*scale), Math.ceil(0.33*pixWidth*scale), Math.ceil(pixHeight*scale));
+		    }
 		}
 	    }
 	}
     }
 
-    addToMask(x, y, val) {
-	var col = Math.floor(x / (this.pixWidth * this.scale))
-	var row = Math.floor(y / (this.pixHeight * this.scale))
-	this.mask[row][col] = val
+    addToMask() {
+	for (var row = 0; row < this.data.length; row++) {
+	    for (var col = 0; col < this.data[0].length; col++) {	
+		this.mask[row][col] = this.tempMask[row][col]
+	    }
+	}
     }
-    
+
+    updateTempMask(mouseX, mouseY, val, brushSize) {
+	var y = -0.5 * this.pixHeight * this.scale
+	for (var row = 0; row < this.data.length; row++) {
+	    y += this.pixHeight * this.scale
+	    var x = -0.5 * this.pixWidth * this.scale
+	    for (var col = 0; col < this.data[0].length; col++) {	
+		x += this.pixWidth * this.scale
+		if ((x-mouseX)**2 + (y-mouseY)**2 < brushSize**2) {
+		    this.tempMask[row][col] = val
+		}
+		else {
+		    this.tempMask[row][col] = this.mask[row][col]
+		}
+	    }
+	}
+    }
 }
