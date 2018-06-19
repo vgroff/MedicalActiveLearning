@@ -16,7 +16,7 @@ export class ImageView extends Component {
     // Draw the image onto the canvas
     drawImage() {
 	if (this.props.images.length) {
-	    this.props.images[this.state.nextImageIndex].drawImage(this.refs.canvas, this.props.level, this.props.window)
+	    this.props.images[this.state.nextImageIndex].drawImage(this.refs.canvas, this.props.level, this.props.window, this.props.maskColours)
 	    this.state.currImageIndex = this.state.nextImageIndex
 	}
     }

@@ -25,10 +25,9 @@ export class Image {
 		this.tempMask[i].push(0)
 	    }
 	}
-	this.maskColours = ["#FF0000"]
     }
 
-    drawImage(canvas, level, window) {
+    drawImage(canvas, level, window, maskColours) {
 	console.log("draw")
 	// Get the dimensions
 	var height = this.data.length
@@ -77,21 +76,21 @@ export class Image {
 		let mask = this.tempMask
 		if (row > 0 && mask[row][col] !== mask[row - 1][col]) {
 		    if (mask[row][col] !== 0) {
-			ctx.fillStyle = this.maskColours[mask[row][col] - 1]; // Set the color to the one specified
+			ctx.fillStyle = maskColours[mask[row][col] - 1]; // Set the color to the one specified
 			ctx.fillRect(Math.floor(col * pixWidth * scale), Math.floor(row * pixHeight*scale), Math.ceil(pixWidth*scale), Math.ceil(0.33*pixHeight*scale));
 		    }
 		    if (mask[row - 1][col] !== 0) {
-			ctx.fillStyle = this.maskColours[mask[row - 1][col] - 1]; // Set the color to the one specified
+			ctx.fillStyle = maskColours[mask[row - 1][col] - 1]; // Set the color to the one specified
 			ctx.fillRect(Math.floor(col * pixWidth * scale), Math.floor((row-0.33) * pixHeight*scale), Math.ceil(pixWidth*scale), Math.ceil(0.33*pixHeight*scale));
 		    }
 		}
 		if (col > 0 && mask[row][col] !== mask[row][col - 1]) {
 		    if (mask[row][col] !== 0) {
-			ctx.fillStyle = this.maskColours[mask[row][col] - 1]; // Set the color to the one specified
+			ctx.fillStyle = maskColours[mask[row][col] - 1]; // Set the color to the one specified
 			ctx.fillRect(Math.floor(col * pixWidth * scale), Math.floor(row * pixHeight*scale), Math.ceil(0.33*pixWidth*scale), Math.ceil(pixHeight*scale));
 		    }
 		    if (mask[row][col - 1] !== 0) {
-			ctx.fillStyle = this.maskColours[mask[row][col - 1] - 1]; // Set the color to the one specified
+			ctx.fillStyle = maskColours[mask[row][col - 1] - 1]; // Set the color to the one specified
 			ctx.fillRect(Math.floor((col-0.33) * pixWidth * scale), Math.floor(row * pixHeight*scale), Math.ceil(0.33*pixWidth*scale), Math.ceil(pixHeight*scale));
 		    }
 		}
