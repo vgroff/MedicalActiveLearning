@@ -10,8 +10,8 @@ class App extends Component {
 	super(props)
 	this.state = {imagesX: {}, imagesY: {}, imagesZ: {}, window:2000,
 		      level:1000, brushSize:1, maskLabel:1}
-	this.maskColours = ["#FF0000"]
-	this.maskColourNames = ["Object"]
+	this.maskColours = ["#FF0000", "#FFFF00"]
+	this.maskColourNames = ["Object", "Object2"]
     }
 
     changeImage(file) {
@@ -47,9 +47,8 @@ class App extends Component {
     }
 
     setMaskLabel(label) {
-	if (label) {
-	    this.setState({maskLabel: label})
-	}
+	this.setState({maskLabel: label})
+	console.log(label)
     }
     
     render() {
@@ -65,17 +64,13 @@ class App extends Component {
 	    <label>
 	    Scribble Label
 	    </label>
-	    <select style={{"appearance":"none", "MozAppearance":"none", "WebkitAppearance":"none"}}
+	    <select onChange={(e) => {this.setMaskLabel(parseInt(e.target.value))}}
 	    defaultValue={this.state.maskLabel}>
-	    <option value={0} onChange={(e) => {this.setMaskLabel(e.target.value)}} key={0}>Background</option>
+	    <option value={0} key={0}>Background</option>
 	    {this.maskColours.map(function(colour, index) {
 		return (
-		    <option value={index+1} key={index+1} style={{"appearance":"none",
-								  "MozAppearance":"none",
-								  "WebkitAppearance":"none",
-								  "backgroundColor":colour,
-								  "color":colour
-		    }}>
+		    <option value={index+1} key={index+1} style={{"backgroundColor":colour,
+								  "color":colour}}>
 		    {this.maskColourNames[index]}
 		    </option>
 		)
@@ -86,15 +81,15 @@ class App extends Component {
 
 	    <ImageView images = {this.state.imagesX} level = {this.state.level}
 	    window = {this.state.window} brushSize={this.state.brushSize}
-	    maskColours = {this.maskColours}/>
+	    maskColours = {this.maskColours} maskLabel={this.state.maskLabel}/>
 
 	    <ImageView images = {this.state.imagesY} level = {this.state.level}
 	    window = {this.state.window} brushSize={this.state.brushSize}
-	    maskColours = {this.maskColours}/>
+	    maskColours = {this.maskColours} maskLabel={this.state.maskLabel}/>
 
 	    <ImageView images = {this.state.imagesZ}  level = {this.state.level}
 	    window = {this.state.window} brushSize={this.state.brushSize}
-	    maskColours = {this.maskColours}/>
+	    maskColours = {this.maskColours} maskLabel={this.state.maskLabel}/>
 	    </div>
 	)
     }

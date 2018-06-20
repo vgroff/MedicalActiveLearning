@@ -70,7 +70,7 @@ export class Image {
 		// TEMP: colour the mask (could be an option?)
 		if (this.mask[row][col] !== 0) {
 		    ctx.fillStyle = "#FFFFFF"; // Set the color to the one specified
-		    ctx.fillRect(Math.floor(col * pixWidth * scale), Math.floor(row * pixHeight*scale), Math.ceil(pixWidth*scale), Math.ceil(pixHeight*scale));
+		    //ctx.fillRect(Math.floor(col * pixWidth * scale), Math.floor(row * pixHeight*scale), Math.ceil(pixWidth*scale), Math.ceil(pixHeight*scale));
 		}
 
 		let mask = this.tempMask
@@ -79,11 +79,13 @@ export class Image {
 			ctx.fillStyle = maskColours[mask[row][col] - 1]; // Set the color to the one specified
 			ctx.fillRect(Math.floor(col * pixWidth * scale), Math.floor(row * pixHeight*scale), Math.ceil(pixWidth*scale), Math.ceil(0.33*pixHeight*scale));
 		    }
+
 		    if (mask[row - 1][col] !== 0) {
 			ctx.fillStyle = maskColours[mask[row - 1][col] - 1]; // Set the color to the one specified
 			ctx.fillRect(Math.floor(col * pixWidth * scale), Math.floor((row-0.33) * pixHeight*scale), Math.ceil(pixWidth*scale), Math.ceil(0.33*pixHeight*scale));
 		    }
 		}
+
 		if (col > 0 && mask[row][col] !== mask[row][col - 1]) {
 		    if (mask[row][col] !== 0) {
 			ctx.fillStyle = maskColours[mask[row][col] - 1]; // Set the color to the one specified

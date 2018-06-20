@@ -45,7 +45,7 @@ export class ImageView extends Component {
     handleMouseMove(x, y) {
 	if (this.props.images.length) {
 	    var rect = this.refs.canvas.getBoundingClientRect()
-	    this.props.images[this.state.currImageIndex].updateTempMask(x - rect.left, y - rect.top, 1, this.props.brushSize)
+	    this.props.images[this.state.currImageIndex].updateTempMask(x - rect.left, y - rect.top, this.props.maskLabel, this.props.brushSize)
 	    if (this.mouseDown === true) {
 		this.markMask()
 	    }
@@ -60,7 +60,7 @@ export class ImageView extends Component {
 
     handleMouseOut() {
 	if (this.props.images.length) {
-	    this.props.images[this.state.currImageIndex].updateTempMask(0,0,1,0)
+	    this.props.images[this.state.currImageIndex].updateTempMask(0,0,this.props.maskLabel,0)
 	    this.forceUpdate()
 	}
     }
