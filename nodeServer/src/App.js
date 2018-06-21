@@ -48,24 +48,47 @@ class App extends Component {
 
     setMaskLabel(label) {
 	this.setState({maskLabel: label})
-	console.log(label)
     }
     
     render() {
+	var outerStyle = {  "textAlign":"center"}
+	var divStyle = {"margin":"15px"}
+	var elementStyle = {"margin":"0px 10px 0px 10px"}
+	var inputStyle = Object.assign({}, elementStyle, {"width": "45px"})
+	var labelStyle = Object.assign({}, elementStyle, {"margin":"0px 0px 0px 10px"})
+	
 	return (
-	    <div>
+	    <div style={outerStyle}>
+
+	    <div style={outerStyle}>
 	    
-	    <p>Select a file: <input onChange={(e) => {this.changeImage(e.target.files[0])}} type="file" id="file" name="files" /></p>
+	    <label style={labelStyle}>Select a file:</label>
+	    <input style={elementStyle}
+	    onChange={(e) => {this.changeImage(e.target.files[0])}} type="file" id="file" name="files" />
+
+
 	    
-	    <label>Level: </label> <input defaultValue={this.state.level} onChange={(e) => {this.setLevel(parseInt(e.target.value))}}></input>
+	    <div style={divStyle}>
 	    
-	    <label>Window: </label> <input defaultValue={this.state.window} onChange={(e) => {this.setWindow(parseInt(e.target.value))}} ></input>
+	    <label style={labelStyle}>Level:</label>
+	    <input style={inputStyle} defaultValue={this.state.level}
+	    onChange={(e) => {this.setLevel(parseInt(e.target.value))}}></input>
 	    
-	    <label>
-	    Scribble Label
-	    </label>
-	    <select onChange={(e) => {this.setMaskLabel(parseInt(e.target.value))}}
+	    <label style={labelStyle}>Window:</label>
+	    <input style={inputStyle} defaultValue={this.state.window}
+	    onChange={(e) => {this.setWindow(parseInt(e.target.value))}} ></input>
+	    
+	    </div>
+
+	    
+	    
+	    <div style={divStyle}>
+	    
+	    <label style={labelStyle}> Scribble Label:</label>
+	    <select style={elementStyle}
+	    onChange={(e) => {this.setMaskLabel(parseInt(e.target.value))}}
 	    defaultValue={this.state.maskLabel}>
+
 	    <option value={0} key={0}>Background</option>
 	    {this.maskColours.map(function(colour, index) {
 		return (
@@ -75,10 +98,18 @@ class App extends Component {
 		    </option>
 		)
 	    }.bind(this))}
-	    </select>
-	    
-	    <label>Brush Size: {this.state.brushSize}</label> <input type="range" min={1} max={50} defaultValue={this.state.brushSize} onChange={(e) => {this.setBrushSize(parseInt(e.target.value))}}></input>
 
+	    </select>
+
+	    <label style={labelStyle}>Brush Size: {this.state.brushSize}</label>
+	    <input style={elementStyle} type="range" min={1} max={50} defaultValue={this.state.brushSize}
+	    onChange={(e) => {this.setBrushSize(parseInt(e.target.value))}}></input>
+	    
+	    </div>
+
+	    </div>
+	    
+	    
 	    <ImageView images = {this.state.imagesX} level = {this.state.level}
 	    window = {this.state.window} brushSize={this.state.brushSize}
 	    maskColours = {this.maskColours} maskLabel={this.state.maskLabel}/>
@@ -90,18 +121,25 @@ class App extends Component {
 	    <ImageView images = {this.state.imagesZ}  level = {this.state.level}
 	    window = {this.state.window} brushSize={this.state.brushSize}
 	    maskColours = {this.maskColours} maskLabel={this.state.maskLabel}/>
+
+	    
+	    
 	    </div>
 	)
     }
 }
 export default App
 
+// Brush size - change brush to being pixel-based, i.e. find the pixel it is on and calculated distances from that
+// Drawing a bounding box
+// Toolbar+styling?
+
 /*
  * TO-DO:
- * - drawing mask, brush size, representation on image etc.. different sized tools:
  * - Brush size needs to be per-pixel at least!!
- * - Add colour choices
  * - Have a "toolbar" that stays at the top of the view
  * - Need to keep the masks in-sync across different image views!!
- * - need fixes for pixel sizes if high resolution (i.e. have a minimum resolution?)
+ * - Allow 2D images (i.e. change image viewer)
+ * - Add bounding-box drawing
+ * - need fixes for pixel sizes if high resolution (i.e. have a minimum pic size depending on res?)
  */

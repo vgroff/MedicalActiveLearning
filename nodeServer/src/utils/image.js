@@ -109,19 +109,33 @@ export class Image {
     }
 
     updateTempMask(mouseX, mouseY, val, brushSize) {
+	// set mouseX/Y to middle of pixel
+	console.log("actual", mouseX, mouseY)
+	mouseY = (Math.floor(mouseY/(this.pixHeight*this.scale))+0.5)*this.pixHeight*this.scale
+	mouseX = (Math.floor(mouseX/(this.pixWidth*this.scale))+0.5)*this.pixWidth*this.scale
+	console.log(mouseX, mouseY)
+	var largestDist = 0.25 * (Math.ceil(this.pixHeight*this.scale)**2 + Math.ceil(this.pixWidth*this.scale)**2)
+	var brushSizeSq = brushSize*largestDist 
+	var min = 100000
+	var stats = []
 	var y = -0.5 * this.pixHeight * this.scale
 	for (var row = 0; row < this.data.length; row++) {
 	    y += this.pixHeight * this.scale
 	    var x = -0.5 * this.pixWidth * this.scale
 	    for (var col = 0; col < this.data[0].length; col++) {	
 		x += this.pixWidth * this.scale
-		if ((x-mouseX)**2 + (y-mouseY)**2 < brushSize**2) {
+		if ((x-mouseX)**2 + (y-mouseY)**2 < brushSizeSq) {
 		    this.tempMask[row][col] = val
 		}
 		else {
 		    this.tempMask[row][col] = this.mask[row][col]
 		}
+		if ((x-mouseX)**2 + (y-mouseY)**2 < min) {
+		    min = (x-mouseX)**2 + (y-mouseY)**2
+		    stats = [x, y, mouseX, mouseY]
+		}
 	    }
 	}
+	console.log("min", min**0.5, stats)
     }
 }
