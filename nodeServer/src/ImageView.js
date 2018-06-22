@@ -7,10 +7,10 @@ export class ImageView extends Component {
 	super(props)
 	this.state = {currImageIndex:-1, nextImageIndex:0}
 	this.mouseDown = false
+	this.drawingRect = false
     }
     
     componentDidMount() {
-	console.log("mounted")
     }
 
     // Draw the image onto the canvas
@@ -44,25 +44,61 @@ export class ImageView extends Component {
 
     handleMouseMove(x, y) {
 	if (this.props.images.length) {
-	    var rect = this.refs.canvas.getBoundingClientRect()
-	    this.props.images[this.state.currImageIndex].updateTempMask(x - rect.left, y - rect.top, this.props.maskLabel, this.props.brushSize)
-	    if (this.mouseDown === true) {
-		this.markMask()
+	    if (this.props.action==="segment") {
+		var rect = this.refs.canvas.getBoundingClientRect()
+		this.props.images[this.state.currImageIndex].updateTempMask(
+		    x - rect.left, y - rect.top, this.props.maskLabel, this.props.brushSize)
+		if (this.mouseDown === true) {
+		    this.markMask()
+		}
+		this.forceUpdate()
 	    }
-	    this.forceUpdate()
+	    else if (this.props.action==="box" && this.drawingRect === true) {
+		var rect = this.refs.canvas.getBoundingClientRect()
+		this.props.images[this.state.currImageIndex].setRectEndCoords(x - rect.left,
+									      y - rect.top)
+		this.forceUpdate()
+	    }
 	}
     }
 
     handleMouseDown(x, y) {
 	this.mouseDown = true
-	this.markMask(x,y)
+	if (this.props.action==="segment") {
+	    this.markMask(x,y)
+	}
+	else if (this.props.action==="box") {
+	    var rect = this.refs.canvas.getBoundingClientRect()
+	    this.props.images[this.state.currImageIndex].setRectEndCoords(x - rect.left,
+									  y - rect.top)
+	    if (this.drawingRect === false) {
+		this.props.images[this.state.currImageIndex].setRectStartCoords(x - rect.left,
+										y - rect.top)
+		this.drawingRect = true
+	    }
+	    else {
+		this.drawingRect = false
+	    }
+	}
     }
 
     handleMouseOut() {
 	if (this.props.images.length) {
-	    this.props.images[this.state.currImageIndex].updateTempMask(0,0,this.props.maskLabel,0)
-	    this.forceUpdate()
+	    if (this.props.action==="segment") {
+		this.props.images[this.state.currImageIndex].updateTempMask(0,0,
+									    this.props.maskLabel,0)
+		this.forceUpdate()
+	    }
+	    else if (this.props.action==="box") {
+		if (this.drawRect === true) {
+		    this.props.images[this.state.currImageIndex].setRectEndCoords(0, 0)
+		    this.props.images[this.state.currImageIndex].setRectStartCoords(0, 0)
+		    this.drawingRect = false
+		    this.forceUpdate()
+		}
+	    }
 	}
+	this.mouseDown = false
     }
     
     render() {

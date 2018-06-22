@@ -135,6 +135,7 @@ export class Image {
 		if ((x-mouseX)**2 + (y-mouseY)**2 < brushSizeSq) {
 		    this.tempMask[row][col] = val
 		}
+
 		else {
 		    this.tempMask[row][col] = this.mask[row][col]
 		}
