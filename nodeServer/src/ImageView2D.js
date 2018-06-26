@@ -21,6 +21,7 @@ export class ImageView2D extends Component {
     
     nextImage(dir) {
 	if (this.props.images.length) {
+	    this.props.images[this.state.currImageIndex].resetTempMask()
 	    var newImg = (this.state.currImageIndex + dir)
 	    if (newImg < 0) {
 		newImg = 0
@@ -46,6 +47,7 @@ export class ImageView2D extends Component {
     handleMouseMove(x, y) {
 	if (this.props.images.length) {
 	    if (this.props.action==="segment") {
+		this.refs.canvas.style.cursor = "default";
 		var rect = this.refs.canvas.getBoundingClientRect()
 		this.props.images[this.state.currImageIndex].updateTempMask(
 		    x - rect.left, y - rect.top, this.props.maskLabel, this.props.brushSize)
@@ -54,11 +56,14 @@ export class ImageView2D extends Component {
 		}
 		this.forceUpdate()
 	    }
-	    else if (this.props.action==="box" && this.drawingRect === true) {
-		var rect = this.refs.canvas.getBoundingClientRect()
-		this.props.images[this.state.currImageIndex].setRectEndCoords(x - rect.left,
-									      y - rect.top)
-		this.forceUpdate()
+	    else if (this.props.action==="box") {
+		this.refs.canvas.style.cursor = "crosshair";
+		if (this.drawingRect === true) {
+		    var rect = this.refs.canvas.getBoundingClientRect()
+		    this.props.images[this.state.currImageIndex].setRectEndCoords(x - rect.left,
+										  y - rect.top)
+		    this.forceUpdate()
+		}
 	    }
 	}
     }
@@ -86,8 +91,7 @@ export class ImageView2D extends Component {
     handleMouseOut() {
 	if (this.props.images.length) {
 	    if (this.props.action==="segment") {
-		this.props.images[this.state.currImageIndex].updateTempMask(0,0,
-									    this.props.maskLabel,0)
+		this.props.images[this.state.currImageIndex].resetTempMask()
 		this.forceUpdate()
 	    }
 	    else if (this.props.action==="box") {

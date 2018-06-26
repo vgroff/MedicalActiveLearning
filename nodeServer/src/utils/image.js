@@ -149,6 +149,16 @@ export class Image {
 	}
     }
 
+    resetTempMask() {
+	for (var row = 0; row < this.data.length; row++) {
+	    for (var col = 0; col < this.data[0].length; col++) {
+		if (this.mask[row][col] !== this.tempMask[row][col]) { 
+		    this.tempMask[row][col] = this.mask[row][col]
+		}
+	    }
+	}
+    }
+
 
     setRectEndCoords(x, y, width, height) {
 	let xPixel = Math.floor(Math.floor(x/(this.pixWidth*this.scale))*this.pixWidth*this.scale)
