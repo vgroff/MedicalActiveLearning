@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 
 import {ImageView} from "./ImageView.js"
+import {ImageView3D} from "./ImageView3D.js"
 import {convertNifti} from "./utils/nifti.js"
 
 
@@ -22,7 +23,8 @@ class App extends Component {
 	    console.log("img loaded")
 	    if (evt.target.readyState === FileReader.DONE) {
                 var imgs = convertNifti(evt.target.result)
-		this.setState({imagesX : imgs[0], imagesY : imgs[1], imagesZ : imgs[2]})
+		this.setState({imagesX : imgs[0], imagesY : imgs[1], imagesZ : imgs[2],
+		image: imgs[3]})
             }
 	}.bind(this)
 	var data = fr.readAsArrayBuffer(file)
@@ -49,15 +51,24 @@ class App extends Component {
     setMaskLabel(label) {
 	this.setState({maskLabel: label})
     }
+
+    hideIfTrue(bool, display){
+	if (bool === true) {
+	    return "none"
+	}
+	else {
+	    return display
+	}
+    }
     
     render() {
-	var outerStyle = {"textAlign":"center"}
-	var toolbarStyle = Object.assign({}, outerStyle, {"position":"fixed", 
-							  "left":"0", "right":"0",
-							  "margin":"auto",
-							  "backgroundColor":"white"}) 
+	var centreStyle = {"textAlign":"center"}
+	var leftStyle = {"textAlign":"left"}
+	var outerStyle = Object.assign({}, outerStyle, {"width":"1024px", "margin": "0 auto"})
+	var innerStyle = Object.assign({}, outerStyle, {"display":"inline-block"})
 	var divStyle = {"margin":"15px"}
 	var elementStyle = {"margin":"0px 10px 0px 10px", "display":"inline-block"}
+	var sliderStyle = Object.assign({}, elementStyle, {"display":"inline"})
 	var inputStyle = Object.assign({}, elementStyle, {"width": "45px"})
 	var labelStyle = Object.assign({}, elementStyle, {"margin":"0px 0px 0px 10px"})
 
@@ -65,7 +76,7 @@ class App extends Component {
 	return (
 	    <div style={outerStyle}>
 
-	    <div style={toolbarStyle}>
+	    <div className="col-sm-4" style={centreStyle}>
 	    
 	    <label style={labelStyle}>Select a file:</label>
 	    <input style={elementStyle}
@@ -90,18 +101,24 @@ class App extends Component {
 
 	    <div style={divStyle}>
 
-	    <p style={elementStyle}>Correct Segmentation</p>
+	    <div style={{"display":"inline-block", "width":"70%", "textAlign":"left"}}>
 	    <input name="actionIndex" style={elementStyle} type="radio"
 	    value={0} onChange={(e) => {this.setState({actionIndex:0})}}
 	    checked={this.state.actionIndex===0 ? "checked" : false}></input>
-	    <p style={elementStyle}>Bounding Box</p>
+	    <p style={elementStyle}>Correct Segmentation</p>
+	    </div>
+
+	    <div style={{"display":"inline-block", "width":"70%", "textAlign":"left"}}>
 	    <input name="actionIndex" style={elementStyle} type="radio"
 	    value={1} onChange={(e) => {this.setState({actionIndex:1})}}
 	    checked={this.state.actionIndex===1 ? "checked" : false}></input>
+	    <p style={elementStyle}>Bounding Box</p>
+	    </div>
 	    
 	    </div>
 
 	    
+	    <div style={{"display":this.hideIfTrue(this.state.actionIndex === 1, "block")}}>
 	    
 	    <div style={divStyle}>
 	    
@@ -123,32 +140,25 @@ class App extends Component {
 	    </select>
 
 	    <label style={labelStyle}>Brush Size: {this.state.brushSize}</label>
-	    <input style={elementStyle} type="range"
+	    <input style={sliderStyle} type="range"
 	    min={1} max={50} defaultValue={this.state.brushSize}
 	    onChange={(e) => {this.setBrushSize(parseInt(e.target.value))}}></input>
 	    
 	    </div>
 
-	    <div>
-	    </div>
-
 	    </div>
 	    
-	    <ImageView images = {this.state.imagesX} level = {this.state.level}
+	    </div>
+
+	    <div className="col-sm-8" style={centreStyle}>
+
+	    <ImageView3D image={this.state.image} level = {this.state.level}
 	    window = {this.state.window} brushSize={this.state.brushSize}
 	    maskColours = {this.maskColours} maskLabel={this.state.maskLabel}
 	    action={this.actions[this.state.actionIndex]}/>
 
-	    <ImageView images = {this.state.imagesY} level = {this.state.level}
-	    window = {this.state.window} brushSize={this.state.brushSize}
-	    maskColours = {this.maskColours} maskLabel={this.state.maskLabel}
-	    action={this.actions[this.state.actionIndex]}/>
 
-	    <ImageView images = {this.state.imagesZ} level = {this.state.level}
-	    window = {this.state.window} brushSize={this.state.brushSize}
-	    maskColours = {this.maskColours} maskLabel={this.state.maskLabel}
-	    action={this.actions[this.state.actionIndex]}/>
-
+	    </div>
 	    
 	    
 	    </div>
@@ -157,14 +167,29 @@ class App extends Component {
 }
 export default App
 
-// Have a 3D image viewer which keeps the 3 2D image viewers in-sync?
-// Put the image toolbar on the left
-// Bootstrap styling
+
+// TO-DO:
+// - Add bounding rectangle for all orientations
+// - Remove 2D stuff
+// - Clean up any console logs or anything else
+// - Node server
+
+
+// BUG LIST:
+// - Does loading a new nifti image work?
+// - Changing 2D images during segmentation sseems to cause issues
+
 
 /*
  * TO-DO:
- * - Need to keep the masks in-sync across different image views!!
- * - Allow 2D images (i.e. change image viewer)
- * - Communication with node server
- * - need fixes for pixel sizes if high resolution (i.e. have a minimum pic size depending on res?)
+ * - Start communication with node server
+ * - Allow 2D images (i.e. use original image viewer just take out the ability to scroll)
+ * - need fixes for pixel sizes if high resolution (i.e. have a minimum pic size depending on res? calculate the width dynamically instead of setting it)
  */
+
+// Questions:
+// Why more than 3 dims in nifti? ever needed?
+// What kind of arch? Deconvolution or dilated convolution?
+// Why DLTK rather than keras?
+// Privacy stuff?
+// Fine-tuning?

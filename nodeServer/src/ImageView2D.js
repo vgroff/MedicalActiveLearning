@@ -1,18 +1,16 @@
 import React, { Component } from 'react'
 
 
-export class ImageView extends Component {
+export class ImageView2D extends Component {
     
     constructor(props) {
 	super(props)
 	this.state = {currImageIndex:-1, nextImageIndex:0}
 	this.mouseDown = false
 	this.drawingRect = false
+	//this.events = {"change":this.props.onChange}
     }
     
-    componentDidMount() {
-    }
-
     // Draw the image onto the canvas
     drawImage() {
 	if (this.props.images.length) {
@@ -39,6 +37,9 @@ export class ImageView extends Component {
 	    var rect = this.refs.canvas.getBoundingClientRect()
 	    this.props.images[this.state.currImageIndex].addToMask()
 	    this.forceUpdate()
+	    if (this.props.onChange) {
+		this.props.onChange()
+	    }
 	}
     }
 
@@ -99,6 +100,13 @@ export class ImageView extends Component {
 	    }
 	}
 	this.mouseDown = false
+    }
+
+    componentDidMount() {
+	console.log("update")
+	if (this.refs.canvas) {
+	    this.drawImage()
+	}
     }
     
     render() {

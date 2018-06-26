@@ -102,9 +102,7 @@ export class ImageView extends Component {
     }
     
     render() {
-	if (this.refs.canvas) {
-	    this.drawImage()
-	}
+	this.drawImage()
 	return (
 	    <div>
 	    <canvas ref="canvas"

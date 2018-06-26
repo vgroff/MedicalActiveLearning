@@ -26,6 +26,7 @@ export class Image {
 	    }
 	}
 	this.boundingRect = [0,0,0,0]
+	this.events = {"rectChange":[], "maskChange":[]}
     }
 
     drawImage(canvas, level, window, maskColours) {
@@ -53,7 +54,7 @@ export class Image {
 	// Draw the image onto the canvas
 	for (var row = 0; row < height; row++) {
 	    for (var col = 0; col < width; col++) { 
-		var grayVal = parseInt(this.data[row][col])
+		var grayVal = (this.data[row][col])
 		// Transfer function
 		if (grayVal < level - window/2) {
 		    grayVal = 0
@@ -112,8 +113,13 @@ export class Image {
 
     addToMask() {
 	for (var row = 0; row < this.data.length; row++) {
-	    for (var col = 0; col < this.data[0].length; col++) {	
-		this.mask[row][col] = this.tempMask[row][col]
+	    for (var col = 0; col < this.data[0].length; col++) {
+		if (this.mask[row][col] !== this.tempMask[row][col]) { 
+		    this.mask[row][col] = this.tempMask[row][col]
+		    for (var i = 0; i < this.events.maskChange.length; i++) {
+			this.events.maskChange[i](row, col, this.mask[row][col])
+		    }
+		}
 	    }
 	}
     }
@@ -135,12 +141,9 @@ export class Image {
 		if ((x-mouseX)**2 + (y-mouseY)**2 < brushSizeSq) {
 		    this.tempMask[row][col] = val
 		}
+
 		else {
 		    this.tempMask[row][col] = this.mask[row][col]
-		}
-		if ((x-mouseX)**2 + (y-mouseY)**2 < min) {
-		    min = (x-mouseX)**2 + (y-mouseY)**2
-		    stats = [x, y, mouseX, mouseY]
 		}
 	    }
 	}
@@ -148,15 +151,22 @@ export class Image {
 
 
     setRectEndCoords(x, y, width, height) {
-	let xPixel = Math.floor(Math.floor(x/(this.pixWidth*this.scale))*this.pixHeight*this.scale)
-	let yPixel = Math.floor(Math.floor(y/(this.pixHeight*this.scale))*this.pixWidth*this.scale)
+	let xPixel = Math.floor(Math.floor(x/(this.pixWidth*this.scale))*this.pixWidth*this.scale)
+	let yPixel = Math.floor(Math.floor(y/(this.pixHeight*this.scale))*this.pixHeight*this.scale)
 	this.boundingRect[2] = xPixel
 	this.boundingRect[3] = yPixel
     }
 
     setRectStartCoords(x,y) {
-	this.boundingRect[0] = Math.floor( Math.floor(x/(this.pixWidth*this.scale))*this.pixHeight*this.scale)
-	this.boundingRect[1] = Math.floor( Math.floor(y/(this.pixHeight*this.scale))*this.pixWidth*this.scale)
+	this.boundingRect[0] = Math.floor( Math.floor(x/(this.pixWidth*this.scale))*this.pixWidth*this.scale)
+	this.boundingRect[1] = Math.floor( Math.floor(y/(this.pixHeight*this.scale))*this.pixHeight*this.scale)
+    }
+
+    addEvent(type, f) {
+	this.events[type].push(f)
     }
     
 }
+
+
+
