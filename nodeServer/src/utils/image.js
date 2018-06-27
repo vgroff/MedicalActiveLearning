@@ -165,6 +165,9 @@ export class Image {
 	let yPixel = Math.floor(Math.floor(y/(this.pixHeight*this.scale))*this.pixHeight*this.scale)
 	this.boundingRect[2] = xPixel
 	this.boundingRect[3] = yPixel
+	for (var i = 0; i < this.events.rectChange.length; i++) {
+	    this.events.rectChange(this.boundingRect)
+	}
     }
 
     setRectStartCoords(x,y) {

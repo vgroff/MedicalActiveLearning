@@ -20,7 +20,7 @@ export class ImageView2D extends Component {
     }
     
     nextImage(dir) {
-	if (this.props.images.length) {
+	if (this.props.images.length && this.drawingRect == false) {
 	    this.props.images[this.state.currImageIndex].resetTempMask()
 	    var newImg = (this.state.currImageIndex + dir)
 	    if (newImg < 0) {
@@ -58,11 +58,29 @@ export class ImageView2D extends Component {
 	    }
 	    else if (this.props.action==="box") {
 		this.refs.canvas.style.cursor = "crosshair";
+		var rect = this.refs.canvas.getBoundingClientRect()
 		if (this.drawingRect === true) {
-		    var rect = this.refs.canvas.getBoundingClientRect()
 		    this.props.images[this.state.currImageIndex].setRectEndCoords(x - rect.left,
 										  y - rect.top)
 		    this.forceUpdate()
+		}
+		else {
+		    x = x - rect.left
+		    y = y - rect.top
+		    var threshold = 6
+		    var img = this.props.images[this.state.currImageIndex]
+		    if (Math.abs(x - img.boundingRect[0]) < threshold) {
+			this.refs.canvas.style.cursor = "w-resize"
+		    }
+		    else if (Math.abs(x - img.boundingRect[2]) < threshold) {
+			this.refs.canvas.style.cursor = "e-resize"
+		    }
+		    else if (Math.abs(y - img.boundingRect[1]) < threshold) {
+			this.refs.canvas.style.cursor = "n-resize"
+		    }
+		    else if (Math.abs(y - img.boundingRect[3]) < threshold) {
+			this.refs.canvas.style.cursor = "s-resize"
+		    }
 		}
 	    }
 	}
@@ -95,7 +113,7 @@ export class ImageView2D extends Component {
 		this.forceUpdate()
 	    }
 	    else if (this.props.action==="box") {
-		if (this.drawRect === true) {
+		if (this.drawingRect === true) {
 		    this.props.images[this.state.currImageIndex].setRectEndCoords(0, 0)
 		    this.props.images[this.state.currImageIndex].setRectStartCoords(0, 0)
 		    this.drawingRect = false

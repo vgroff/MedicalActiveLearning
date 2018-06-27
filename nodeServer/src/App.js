@@ -15,7 +15,8 @@ class App extends Component {
 	this.maskColourNames = ["Object", "Object2"]
 	this.actions = ["segment","box"]
 	// Server test
-	fetch("/welcome").then(function(response) {
+	fetch("/welcome?name=RollaT").then(function(response) {
+	    console.log(response)
 	    return response.text();
 	}).then(function(text) {
 	    console.log(text);
@@ -180,17 +181,16 @@ export default App
 
 
 // TO-DO short term:
-// - Add bounding rectangle for all orientations - adding a single one is quite simple, to update the others. How do we add multiple/have multiple interactions. Instead, get to EDIT the rectangle as you go!
-// - Clean up any console logs or anything else
+// - Add bounding rectangle for all orientations - adding a single one is quite simple, to update the others. How do we add multiple/have multiple interactions. Instead, get to EDIT the rectangle as you go! Going to need to keep a bounding rectangle in picture pixels rather than canvas pixels
+// - Allow images to be cropped according to bounding rect
+// - Fix the rects which should be lines
 // - Move on to Node server
 
-
-// BUG LIST:
 
 
 /*
  * TO-DO:
- * - Noder Server
+ * - Node Server
  * - Dynamically calculate width required (hardcode toolbar width?)
  * - Allow 2D images (i.e. use original image viewer just take out the ability to scroll)
  * - need fixes for pixel sizes if high resolution (i.e. have a minimum pic size depending on res? calculate the width dynamically instead of setting it)
@@ -202,3 +202,5 @@ export default App
 // Why DLTK rather than keras?
 // Privacy stuff?
 // Fine-tuning?
+// What datasets?
+// JavaScript and Python
