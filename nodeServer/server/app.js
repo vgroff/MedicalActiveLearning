@@ -42,16 +42,15 @@ app.get('/welcome', function response(req, res) {
     // Takes stdout data from script which executed
     // with arguments and send this data to res object
     process.stdout.on('data', function(data) {
-	console.log(data)
 	res.send(data.toString());
     } )
     process.stderr.on('data', function(data) {
-	console.log(data.toString())
+	errMsg = "Server Err: " + data.toString()
+	console.log(errMsg)
+	res.send(errMsg)
     } )
-    process.on("close", function() {
-	console.log("python done")	
+    process.on("close", function() {	
     })
-    console.log("done")
 });
 
 app.listen(8080)

@@ -32,6 +32,7 @@ export function convertNifti(data) {
 	    image = new Uint16Array(niftiImage)
 	}
 	else {
+	    console.log("Error, unrecognized bit depth in image")
 	    alert("Error, unrecognized bit depth in image")
 	    return
 	}
@@ -88,6 +89,7 @@ export function convertNifti(data) {
 	return imgs
     }
     else {
+	alert("File not recognised")
 	return false
     }
 }

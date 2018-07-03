@@ -8,6 +8,7 @@ export class ImageView2D extends Component {
 	this.state = {currImageIndex:-1, nextImageIndex:0}
 	this.mouseDown = false
 	this.drawingRect = false
+	this.resizingRect = -1
 	//this.events = {"change":this.props.onChange}
     }
     
@@ -54,7 +55,9 @@ export class ImageView2D extends Component {
 		if (this.mouseDown === true) {
 		    this.markMask()
 		}
-		this.forceUpdate()
+		else {
+		    this.forceUpdate()
+		}
 	    }
 	    else if (this.props.action==="box") {
 		this.refs.canvas.style.cursor = "crosshair";
@@ -69,17 +72,50 @@ export class ImageView2D extends Component {
 		    y = y - rect.top
 		    var threshold = 6
 		    var img = this.props.images[this.state.currImageIndex]
-		    if (Math.abs(x - img.boundingRect[0]) < threshold) {
-			this.refs.canvas.style.cursor = "w-resize"
+		    var index = -1
+		    var min = threshold+1
+		    if (this.resizingRect === -1) {
+			if (Math.abs(x - img.boundingRect[0]) < threshold) {
+			    this.refs.canvas.style.cursor = "w-resize"
+			    this.resizingRect = 0
+			    min = Math.abs(x - img.boundingRect[0])
+			}
+			else if ( (Math.abs(x - img.boundingRect[2]) < threshold) &&
+				  Math.abs(x - img.boundingRect[2]) < min) {
+			    this.refs.canvas.style.cursor = "e-resize"
+			    this.resizingRect = 2
+			}
+			else if (Math.abs(y - img.boundingRect[1]) < threshold &&
+				 Math.abs(y - img.boundingRect[1]) < min) {
+			    this.refs.canvas.style.cursor = "n-resize"
+			    this.resizingRect = 1
+			}
+			else if (Math.abs(y - img.boundingRect[3]) < threshold &&
+				 Math.abs(y - img.boundingRect[3]) < min) {
+			    this.refs.canvas.style.cursor = "s-resize"
+			    this.resizingRect = 3
+			}
 		    }
-		    else if (Math.abs(x - img.boundingRect[2]) < threshold) {
-			this.refs.canvas.style.cursor = "e-resize"
+		    // Don't resize if the mouse isn't down, and reset if so
+		    if (this.mouseDown === false) {
+			this.resizingRect = -1
 		    }
-		    else if (Math.abs(y - img.boundingRect[1]) < threshold) {
-			this.refs.canvas.style.cursor = "n-resize"
-		    }
-		    else if (Math.abs(y - img.boundingRect[3]) < threshold) {
-			this.refs.canvas.style.cursor = "s-resize"
+		    if (this.resizingRect >= 0) {
+			var val
+			var index = this.resizingRect
+			if (index % 2 == 1) {
+			    val = y
+			}
+			else {
+			    val = x
+			}
+			img.boundingRect[index] = val
+			img.setRectCoords(img.boundingRect[0], img.boundingRect[1],
+					  img.boundingRect[2], img.boundingRect[3])
+			this.forceUpdate()
+			if (this.props.onChange) {
+			    this.props.onChange()
+			}
 		    }
 		}
 	    }
@@ -93,14 +129,27 @@ export class ImageView2D extends Component {
 	}
 	else if (this.props.action==="box") {
 	    var rect = this.refs.canvas.getBoundingClientRect()
-	    this.props.images[this.state.currImageIndex].setRectEndCoords(x - rect.left,
-									  y - rect.top)
+	    x = x - rect.left
+	    y = y - rect.top
+	    var img = this.props.images[this.state.currImageIndex]
 	    if (this.drawingRect === false) {
-		this.props.images[this.state.currImageIndex].setRectStartCoords(x - rect.left,
-										y - rect.top)
-		this.drawingRect = true
+		var threshold = 6
+		if (Math.abs(x - img.boundingRect[0]) < threshold) {
+		}
+		else if (Math.abs(x - img.boundingRect[2]) < threshold) {
+		}
+		else if (Math.abs(y - img.boundingRect[1]) < threshold) {
+		}
+		else if (Math.abs(y - img.boundingRect[3]) < threshold) {
+		}
+		else {
+		    img.setRectStartCoords(x, y)
+		    img.setRectEndCoords(x, y)
+		    this.drawingRect = true
+		}
 	    }
 	    else {
+		// Clicking while drawing means we stop drawing (i.e. stop updates with musoe move)
 		this.drawingRect = false
 	    }
 	}
@@ -143,6 +192,7 @@ export class ImageView2D extends Component {
 	    onMouseDown={(e) => {this.handleMouseDown(e.clientX, e.clientY)}}
 	    onMouseUp={(e) => {this.mouseDown = false}}
 	    onMouseOut={(e) => {this.handleMouseOut()}}/>
-	    </div>)
+	    </div>
+	)
     }
 }

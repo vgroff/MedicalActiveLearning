@@ -27,9 +27,10 @@ class App extends Component {
 	console.log("img changed")
 	var fr = new FileReader()
 	fr.onloadend = function(evt) {
-	    console.log("img loaded")
 	    if (evt.target.readyState === FileReader.DONE) {
-                var imgs = convertNifti(evt.target.result)
+		console.log("img loaded")
+		var imgs = convertNifti(evt.target.result)
+		console.log(imgs)
 		this.setState({imagesX : imgs[0], imagesY : imgs[1], imagesZ : imgs[2],
 		image: imgs[3]})
             }
@@ -181,10 +182,13 @@ export default App
 
 
 // TO-DO short term:
-// - Add bounding rectangle for all orientations - adding a single one is quite simple, to update the others. How do we add multiple/have multiple interactions. Instead, get to EDIT the rectangle as you go! Going to need to keep a bounding rectangle in picture pixels rather than canvas pixels
-// - Allow images to be cropped according to bounding rect
+// - When bounding rect is re-drawn rather than re-sized, re-set the limits? Who decides this? Could have a special event for rect start to signify a new rect? Maybe makes more sense for ImageView2D to tell ImageView3D whether resizing or redrawing and ImageView3D can make the correct call on image?
 // - Fix the rects which should be lines
-// - Move on to Node server
+// - Fix bugs in bug list
+// - DLTK model with dataset. Have smir dataset, do simple binary segmentation on all of them.
+
+// BUGS LIST:
+// - Resize activates whenever it lines up with a side, even if not near the line - check if inside the rect first?
 
 
 
@@ -197,10 +201,8 @@ export default App
  */
 
 // Questions:
-// Why more than 3 dims in nifti? ever needed?
 // What kind of arch? Deconvolution or dilated convolution?
-// Why DLTK rather than keras?
-// Privacy stuff?
 // Fine-tuning?
 // What datasets?
-// JavaScript and Python
+// Differently sized pixels?
+// How do I use GPU server?

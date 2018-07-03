@@ -26,6 +26,7 @@ export class Image {
 	    }
 	}
 	this.boundingRect = [0,0,0,0]
+	this.boundingRectPix = [0,0,0,0]
 	this.events = {"rectChange":[], "maskChange":[]}
     }
 
@@ -101,6 +102,10 @@ export class Image {
 		}
 	    }
 	}
+	this.boundingRect[1] = this.rowToCoord(this.boundingRectPix[1])
+	this.boundingRect[3] = this.rowToCoord(this.boundingRectPix[3])
+	this.boundingRect[0] = this.colToCoord(this.boundingRectPix[0])
+	this.boundingRect[2] = this.colToCoord(this.boundingRectPix[2])
 	ctx.beginPath();
 	ctx.rect(this.boundingRect[0],
 		 this.boundingRect[1],
@@ -161,24 +166,80 @@ export class Image {
 
 
     setRectEndCoords(x, y, width, height) {
-	let xPixel = Math.floor(Math.floor(x/(this.pixWidth*this.scale))*this.pixWidth*this.scale)
-	let yPixel = Math.floor(Math.floor(y/(this.pixHeight*this.scale))*this.pixHeight*this.scale)
-	this.boundingRect[2] = xPixel
-	this.boundingRect[3] = yPixel
+	let colX = this.coordToColX(x)
+	let rowY = this.coordToRowY(y)
+	this.boundingRect[2] = colX
+	this.boundingRect[3] = rowY
+	let col = this.coordToCol(x)
+	let row = this.coordToRow(y)
+	this.boundingRectPix[2] = col
+	this.boundingRectPix[3] = row
 	for (var i = 0; i < this.events.rectChange.length; i++) {
-	    this.events.rectChange(this.boundingRect)
+	    this.events.rectChange[i](this.boundingRectPix)
 	}
     }
 
     setRectStartCoords(x,y) {
-	this.boundingRect[0] = Math.floor( Math.floor(x/(this.pixWidth*this.scale))*this.pixWidth*this.scale)
-	this.boundingRect[1] = Math.floor( Math.floor(y/(this.pixHeight*this.scale))*this.pixHeight*this.scale)
+	this.boundingRect[0] = this.coordToColX(x)
+	this.boundingRect[1] = this.coordToRowY(y)
+	let col = this.coordToCol(x)
+	let row = this.coordToRow(y)
+	this.boundingRectPix[0] = col
+	this.boundingRectPix[1] = row
+    }
+
+    setRectPix(row1, col1, row2, col2) {
+	this.boundingRectPix[1] = row1
+	this.boundingRectPix[0] = col1
+	this.boundingRectPix[3] = row2
+	this.boundingRectPix[2] = col2
+	this.boundingRect[1] = this.rowToCoord(row1)
+	this.boundingRect[3] = this.rowToCoord(row2)
+	this.boundingRect[0] = this.colToCoord(col1)
+	this.boundingRect[2] = this.colToCoord(col2)
+    }
+
+    setRectCoords(x1, y1, x2, y2) {
+	this.boundingRect[0] = x1
+	this.boundingRect[2] = x2
+	this.boundingRect[1] = y1
+	this.boundingRect[3] = y2
+	this.boundingRectPix[1] = Math.round(y1/(this.pixHeight*this.scale))
+	this.boundingRectPix[0] = Math.round(x1/(this.pixWidth*this.scale))
+	this.boundingRectPix[3] = Math.round(y2/(this.pixHeight*this.scale))
+	this.boundingRectPix[2] = Math.round(x2/(this.pixWidth*this.scale))
+	for (var i = 0; i < this.events.rectChange.length; i++) {
+	    this.events.rectChange[i](this.boundingRectPix)
+	}
     }
 
     addEvent(type, f) {
 	this.events[type].push(f)
     }
-    
+
+    colToCoord(x) {
+	return x*this.pixWidth*this.scale
+    }
+
+    rowToCoord(y) {
+	return y*this.pixHeight*this.scale
+    }
+
+    coordToCol(x) {
+	return Math.floor(x/(this.pixWidth*this.scale))
+    }
+
+    coordToRow(y) {
+	return Math.floor(y/(this.pixHeight*this.scale))
+    }
+
+    coordToColX(x) {
+	return this.colToCoord(this.coordToCol(x))
+    }
+
+    coordToRowY(y) {
+	return this.rowToCoord(this.coordToRow(y))
+    }
 }
 
 
