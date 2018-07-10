@@ -2,13 +2,14 @@ import numpy as np
 import tensorflow as tf
 
 import os
-import json
 
 from dltk.core.metrics import dice
 from dltk.networks.segmentation.unet import residual_unet_3d
 from dltk.io.abstract_reader import Reader
 
 from imageReader import readFunc
+
+from utils import getDatasetInfo, splitArr
 
 #from tensorflow.python.client import device_lib
 #print(device_lib.list_local_devices())
@@ -75,21 +76,6 @@ def model_fn(features, labels, mode, params):
                                       train_op=train_op,
                                       eval_metric_ops=None)
 
-def getDatasetInfo(folder):
-    with open(os.path.join(folder, "dataset.json")) as f:
-        data = json.load(f)
-    return data["training"]
-
-def splitArr(arr, fraction):
-    arr1 = []
-    arr2 = []
-    length = len(arr)
-    for i in range(length):
-        if (i < length*fraction):
-            arr1.append(arr[i])
-        else:
-            arr2.append(arr[i])
-    return arr1, arr2
 
 def train():
     modelPath = "./models"
@@ -103,19 +89,19 @@ def train():
     #    print("\n", img["features"]["x"].shape, img["labels"]["y"].shape, "\n")
 
     # Training parameters
-    EVAL_EVERY_N_STEPS = 1
-    EVAL_STEPS = 1
+    EVAL_EVERY_N_STEPS = 15*1
+    EVAL_STEPS = 3
     NUM_CLASSES = 2
     NUM_CHANNELS = 1
     BATCH_SIZE = 1
-    SHUFFLE_CACHE_SIZE = 2
-    MAX_STEPS = 5000
+    SHUFFLE_CACHE_SIZE = 1
+    MAX_STEPS = 210
 
-    train_filenames = train_filenames[:2]
-    val_filenames = val_filenames[:2]
+    train_filenames = train_filenames
+    val_filenames = val_filenames
     
     # Set up a data reader to handle the file i/o.
-    reader_params = {'folder':folder, "depth":132, "size":size}
+    reader_params = {'folder':folder, "depth":132, "size":size, "whiten": True}
     reader = Reader(readFunc,
                     {'features': {'x': tf.float32},
                      'labels': {'y': tf.int32}})
@@ -139,11 +125,11 @@ def train():
         shuffle_cache_size=SHUFFLE_CACHE_SIZE,
         params=reader_params)
 
-        # Instantiate the neural network estimator
+    # Instantiate the neural network estimator
     nn = tf.estimator.Estimator(
         model_fn=model_fn,
         model_dir=modelPath,
-        params={"learning_rate": 0.001, "numClasses":NUM_CLASSES},
+        params={"learning_rate": 0.00035, "numClasses":NUM_CLASSES},
         config=tf.estimator.RunConfig())
 
     # Hooks for validation summaries
@@ -165,7 +151,7 @@ def train():
             if True:
                 results_val = nn.evaluate(
                     input_fn=val_input_fn,
-                    hooks=[val_qinit_hook, val_summary_hook],
+                    hooks=[val_qinit_hook],#, val_summary_hook],
                     steps=EVAL_STEPS)
                 print('Step = {}; val loss = {:.5f};'.format(
                     results_val['global_step'], results_val['loss']))
@@ -176,7 +162,7 @@ def train():
     print('Stopping now.')
     export_dir = nn.export_savedmodel(
         export_dir_base=modelPath,
-        serving_input_receiver_fn=reader.serving_input_receiver_fn(reader_example_shapes))
+        serving_input_receiver_fn=reader.serving_input_receiver_fn(shape))
     print('Model saved to {}.'.format(export_dir))
     
 
@@ -189,6 +175,5 @@ if __name__ == '__main__':
     train()
 
 # TODO:
-# - Going to need to return smaller patches somehow us https://www.tensorflow.org/api_docs/python/tf/image/crop_and_resize to select boxes and re-size them to a given size - is this only for 2D images though???? Coudl use a for loop and numpy array manipulation
-# - Memory allocation not even enough, need smaller patches so may aswell work on that now. Gonna need to iterate over the numpy array, storing maximal and minimal values of row, column and depth - building a square to preserve aspect ratio. Then we will need to resize it to a pre-agreed size.
-# - OR, for now we just do a 3-D resize, halfing all dimensions post-padding... maybe test it on an ITK image first.
+# - Test resized images
+# - Going to need to produce a 3D cube of image and label around area of interest
