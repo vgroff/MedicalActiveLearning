@@ -6,12 +6,12 @@ import math
 
 from dltk.io.preprocessing import whitening
 
-from imageUtils import resize3D
+from utils import resize3D
 
 def readFunc(dataset, mode, params):
     folder = params["folder"]
     for ID, dataPoint in enumerate(dataset):
-        #print("Image {}/{}".format(ID+1, len(dataset)))
+        print("Image {}/{}".format(ID+1, len(dataset)))
         # Read image
         imgPath = dataPoint["image"]
         img_sitk = sitk.ReadImage(os.path.join(folder, imgPath))
@@ -45,17 +45,16 @@ def readFunc(dataset, mode, params):
             labelPath = dataPoint["label"]
             label_sitk = sitk.ReadImage(os.path.join(folder, labelPath))
             label = sitk.GetArrayFromImage(label_sitk).astype(np.float32)
-            label = np.stack([label], axis=-1).astype(np.float32)
             diff = size - label.shape[0]
             if diff > 0:
                 pad = math.floor(diff/2)
-                paddings = tf.constant([[pad, pad], [0, 0], [0, 0], [0,0]])
+                paddings = tf.constant([[pad, pad], [0, 0], [0, 0]])
                 label = tf.pad(label, paddings, "CONSTANT")
                 if (diff % 2 == 1):
-                    paddings = tf.constant([[1, 0], [0, 0], [0, 0], [0,0]])
+                    paddings = tf.constant([[1, 0], [0, 0], [0, 0]])
                     label = tf.pad(label, paddings, "CONSTANT")
                 label = tf.Session().run(label)
-            label = resize3D(label, False, *params["size"])
+            label = resize3D(label, True, *params["size"])
             label = tf.Session().run(label)
             yield {'features': {'x': img},
                    'labels': {'y': label},
