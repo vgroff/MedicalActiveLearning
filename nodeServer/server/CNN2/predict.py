@@ -40,7 +40,7 @@ def predict():
     imgs = []
     labels = []
     for i, img in enumerate(imgsAll):
-        if i > 18:
+        if i > 4:
             imgs.append(img)
             labels.append(labelsAll[i])
     #sgd = SGD(lr=0.0002, decay=1.2e-2, momentum=0.9, nesterov=True)
@@ -55,34 +55,28 @@ def predict():
     zeroes = 0
     counts  = [0,0]
     counts2 = [0,0]
+    counts3 = [0,0]
     for i, label in enumerate(result):
         #newLabel = np.moveaxis(label, 0, 3)
         print(label.shape)
         newLabel = np.argmax(label, axis=0)
         print(newLabel.shape)
+        newLabel2 = np.argmax(labels[i], axis=0)
         for row in newLabel:
             for col in row:
                 for depth in col:
                     #print(depth)
                     counts[depth] += 1
-    
-    print(labels[0].shape)
-    for label in labels:
-        newLabel = label[0]#np.moveaxis(label, 0, 3)
-        print(newLabel.shape)
-        for row in newLabel:
+        for row in newLabel2:
             for col in row:
                 for depth in col:
-                    #if (int(round(depth)) > 0.1):
-                        #print(depth)
-                    counts2[int(round(depth))] += 1
-    print(counts, counts2)
-        #print(res)
-        #print(np.sum(res))
-        #print(np.sum(img))
-        #dice = metrics.dice(newLabel, labels, 1)[1:].mean()
-        #print("Dice score: {}".format(dice))
-    print(ones, zeroes)
+                    #print(depth)
+                    counts3[depth] += 1
+        writeNIFTI(newLabel, outputFolder, "{}_truth".format(i))
+        writeNIFTI(newLabel2, outputFolder, "{}_pred".format(i))
+        print(imgs[i].shape)
+        writeNIFTI(imgs[i][0], outputFolder, "{}_actual".format(i))
+    print(counts, counts3)
         
 if __name__ == '__main__':
     np.random.seed(42)

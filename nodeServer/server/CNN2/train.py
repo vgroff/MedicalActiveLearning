@@ -22,12 +22,14 @@ def getImages(folder, size):
     imgs = []
     labels = []
     i = 0
-    for img in readFunc(trainPaths, None,
+    for img in readFunc(trainPaths[:6], None,
                         {"folder":folder, "depth":132, "size":size, "whiten":True}):
         i += 1
-        print("Image {}".format(i), end="\r") 
-        newImg = np.swapaxes(img["features"]["x"], 0,3)
-        newLabel = np.swapaxes(img["labels"]["y"], 0,3)
+        print("Image {}".format(i), end="\r")
+        image = img["features"]["x"]
+        label = img["labels"]["y"]
+        newImg = np.swapaxes(image, 0,3)
+        newLabel = np.swapaxes(label, 0,3)
         imgs.append(newImg)#img["features"]["x"])
         labels.append(newLabel)#img["labels"]["y"])
     return imgs, labels
@@ -52,7 +54,7 @@ def train():
 
     print("Getting net")
     if (useOldModel == False):
-        model = getUNet2((1,80,80,32), nClasses, lr=3e-4)
+        model = getUNet2((1,80,80,32), nClasses, lr=0.8e-4)
     else:
         model = loadModel(1)
         adam = Adam(lr = 2.0e-4)
@@ -61,7 +63,7 @@ def train():
     learning_rate_reduction = ReduceLROnPlateau(monitor='loss',
                                                 patience=3,
                                                 verbose=1,
-                                                factor=0.75,
+                                                factor=0.65,
                                                 min_lr=2e-5)
     model.fit(np.array(imgs), np.array(labels), batch_size=1, verbose=1, epochs=40, shuffle=True,
               validation_split=0.2, callbacks=[learning_rate_reduction])
@@ -76,15 +78,10 @@ if __name__ == '__main__':
     train()
 
 # TO-DO:
-# - Try to swap channels_first in create_context_module
-# - See predictions
-# - Crop the input image
+# - Crop the input image, then train on all
+# - Resize the output image correctly back to original size
 # - Do augmentation on input images - Check the guys Github!!!
-
-
-# Current issues:
-# - Predictions don't look correct. Could write to NIFTI for diagnosis, but am also thinking it could be an issue with the way the labels are? Maybe we need them to be categorical, it is kinda weird the way they are distributed, and very different to the way the output comes. Perhaps that extra dimension is an error
-
+# - Do graphcuts/BIFSeg, using front-end
 
 
 # BIG PICTURE:

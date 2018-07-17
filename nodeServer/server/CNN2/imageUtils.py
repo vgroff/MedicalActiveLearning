@@ -83,6 +83,8 @@ def cropToSeg(image, margin, minMargin=1, randomized=True):
                         depthBounds[0] = depth
                     if depth > depthBounds[1]:
                         depthBounds[1] = depth
+    return image[rowBounds[0]:rowBounds[1], colBounds[0]:colBounds[1],
+                 depthBounds[0]:depthBounds[1]]
 
 
 def resize_by_axis(image, dim_1, dim_2, ax, is_grayscale):

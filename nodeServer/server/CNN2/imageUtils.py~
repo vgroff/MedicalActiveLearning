@@ -50,6 +50,7 @@ def getDatasetInfo(folder):
         data = json.load(f)
     return data["training"]
 
+
 def splitArr(arr, fraction):
     arr1 = []
     arr2 = []
@@ -61,6 +62,27 @@ def splitArr(arr, fraction):
             arr2.append(arr[i])
     return arr1, arr2
 
+
+def cropToSeg(image, margin, minMargin=1, randomized=True):
+    rowBounds   = [image.shape[0],-1]
+    colBounds   = [image.shape[1],-1]
+    depthBounds = [image.shape[2],-1]
+    for row in image:
+        for col in row:
+            for depth in col:
+                if (image[row, col, depth] != 0):
+                    if row < rowBounds[0]:
+                        rowBounds[0] = row
+                    if row > rowBounds[1]:
+                        rowBounds[1] = row
+                    if col < colBounds[0]:
+                        colBounds[0] = col
+                    if col > colBounds[1]:
+                        colBounds[1] = col
+                    if depth < depthBounds[0]:
+                        depthBounds[0] = depth
+                    if depth > depthBounds[1]:
+                        depthBounds[1] = depth
 
 
 def resize_by_axis(image, dim_1, dim_2, ax, is_grayscale):
