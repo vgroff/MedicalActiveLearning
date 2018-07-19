@@ -1,0 +1,34 @@
+import React, { Component } from 'react'
+
+
+class DropDown extends Component {
+
+    constructor() {
+
+    }
+
+    render() {
+	return (
+	    <div>
+	    
+	    <label style={labelStyle}> Scribble Label:</label>
+	    <select style={elementStyle}
+	    onChange={(e) => {this.setMaskLabel(parseInt(e.target.value))}}
+	    defaultValue={this.state.maskLabel}>
+
+	    <option value={0} key={0}>Background</option>
+	    {this.maskColours.map(function(colour, index) {
+		return (
+		    <option value={index+1} key={index+1} style={{"backgroundColor":colour,
+								  "color":colour}}>
+		    {this.maskColourNames[index]}
+		    </option>
+		)
+	    }.bind(this))}
+
+	    </select>
+	    </div>
+	)
+    }
+    
+}

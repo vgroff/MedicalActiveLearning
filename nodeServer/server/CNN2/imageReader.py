@@ -6,9 +6,9 @@ import math
 
 from dltk.io.preprocessing import whitening
 
-from imageUtils import resize3D
+from imageUtils import resize3D, cropToSeg
 
-def readFunc(dataset, mode, params):
+def readFunc(dataset, mode, params, crop=True):
     folder = params["folder"]
     for ID, dataPoint in enumerate(dataset):
         #print("Image {}/{}".format(ID+1, len(dataset)))
@@ -16,22 +16,30 @@ def readFunc(dataset, mode, params):
         imgPath = dataPoint["image"]
         img_sitk = sitk.ReadImage(os.path.join(folder, imgPath))
         img = sitk.GetArrayFromImage(img_sitk).astype(np.float32)
-        #img = whitening(img)
-        img = np.stack([img], axis=-1).astype(np.float32)
+        if (crop == True):
+            # Only read label if training
+            labelPath = dataPoint["label"]
+            label_sitk = sitk.ReadImage(os.path.join(folder, labelPath))
+            label = sitk.GetArrayFromImage(label_sitk).astype(np.float32)
+            label, img = cropToSeg(label, img, 5, 1, randomized=True)
+        else:
+            #img = whitening(img)
+            img = np.stack([img], axis=-1).astype(np.float32)
 
-        # Pad images to the correct size
-        size = params["depth"]
-        diff = size - img.shape[0]
-        if diff > 0:
-            pad = math.floor(diff/2)
-            paddings = tf.constant([[pad, pad], [0, 0], [0, 0], [0, 0]])
-            img = tf.pad(img, paddings, "CONSTANT")
-            if (diff % 2 == 1):
-                paddings = tf.constant([[1, 0], [0, 0], [0, 0], [0, 0]])
+            # Pad images to the correct size
+            size = params["depth"]
+            diff = size - img.shape[0]
+            if diff > 0:
+                pad = math.floor(diff/2)
+                paddings = tf.constant([[pad, pad], [0, 0], [0, 0], [0, 0]])
                 img = tf.pad(img, paddings, "CONSTANT")
-            img = tf.Session().run(img)
-        img = resize3D(img, False, *params["size"])
-        img = tf.Session().run(img)
+                if (diff % 2 == 1):
+                    paddings = tf.constant([[1, 0], [0, 0], [0, 0], [0, 0]])
+                    img = tf.pad(img, paddings, "CONSTANT")
+                    img = tf.Session().run(img)
+                img = resize3D(img, False, *params["size"])
+                img = tf.Session().run(img)
+
         if (params["whiten"] == True):
             img = whitening(img)
             
@@ -41,21 +49,24 @@ def readFunc(dataset, mode, params):
                    'sitk': img_sitk,
                    'subject_id': ID+1}
         else:
-            # Only read label if training
-            labelPath = dataPoint["label"]
-            label_sitk = sitk.ReadImage(os.path.join(folder, labelPath))
-            label = sitk.GetArrayFromImage(label_sitk).astype(np.float32)
-            #label = np.stack([label], axis=-1).astype(np.float32)
-            diff = size - label.shape[0]
-            if diff > 0:
-                pad = math.floor(diff/2)
-                paddings = tf.constant([[pad, pad], [0, 0], [0, 0]])
-                label = tf.pad(label, paddings, "CONSTANT")
-                if (diff % 2 == 1):
-                    paddings = tf.constant([[1, 0], [0, 0], [0, 0]])
+            if (crop == True):
+                pass
+            else:
+                # Only read label if training
+                labelPath = dataPoint["label"]
+                label_sitk = sitk.ReadImage(os.path.join(folder, labelPath))
+                label = sitk.GetArrayFromImage(label_sitk).astype(np.float32)
+                #label = np.stack([label], axis=-1).astype(np.float32)
+                diff = size - label.shape[0]
+                if diff > 0:
+                    pad = math.floor(diff/2)
+                    paddings = tf.constant([[pad, pad], [0, 0], [0, 0]])
                     label = tf.pad(label, paddings, "CONSTANT")
-                label = tf.Session().run(label)
-            #print(label.shape)
+                    if (diff % 2 == 1):
+                        paddings = tf.constant([[1, 0], [0, 0], [0, 0]])
+                        label = tf.pad(label, paddings, "CONSTANT")
+                    label = tf.Session().run(label)
+                #print(label.shape)
             catLabels = np.zeros(list(label.shape)+[2])
             #print(catLabels.shape)
             for i, row in enumerate(label):
@@ -69,6 +80,10 @@ def readFunc(dataset, mode, params):
             #label = tf.Session().run(label)
             catLabels = resize3D(catLabels, False, *params["size"])
             catLabels = tf.Session().run(catLabels)
+            if (crop == True):
+                img = np.stack([img], axis=-1).astype(np.float32)
+                img = resize3D(img, False, *params["size"])
+                img = tf.Session().run(img)
             yield {'features': {'x': img},
                    'labels': {'y': catLabels},
                    'sitk': img_sitk,

@@ -1,0 +1,34 @@
+import React, { Component } from 'react'
+
+
+export class DropDown extends Component {
+
+    constructor(props) {
+	super(props)
+	this.state = {}
+    }
+
+    render() {
+	return (
+	    <div>
+	    
+	    <label style={this.props.labelStyle}> Scribble Label:</label>
+	    <select style={this.props.dropDownStyle}
+	    onChange={(e) => {this.props.onChange(e.target.value)}}
+	    defaultValue={this.state.maskLabel}>
+
+	    {this.props.options.map(function(option, index) {
+		return (
+		    <option value={index} key={index}>
+		    {option}
+		    </option>
+		)
+	    }.bind(this))}
+
+	    </select>
+	    
+	    </div>
+	)
+    }
+    
+}

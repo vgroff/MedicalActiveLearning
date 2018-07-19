@@ -22,6 +22,7 @@ export class Image3D {
 	this.boundingRect = [0,0,0,this.nImages,this.width,this.height] // (x1,y1,z1), (x2,y2,z2)
 	this.setBoundingRect(0,0,0,this.boundingRect[3],this.boundingRect[4],this.boundingRect[5])
 	this.setupEvents()
+	this.masks = ["Segmentation"]
     }
 
     imgArray(nImages, height, width, pixHeight, pixWidth) {
@@ -40,11 +41,23 @@ export class Image3D {
 	return images
     }
 
+    addNewMask() {
+	for (var nImg = 0; nImg < this.imagesX.length; nImg++) {
+	    this.imagesX[nImg].addNewMask()
+	}
+	for (var nImg = 0; nImg < this.imagesY.length; nImg++) {
+	    this.imagesY[nImg].addNewMask()
+	}
+	for (var nImg = 0; nImg < this.imagesZ.length; nImg++) {
+	    this.imagesZ[nImg].addNewMask()
+	}
+    }
+
     setupEvents() {
 	for (var nImg = 0; nImg < this.nImages; nImg++) {
 	    var img = this.imagesX[nImg]
-	    var f = function(nImage, row, col, val) {
-		this.setMask(nImage, row, col, val)
+	    var f = function(nImage, row, col, val, mask) {
+		this.setMask(nImage, row, col, val, mask)
 	    }.bind(this, nImg)
 	    img.addEvent("maskChange", f)
 	    var f = function(boundingRect) {
@@ -56,8 +69,8 @@ export class Image3D {
 	}
 	for (var col = 0; col < this.width; col++) {
 	    var img = this.imagesY[col]
-	    var f = function(column, invNImg, row, val) {
-		this.setMask((this.nImages-1)-invNImg, row, column, val)
+	    var f = function(column, invNImg, row, val, mask) {
+		this.setMask((this.nImages-1)-invNImg, row, column, val, mask)
 	    }.bind(this, col)
 	    img.addEvent("maskChange", f)
 	    var f = function(boundingRect) {
@@ -69,8 +82,8 @@ export class Image3D {
 	}
 	for (var row = 0; row < this.height; row++) {
 	    var img = this.imagesZ[row]
-	    var f = function(r, invNImg, col, val) {
-		this.setMask((this.nImages-1)-invNImg, r, col, val)
+	    var f = function(r, invNImg, col, val, mask) {
+		this.setMask((this.nImages-1)-invNImg, r, col, val, mask)
 	    }.bind(this, row)
 	    img.addEvent("maskChange", f)
 	    var f = function(boundingRect) {
@@ -88,10 +101,10 @@ export class Image3D {
 	this.imagesZ[row].data[(this.nImages-1) - nImg][col] = val
     }
 
-    setMask(nImg, row, col, val) {
-	this.imagesX[nImg].mask[row][col] = val
-	this.imagesY[col].mask[(this.nImages-1) - nImg][row] = val
-	this.imagesZ[row].mask[(this.nImages-1) - nImg][col] = val
+    setMask(nImg, row, col, val, mask) {
+	this.imagesX[nImg].masks[mask][row][col] = val
+	this.imagesY[col].masks[mask][(this.nImages-1) - nImg][row] = val
+	this.imagesZ[row].masks[mask][(this.nImages-1) - nImg][col] = val
 	this.imagesX[nImg].tempMask[row][col] = val
 	this.imagesY[col].tempMask[(this.nImages-1) - nImg][row] = val
 	this.imagesZ[row].tempMask[(this.nImages-1) - nImg][col] = val

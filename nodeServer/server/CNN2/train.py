@@ -35,12 +35,12 @@ def getImages(folder, size):
     return imgs, labels
 
 def train():
-    useOldImg = True
-    useOldModel = True
+    useOldImg = False
+    useOldModel = False
     nClasses = 2
     if (useOldImg == False):
         folder = "/home/vincent/Documents/imperial/individual project/datasets/decathlon/Task02_Heart"
-        size = [32, 80, 80] # 32,80,80
+        size = [64, 64, 64] # 32,80,80
         imgs, labels = getImages(folder, size)
         mngr = DataManager(imgs, labels)
         f = open("imgs.pkl", "wb")
@@ -54,10 +54,10 @@ def train():
 
     print("Getting net")
     if (useOldModel == False):
-        model = getUNet2((1,80,80,32), nClasses, lr=0.8e-4)
+        model = getUNet2((1,64,64,64), nClasses, lr=0.8e-4)
     else:
         model = loadModel(1)
-        adam = Adam(lr = 2.0e-4)
+        adam = Adam(lr = 3.5e-4)
         model.compile(optimizer = adam, loss = weighted_dice_coefficient_loss)
     print("Training")
     learning_rate_reduction = ReduceLROnPlateau(monitor='loss',
@@ -78,10 +78,9 @@ if __name__ == '__main__':
     train()
 
 # TO-DO:
-# - Crop the input image, then train on all
-# - Resize the output image correctly back to original size
-# - Do augmentation on input images - Check the guys Github!!!
 # - Do graphcuts/BIFSeg, using front-end
+# - Resize the output image correctly back to original size
+
 
 
 # BIG PICTURE:

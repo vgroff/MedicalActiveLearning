@@ -25,6 +25,8 @@ export class Image {
 		this.tempMask[i].push(0)
 	    }
 	}
+	this.masks = [this.mask]
+	this.currentMask = 0
 	this.boundingRect = [0,0,0,0]
 	this.boundingRectPix = [0,0,0,0]
 	this.events = {"rectChange":[], "maskChange":[]}
@@ -116,13 +118,39 @@ export class Image {
 	ctx.stroke()
     }
 
+    resetTempMask() {
+	for (var row = 0; row < this.data.length; row++) {
+	    for (var col = 0; col < this.data[0].length; col++) {
+		if (this.mask[row][col] !== this.tempMask[row][col]) { 
+		    this.tempMask[row][col] = this.mask[row][col]
+		}
+	    }
+	}
+    }
+
+    addNewMask() {
+	for (var i = 0; i < data.length; i++) {
+	    this.mask.push([])
+	    this.tempMask.push([])
+	    for (var j = 0 ; j < data[0].length; j++) {
+		this.mask[i].push(0)
+		this.tempMask[i].push(0)
+	    }
+	}
+    }
+
+    setActiveMask(n) {
+	this.mask = this.masks[n]
+	this.currentMask = n
+    }
+
     addToMask() {
 	for (var row = 0; row < this.data.length; row++) {
 	    for (var col = 0; col < this.data[0].length; col++) {
 		if (this.mask[row][col] !== this.tempMask[row][col]) { 
 		    this.mask[row][col] = this.tempMask[row][col]
 		    for (var i = 0; i < this.events.maskChange.length; i++) {
-			this.events.maskChange[i](row, col, this.mask[row][col])
+			this.events.maskChange[i](row, col, this.mask[row][col], this.currentMask)
 		    }
 		}
 	    }
@@ -135,7 +163,6 @@ export class Image {
 	mouseX = (Math.floor(mouseX/(this.pixWidth*this.scale))+0.5)*this.pixWidth*this.scale
 	var largestDist = 0.25 * (Math.ceil(this.pixHeight*this.scale)**2 + Math.ceil(this.pixWidth*this.scale)**2)
 	var brushSizeSq = brushSize*largestDist 
-	var min = 100000
 	var stats = []
 	var y = -0.5 * this.pixHeight * this.scale
 	for (var row = 0; row < this.data.length; row++) {
@@ -154,15 +181,6 @@ export class Image {
 	}
     }
 
-    resetTempMask() {
-	for (var row = 0; row < this.data.length; row++) {
-	    for (var col = 0; col < this.data[0].length; col++) {
-		if (this.mask[row][col] !== this.tempMask[row][col]) { 
-		    this.tempMask[row][col] = this.mask[row][col]
-		}
-	    }
-	}
-    }
 
 
     setRectEndCoords(x, y, width, height) {
@@ -244,3 +262,4 @@ export class Image {
 
 
 
+// Have an add new mask option, have the first mask in a list of masks and have an "active mask" index that starts on 0 but can be changed. Send the mask index up with maskChange event
