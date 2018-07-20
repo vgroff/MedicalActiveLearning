@@ -15,6 +15,7 @@ export function convertNifti(data) {
     if (nifti.isNIFTI(data)) {
 	// Separate image and header data
 	niftiHeader = nifti.readHeader(data);
+	console.log("header", niftiHeader)
 	niftiImage = nifti.readImage(niftiHeader, data);
 	// Get the dimensions
 	var height = niftiHeader.dims[1]
@@ -25,11 +26,17 @@ export function convertNifti(data) {
 	}
 	// Depending on the bitdepth, convert the current image to an array
 	var image
-	if (niftiHeader.bitDepth == 8) {
+	if (niftiHeader.numBitsPerVoxel == 8) {
 	    image = new Uint8Array(niftiImage)
 	}
 	else if (niftiHeader.numBitsPerVoxel == 16) {
 	    image = new Uint16Array(niftiImage)
+	}
+	else if (niftiHeader.numBitsPerVoxel == 32) {
+	    image = new Uint32Array(niftiImage)
+	}
+	else if (niftiHeader.numBitsPerVoxel == 64) {
+	    image = new Uint64Array(niftiImage)
 	}
 	else {
 	    console.log("Error, unrecognized bit depth in image")
@@ -84,7 +91,7 @@ export function convertNifti(data) {
 	var xImages = dataX.map(img => new Image(img, pixDims[1], pixDims[2]))
 	var yImages = dataY.map(img => new Image(img, pixDims[3], pixDims[2]))
 	var zImages = dataZ.map(img => new Image(img, pixDims[3], pixDims[1]))
-	
+
 	var imgs = [xImages, yImages, zImages, image3D]
 	return imgs
     }

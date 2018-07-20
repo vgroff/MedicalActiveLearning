@@ -11,8 +11,9 @@ class App extends Component {
     
     constructor(props) {
 	super(props)
-	this.state = {imageIndex: -1, imageNames: [], window:2000,
-		      level:1000, brushSize:1, maskLabel:1, actionIndex:0}
+	this.state = {imageIndex: -1, imageNames: [], activeMask: -1, maskVisibility: [],
+		      window:2000, level:1000,
+		      brushSize:1, maskLabel:1, actionIndex:0}
 	this.images = []
 	this.maskColours = ["#FF0000", "#FFFF00"]
 	this.maskColourNames = ["Background", "Object", "Object2"]
@@ -33,13 +34,36 @@ class App extends Component {
 	    if (evt.target.readyState === FileReader.DONE) {
 		console.log("img loaded")
 		var imgs = convertNifti(evt.target.result)
-		console.log(imgs)
 		this.images.push(imgs[3])
 		var imageNames = this.state.imageNames.slice(0)
-		console.log(file)
 		imageNames.push(file.name)
-		console.log(this.images.length)
-		this.setState({imageIndex: this.images.length - 1, imageNames: imageNames})
+		this.setState({imageIndex: this.images.length - 1, imageNames: imageNames,
+		activeMask: 0, maskVisibility:[true]})
+            }
+	}.bind(this)
+	var data = fr.readAsArrayBuffer(file)
+    }
+    
+    loadMask(file) {
+	console.log("mask loading")
+	var fr = new FileReader()
+	fr.onloadend = function(evt) {
+	    if (evt.target.readyState === FileReader.DONE) {
+		var imgs = convertNifti(evt.target.result)
+		var imgs = imgs[0]
+		this.addNewMask()
+		var currImg = this.images[this.state.imageIndex]
+		for (var nImg = 0; nImg < imgs.length; nImg++) {
+		    for (var y = 0; y < imgs[0].data.length; y++) {
+			for (var x = 0; x < imgs[0].data[0].length; x++) {
+			    currImg.setMask(nImg, y, x, imgs[nImg].data[y][x],
+					    this.state.activeMask)
+			    //console.log("Mask", imgs[nImg].data[y][x], currImg.imagesX[nImg].masks[1][y][x])
+			}
+		    }
+		}
+		this.forceUpdate()
+		
             }
 	}.bind(this)
 	var data = fr.readAsArrayBuffer(file)
@@ -68,13 +92,41 @@ class App extends Component {
     }
 
     setMaskLabel(label) {
-	if (parseInt(label)) {
+	if (parseInt(label) !== undefined) {
 	    this.setState({maskLabel: parseInt(label)})
 	}
     }
 
     showMasks(masks) {
+	this.setState({maskVisibility: masks})
     }
+
+    setActiveMask(maskIndex) {
+	this.setState({activeMask: maskIndex})
+	this.images[this.state.imageIndex].setActiveMask(maskIndex)
+    }
+
+    cropImage() {
+	var currImg = this.images[this.state.imageIndex]
+	var newImg = currImg.cropToBoundingRect()
+	var currNames = this.state.imageNames.slice()
+	currNames = currNames.push(currNames[this.state.imageIndex] + " (Cropped)")
+	
+	this.setState({imageIndex: currNames.length - 1, imageNames: currNames})
+    }
+
+    addNewMask() {
+	var currImg = this.images[this.state.imageIndex]
+	currImg.addNewMask()
+	var maskIndex = currImg.getNumMasks() - 1
+	console.log("MKK", maskIndex)
+	var vis = this.state.maskVisibility.slice()
+	vis.push(true)
+	this.setState({activeMask: maskIndex,
+		       maskVisibility: vis})
+	this.refs.maskVisibility.setChecked(vis)
+    }
+
     
     hideIfTrue(bool, display){
 	if (bool === true) {
@@ -100,23 +152,30 @@ class App extends Component {
 	var sliderStyle = Object.assign({}, elementStyle, {"display":"inline"})
 	var inputStyle = Object.assign({}, elementStyle, {"width": "45px"})
 	var labelStyle = Object.assign({}, elementStyle, {"margin":"0px 0px 0px 10px"})
-	if (this.state.imageIndex >= 0) {
-	    console.log(range(0, this.images[this.state.imageIndex].masks.length))
-	}
+
+	var currImg = this.images[this.state.imageIndex]
+
 	return (
-		<div style={{"textAlign":"center"}}>
-		<div style={outerStyle}>
+	    <div style={{"textAlign":"center"}}>
+	    <div style={outerStyle}>
+	    
+	    <div style={columnLeftStyle}>
+	    
 
-		<div style={columnLeftStyle}>
-
-
-		<div style={borderStyle}>
-		<label style={labelStyle}>Select a file:</label>
-		<input style={elementStyle}
+	    <div style={borderStyle}>
+	    <label style={labelStyle}>Select a file:</label>
+	    <input style={elementStyle}
 	    onChange={(e) => {this.loadImage(e.target.files[0])}}
 	    type="file" id="file" name="files" />
 	    </div>
-	    
+
+	    {this.state.imageIndex === -1 ? null :
+	     <div style={borderStyle}>
+		<label style={labelStyle}>Load mask:</label>
+		<input style={elementStyle}
+		onChange={(e) => {this.loadMask(e.target.files[0])}}
+		type="file" id="file" name="files" />
+		</div>}
 
 	    <div style={{display:this.hideIfTrue(this.state.imageIndex === -1, "block")}}>
 
@@ -129,16 +188,29 @@ class App extends Component {
 		divStyleInner={{"display":"inline-block", "width":"70%", "textAlign":"left"}}
 		/>
 		</div>}
+	    
 
 	    {this.state.imageIndex === -1 ? null :
 	     <div style={borderStyle}>
-		<p>Masks:</p>
-		<RadioList options={range(0, this.images[this.state.imageIndex].masks.length)}
+		<p>Show/Hide Masks:</p>
+		<RadioList ref="maskVisibility" options={range(0, currImg.getNumMasks())}
 		exclusionary={false}
-		defaultVal={0} onChange={this.showMasks.bind(this)} divStyleOuter={divStyle}
+		defaultVal={[true]} onChange={this.showMasks.bind(this)} divStyleOuter={divStyle}
 		radioStyle={elementStyle} labelStyle={elementStyle}
 		divStyleInner={{"display":"inline-block", "width":"70%", "textAlign":"left"}}
 		/>
+		</div>}
+
+	    {this.state.imageIndex === -1 ? null :
+	     <div style={borderStyle}>
+		<p>Active Mask:</p>
+		<RadioList options={range(0, currImg.getNumMasks())}
+		exclusionary={true}
+		defaultVal={0} onChange={this.setActiveMask.bind(this)} divStyleOuter={divStyle}
+		radioStyle={elementStyle} labelStyle={elementStyle}
+		divStyleInner={{"display":"inline-block", "width":"70%", "textAlign":"left"}}
+		/>
+		<button onClick={(e) => {this.addNewMask(e.target.value)}}>Add New Mask</button>
 		</div>}
 
 
@@ -168,8 +240,11 @@ class App extends Component {
 	    <div style={borderStyle}>	    
 	    <div style={divStyle}>
 
-	    <DropDown label={"Scribble:"} labelStyle={labelStyle} dropDownStyle={elementStyle}
-	    options={this.maskColourNames} onChange={this.setMaskLabel.bind(this)}/>
+	    <RadioList options={["Background", "Foreground"]}
+	    exclusionary={true} defaultVal={1}
+	    onChange={this.setMaskLabel.bind(this)}
+	    divStyleOuter={divStyle} radioStyle={elementStyle} labelStyle={elementStyle}
+	    divStyleInner={{"display":"inline-block", "width":"70%", "textAlign":"left"}}/>
 
 	    <label style={labelStyle}>Brush Size: {this.state.brushSize}</label>
 	    <input style={sliderStyle} type="range"
@@ -180,6 +255,18 @@ class App extends Component {
 	    </div>
 	    </div>
 
+
+	    <div style={{"display":this.hideIfTrue(this.state.actionIndex === 0, "block")}}>
+	    <div style={borderStyle}>	    
+	    <div style={divStyle}>
+
+	    <button onClick={this.cropImage.bind(this)}>Crop Image</button>
+	    
+	    </div>
+	    </div>
+	    </div>
+	    
+
 	    </div> 
 	    
 	    </div>
@@ -188,8 +275,10 @@ class App extends Component {
 	    
 	    <div style={columnRightStyle}>
 	    
-	    <ImageView3D image={this.images[this.state.imageIndex]} level = {this.state.level}
-	    window = {this.state.window} brushSize={this.state.brushSize}
+	    <ImageView3D ref="imageView" image={currImg} activeMask={this.state.activeMask}
+	    maskVisibility={this.state.maskVisibility} 
+	    level = {this.state.level} window = {this.state.window}
+	    brushSize={this.state.brushSize}
 	    maskColours = {this.maskColours} maskLabel={this.state.maskLabel}
 	    action={this.actions[this.state.actionIndex]}/>
 	    
@@ -212,7 +301,7 @@ export default App
 // - Look over cropping behaviour perhaps?
 
 // Shortest term:
-// - multiple masks UI - have 2 lists - one to show/hide, one to change which currently editing, have an add masks button. Then get them all to draw through drawImage calls and add calls to change the active mask, both will be in ImageView2D. Then fix the mask stuff so that background can be added too, only ever have 2 masks though
+// - Add in cropping - transfer active mask and visibility
 // - Integrate different masks into UI stuff and test it out. Remember to fix draw function to draw all masks that aren't hidden - passed in by ImageViewer.
 // - Going to need a more complex UI. The standard UI and the segmentation active learning UI. Might need to split these into 2, where the seg UI is a simplified version of the standard one. In this case, I might want to have some basic building blocks of UIs, like drop-downs or lists, done separately so that they can be re-used. Drop-downs should be easy, if we want lists that can have multiple actions this may be harder work
 // - Integrate a graph cuts sitch using a Gaussian for the regional term

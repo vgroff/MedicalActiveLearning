@@ -7,7 +7,6 @@ export class ImageView3D extends Component {
     constructor(props) {
 	super(props)
 	this.props = props
-	console.log(this.props)
 	this.state = {}
     }
 
@@ -20,27 +19,23 @@ export class ImageView3D extends Component {
     render() {
 	if (this.props.image) {
 	    console.log("Drawing 3d")
-	    
+	    var axes = [ ["imgX", this.props.image.imagesX],
+			 ["imgY", this.props.image.imagesY],
+			 ["imgZ", this.props.image.imagesZ] ]
 	    return (
 		<div>
+
+		{axes.map( function(ax, index) {
+		    return (
+			<ImageView2D ref={ax[0]} key={index} images = {ax[1]}
+			maskVisibility = {this.props.maskVisibility}
+			level = {this.props.level} window = {this.props.window}
+			brushSize={this.props.brushSize} 
+			maskColours = {this.props.maskColours} maskLabel={this.props.maskLabel}
+			action={this.props.action} onChange={this.drawAll.bind(this)}/>
+		    )
+		}.bind(this))}
 		
-		<ImageView2D ref="imgX" images = {this.props.image.imagesX}
-		level = {this.props.level} window = {this.props.window}
-		brushSize={this.props.brushSize} 
-		maskColours = {this.props.maskColours} maskLabel={this.props.maskLabel}
-		action={this.props.action} onChange={this.drawAll.bind(this)}/>
-
-		<ImageView2D ref="imgY" images = {this.props.image.imagesY}
-		level = {this.props.level}
-		window = {this.props.window} brushSize={this.props.brushSize}
-		maskColours = {this.props.maskColours} maskLabel={this.props.maskLabel}
-		action={this.props.action} onChange={this.drawAll.bind(this)}/>
-
-		<ImageView2D ref="imgZ" images = {this.props.image.imagesZ}
-		level = {this.props.level}
-		window = {this.props.window} brushSize={this.props.brushSize}
-		maskColours = {this.props.maskColours} maskLabel={this.props.maskLabel}
-		action={this.props.action} onChange={this.drawAll.bind(this)}/>
 
 		</div>
 	    )

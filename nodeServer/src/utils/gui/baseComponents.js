@@ -40,15 +40,15 @@ export class RadioButton extends Component {
 	this.state = {}
     }
 
-    triggerOnChange() {
-	this.props.onChange(this.props.val)
+    triggerOnClick() {
+	this.props.onClick(this.props.val)
     }
 
     render() {
 	return (
 	    <div style={this.props.divStyle}>
 	    <input style={this.props.radioStyle} type="radio"
-	    onChange={this.triggerOnChange.bind(this)}
+	    onClick={this.triggerOnClick.bind(this)}
 	    checked={this.props.checked ? "checked" : false}></input>
 	    <p style={this.props.labelStyle}>{this.props.label}</p>
 	    </div>
@@ -95,10 +95,10 @@ export class RadioList extends Component {
 	    var checked = []
 	    for (var i = 0; i < this.props.options.length; i++) {
 		if (i === index) {
-		    checked.push(!this.state.checked[index])
+		    checked.push(!(this.state.checked[index]))
 		}
 		else {
-		    checked.push(this.state.checked[index])
+		    checked.push(this.state.checked[i])
 		}
 	    }
 	    this.setState({checked:checked})
@@ -106,12 +106,16 @@ export class RadioList extends Component {
 	}
     }
 
+    setChecked(checked) {
+	this.setState({checked:checked})
+    }
+
     render() {
 	return (
 	    <div style={this.props.divStyleOuter}>
 	    {this.props.options.map(function(label, index) {
 		return (
-		    <RadioButton label={label} val={index} onChange={this.onChange.bind(this)}
+		    <RadioButton label={label} val={index} onClick={this.onChange.bind(this)}
 		    checked={this.state.checked[index]} key={index}
 		    labelStyle={this.props.labelStyle}
 		    divStyle={this.props.divStyleInner} radioStyle={this.props.radioStyle} />

@@ -15,8 +15,13 @@ export class ImageView2D extends Component {
     // Draw the image onto the canvas
     drawImage() {
 	if (this.props.images.length) {
-	    this.props.images[this.state.nextImageIndex].drawImage(this.refs.canvas, this.props.level, this.props.window, this.props.maskColours)
+	    this.props.images[this.state.nextImageIndex].drawImage(this.refs.canvas,
+								   this.props.level,
+								   this.props.window,
+								   this.props.maskVisibility,
+								   this.props.maskColours)
 	    this.state.currImageIndex = this.state.nextImageIndex
+	    console.log("drawn")
 	}
     }
     

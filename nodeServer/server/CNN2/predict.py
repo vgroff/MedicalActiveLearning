@@ -72,9 +72,8 @@ def predict():
                 for depth in col:
                     #print(depth)
                     counts3[depth] += 1
-        writeNIFTI(newLabel, outputFolder, "{}_truth".format(i))
-        writeNIFTI(newLabel2, outputFolder, "{}_pred".format(i))
-        print(imgs[i].shape)
+        writeNIFTI(newLabel, outputFolder, "{}_pred".format(i))
+        writeNIFTI(newLabel2, outputFolder, "{}_truth".format(i))
         writeNIFTI(imgs[i][0], outputFolder, "{}_actual".format(i))
     print(counts, counts3)
         

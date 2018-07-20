@@ -32,7 +32,7 @@ export class Image {
 	this.events = {"rectChange":[], "maskChange":[]}
     }
 
-    drawImage(canvas, level, window, maskColours) {
+    drawImage(canvas, level, window, maskVisibility, maskColours) {
 	console.log("draw")
 	// Get the dimensions
 	var height = this.data.length
@@ -49,11 +49,11 @@ export class Image {
 	this.scale = scale
 	canvas.height = size
 	canvas.width  = width * pixWidth * scale
-	
+
 	// Clear the canvas
 	var ctx = canvas.getContext("2d")
 	ctx.clearRect(0, 0, width*scale, height*scale);
-	
+	console.log("drawing", maskVisibility)
 	// Draw the image onto the canvas
 	for (var row = 0; row < height; row++) {
 	    for (var col = 0; col < width; col++) { 
@@ -77,29 +77,38 @@ export class Image {
 		    ctx.fillStyle = "#FFFFFF"; // Set the color to the one specified
 		    //ctx.fillRect(Math.floor(col * pixWidth * scale), Math.floor(row * pixHeight*scale), Math.ceil(pixWidth*scale), Math.ceil(pixHeight*scale));
 		}
+		for (var i = 0; i < this.masks.length; i++) {
+		    if (maskVisibility[i] === false) {
+			continue
+		    }
+		    if (this.currentMask === i) {
+			var mask = this.tempMask
+		    }
+		    else {
+			var mask = this.masks[i]
+		    }
+		    if (row > 0 && mask[row][col] !== mask[row - 1][col]) {
+			if (mask[row][col] !== 0) {
+			    // Set the color to the one specified
+			    ctx.fillStyle = maskColours[mask[row][col] - 1]; 
+			    ctx.fillRect(Math.floor(col * pixWidth * scale), Math.floor(row * pixHeight*scale), Math.ceil(pixWidth*scale), Math.ceil(0.33*pixHeight*scale));
+			}
 
-		let mask = this.tempMask
-		if (row > 0 && mask[row][col] !== mask[row - 1][col]) {
-		    if (mask[row][col] !== 0) {
-			// Set the color to the one specified
-			ctx.fillStyle = maskColours[mask[row][col] - 1]; 
-			ctx.fillRect(Math.floor(col * pixWidth * scale), Math.floor(row * pixHeight*scale), Math.ceil(pixWidth*scale), Math.ceil(0.33*pixHeight*scale));
+			if (mask[row - 1][col] !== 0) {
+			    ctx.fillStyle = maskColours[mask[row - 1][col] - 1];
+			    ctx.fillRect(Math.floor(col * pixWidth * scale), Math.floor((row-0.33) * pixHeight*scale), Math.ceil(pixWidth*scale), Math.ceil(0.33*pixHeight*scale));
+			}
 		    }
 
-		    if (mask[row - 1][col] !== 0) {
-			ctx.fillStyle = maskColours[mask[row - 1][col] - 1];
-			ctx.fillRect(Math.floor(col * pixWidth * scale), Math.floor((row-0.33) * pixHeight*scale), Math.ceil(pixWidth*scale), Math.ceil(0.33*pixHeight*scale));
-		    }
-		}
-
-		if (col > 0 && mask[row][col] !== mask[row][col - 1]) {
-		    if (mask[row][col] !== 0) {
-			ctx.fillStyle = maskColours[mask[row][col] - 1]; 
-			ctx.fillRect(Math.floor(col * pixWidth * scale), Math.floor(row * pixHeight*scale), Math.ceil(0.33*pixWidth*scale), Math.ceil(pixHeight*scale));
-		    }
-		    if (mask[row][col - 1] !== 0) {
-			ctx.fillStyle = maskColours[mask[row][col - 1] - 1]; 
-			ctx.fillRect(Math.floor((col-0.33) * pixWidth * scale), Math.floor(row * pixHeight*scale), Math.ceil(0.33*pixWidth*scale), Math.ceil(pixHeight*scale));
+		    if (col > 0 && mask[row][col] !== mask[row][col - 1]) {
+			if (mask[row][col] !== 0) {
+			    ctx.fillStyle = maskColours[mask[row][col] - 1]; 
+			    ctx.fillRect(Math.floor(col * pixWidth * scale), Math.floor(row * pixHeight*scale), Math.ceil(0.33*pixWidth*scale), Math.ceil(pixHeight*scale));
+			}
+			if (mask[row][col - 1] !== 0) {
+			    ctx.fillStyle = maskColours[mask[row][col - 1] - 1]; 
+			    ctx.fillRect(Math.floor((col-0.33) * pixWidth * scale), Math.floor(row * pixHeight*scale), Math.ceil(0.33*pixWidth*scale), Math.ceil(pixHeight*scale));
+			}
 		    }
 		}
 	    }
@@ -129,19 +138,20 @@ export class Image {
     }
 
     addNewMask() {
-	for (var i = 0; i < data.length; i++) {
-	    this.mask.push([])
-	    this.tempMask.push([])
-	    for (var j = 0 ; j < data[0].length; j++) {
-		this.mask[i].push(0)
-		this.tempMask[i].push(0)
+	var mask = []
+	for (var i = 0; i < this.data.length; i++) {
+	    mask.push([])
+	    for (var j = 0 ; j < this.data[0].length; j++) {
+		mask[i].push(0)
 	    }
 	}
+	this.masks.push(mask)
     }
 
     setActiveMask(n) {
 	this.mask = this.masks[n]
 	this.currentMask = n
+	this.resetTempMask()
     }
 
     addToMask() {

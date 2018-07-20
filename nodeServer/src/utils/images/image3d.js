@@ -22,7 +22,6 @@ export class Image3D {
 	this.boundingRect = [0,0,0,this.nImages,this.width,this.height] // (x1,y1,z1), (x2,y2,z2)
 	this.setBoundingRect(0,0,0,this.boundingRect[3],this.boundingRect[4],this.boundingRect[5])
 	this.setupEvents()
-	this.masks = ["Segmentation"]
     }
 
     imgArray(nImages, height, width, pixHeight, pixWidth) {
@@ -41,6 +40,10 @@ export class Image3D {
 	return images
     }
 
+    getNumMasks() {
+	return this.imagesX[0].masks.length
+    }
+
     addNewMask() {
 	for (var nImg = 0; nImg < this.imagesX.length; nImg++) {
 	    this.imagesX[nImg].addNewMask()
@@ -50,6 +53,18 @@ export class Image3D {
 	}
 	for (var nImg = 0; nImg < this.imagesZ.length; nImg++) {
 	    this.imagesZ[nImg].addNewMask()
+	}
+    }
+
+    setActiveMask(maskIndex) {
+	for (var nImg = 0; nImg < this.imagesX.length; nImg++) {
+	    this.imagesX[nImg].setActiveMask(maskIndex)
+	}
+	for (var nImg = 0; nImg < this.imagesY.length; nImg++) {
+	    this.imagesY[nImg].setActiveMask(maskIndex)
+	}
+	for (var nImg = 0; nImg < this.imagesZ.length; nImg++) {
+	    this.imagesZ[nImg].setActiveMask(maskIndex)
 	}
     }
 
@@ -156,6 +171,36 @@ export class Image3D {
 		this.imagesZ[row].setRectPix(0,0,0,0)
 	    }
 	}
+    }
+
+    cropToBoundingRect() {
+	var data = []
+	for (var img = this.boundingRect[0]; img < this.boundingRect[3]; img++) {
+	    data.push([])
+	    for (var row = this.boundingRect[1]; row < this.boundingRect[4]; row++) {
+		data.push([])
+		for (var col = this.boundingRect[2]; col < this.boundingRect[5]; col++) {
+		    data.push(this.imagesX[img].data[row][col])
+		}
+	    }
+	}
+	var croppedImg = new Image(data, this.pixHeight, this.pixWidth, this.pixDepth)
+	var masks = []
+	for (var i = 0; i < this.imagesX[0].masks.length; i++) {
+	    if (i > 0) {
+		croppedImg.addNewMask()
+	    }
+	    for (var img = this.boundingRect[0]; img < this.boundingRect[3]; img++) {
+		for (var row = this.boundingRect[1]; row < this.boundingRect[4]; row++) {
+		    for (var col = this.boundingRect[2]; col < this.boundingRect[5]; col++) {
+			croppedImg.setMask(img - this.boundingRect[0], row - this.boundingRect[1],
+					   col - this.boundingRect[2],
+					   this.imagesX[img].masks[i][row][col], i)
+		    }
+		}
+	    }
+	}
+	return croppedImg
     }
     
 }

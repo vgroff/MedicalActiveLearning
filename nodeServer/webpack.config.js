@@ -3,13 +3,14 @@ var webpack = require('webpack');
 
 module.exports = {
   entry: './src/index.js',
-    output: {     path: path.join(__dirname, "/dist"),
+  mode:'development',
+    output: {     path: __dirname,
 		  filename: 'bundle.js',
 		  publicPath: '/app/assets/'},
   module: {
     rules: [
       {
-        test: /.jsx?$/,
+        test: /.js?$/,
         loader: 'babel-loader',
         exclude: /node_modules/,
         query: {

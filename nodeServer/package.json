@@ -4,8 +4,8 @@
    "description": "a",
    "main": "index.js",
    "scripts": {
-      "start": "webpack-dev-server -d --config webpack.config.js --progress --colors",
-      "start2": "node ./server/main.js",
+      "start": "webpack-dev-server -d --config webpack.config.js --open --hot --progress --colors",
+      "start2": "webpack-dev-server",
       "test": "echo \"Error: no test specified\" && exit 1",
       "client": "webpack --config webpack.config.js --progress --colors",
       "server": "node server/app.js",
