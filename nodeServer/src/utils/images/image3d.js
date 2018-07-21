@@ -7,19 +7,20 @@ export class Image3D {
 	this.height  = dataX[0].length
 	this.width   = dataX[0][0].length
 	this.imagesX = this.imgArray(this.nImages, this.height, this.width, pixHeight, pixWidth)
-	this.imagesY = this.imgArray(this.height, this.nImages, this.width, pixDepth, pixWidth)
-	this.imagesZ = this.imgArray(this.width, this.nImages, this.height, pixDepth, pixHeight)
+	this.imagesY = this.imgArray(this.width, this.nImages, this.height, pixDepth, pixWidth)
+	this.imagesZ = this.imgArray(this.height, this.nImages, this.width, pixDepth, pixHeight)
 	this.pixHeight = pixHeight
 	this.pixWidth  = pixWidth
 	this.pixDepth  = pixDepth
 	for (var nImg = 0; nImg < this.nImages; nImg++) {
 	    for (var y = 0; y < this.height; y++) {
 		for (var x = 0; x < this.width; x++) {
+		    //if (this.nImages !== 10) {console.log(nImg, y, x, this.imagesY)}
 		    this.setPixel(nImg, y, x, dataX[nImg][y][x])
 		}
 	    }
 	}
-	this.boundingRect = [0,0,0,this.nImages,this.width,this.height] // (x1,y1,z1), (x2,y2,z2)
+	this.boundingRect = [0,0,0,this.nImages,this.height,this.width] // (x1,y1,z1), (x2,y2,z2)
 	this.setBoundingRect(0,0,0,this.boundingRect[3],this.boundingRect[4],this.boundingRect[5])
 	this.setupEvents()
     }
@@ -177,29 +178,31 @@ export class Image3D {
 	var data = []
 	for (var img = this.boundingRect[0]; img < this.boundingRect[3]; img++) {
 	    data.push([])
-	    for (var row = this.boundingRect[1]; row < this.boundingRect[4]; row++) {
-		data.push([])
-		for (var col = this.boundingRect[2]; col < this.boundingRect[5]; col++) {
-		    data.push(this.imagesX[img].data[row][col])
+	    for (var row = this.boundingRect[2]; row < this.boundingRect[5]; row++) {
+		data[img - this.boundingRect[0]].push([])
+		for (var col = this.boundingRect[1]; col < this.boundingRect[4]; col++) {
+		    data[img - this.boundingRect[0]][row - this.boundingRect[2]].push(this.imagesX[img].data[row][col])
 		}
 	    }
 	}
-	var croppedImg = new Image(data, this.pixHeight, this.pixWidth, this.pixDepth)
+	var croppedImg = new Image3D(data, this.pixHeight, this.pixWidth, this.pixDepth)
 	var masks = []
 	for (var i = 0; i < this.imagesX[0].masks.length; i++) {
 	    if (i > 0) {
 		croppedImg.addNewMask()
 	    }
 	    for (var img = this.boundingRect[0]; img < this.boundingRect[3]; img++) {
-		for (var row = this.boundingRect[1]; row < this.boundingRect[4]; row++) {
-		    for (var col = this.boundingRect[2]; col < this.boundingRect[5]; col++) {
-			croppedImg.setMask(img - this.boundingRect[0], row - this.boundingRect[1],
-					   col - this.boundingRect[2],
+		for (var row = this.boundingRect[2]; row < this.boundingRect[5]; row++) {
+		    for (var col = this.boundingRect[1]; col < this.boundingRect[4]; col++) {
+			croppedImg.setMask(img - this.boundingRect[0], row - this.boundingRect[2],
+					   col - this.boundingRect[1],
 					   this.imagesX[img].masks[i][row][col], i)
 		    }
 		}
 	    }
 	}
+	console.log(croppedImg.boundingRect)
+	console.log("crp", croppedImg)
 	return croppedImg
     }
     

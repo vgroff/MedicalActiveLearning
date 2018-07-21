@@ -8,7 +8,7 @@
       "start2": "webpack-dev-server",
       "test": "echo \"Error: no test specified\" && exit 1",
       "client": "webpack --config webpack.config.js --progress --colors",
-      "server": "node server/app.js",
+      "server": "node server/server.js",
       "dev": "concurrently \"npm run server\" \"npm run client\""
    },
    "author": "v",

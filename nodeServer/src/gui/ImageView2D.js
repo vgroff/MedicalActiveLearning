@@ -24,6 +24,10 @@ export class ImageView2D extends Component {
 	    console.log("drawn")
 	}
     }
+
+    setImageIndex(index) {
+	this.setState({nextImageIndex: index})
+    }
     
     nextImage(dir) {
 	if (this.props.images.length && this.drawingRect == false) {

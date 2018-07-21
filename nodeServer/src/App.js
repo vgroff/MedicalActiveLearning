@@ -19,7 +19,8 @@ class App extends Component {
 	this.maskColourNames = ["Background", "Object", "Object2"]
 	this.actions = ["segment","box"]
 	// Server test
-	fetch("/welcome?name=RollaT").then(function(response) {
+	var arr = [[1,2],[3, 4]]
+	fetch("/graphCuts?image=" + JSON.stringify(arr)).then(function(response) {
 	    console.log(response)
 	    return response.text();
 	}).then(function(text) {
@@ -71,6 +72,7 @@ class App extends Component {
 
     changeImage(index) {
 	this.setState({imageIndex: index})
+	this.refs.imageView.resetImageIndices()
     }
 
     setLevel(level) {
@@ -109,9 +111,10 @@ class App extends Component {
     cropImage() {
 	var currImg = this.images[this.state.imageIndex]
 	var newImg = currImg.cropToBoundingRect()
+	this.images.push(newImg)
 	var currNames = this.state.imageNames.slice()
-	currNames = currNames.push(currNames[this.state.imageIndex] + " (Cropped)")
-	
+	currNames.push(currNames[this.state.imageIndex] + " (Cropped)")
+	this.refs.imageView.resetImageIndices()
 	this.setState({imageIndex: currNames.length - 1, imageNames: currNames})
     }
 
@@ -119,7 +122,6 @@ class App extends Component {
 	var currImg = this.images[this.state.imageIndex]
 	currImg.addNewMask()
 	var maskIndex = currImg.getNumMasks() - 1
-	console.log("MKK", maskIndex)
 	var vis = this.state.maskVisibility.slice()
 	vis.push(true)
 	this.setState({activeMask: maskIndex,
@@ -154,6 +156,9 @@ class App extends Component {
 	var labelStyle = Object.assign({}, elementStyle, {"margin":"0px 0px 0px 10px"})
 
 	var currImg = this.images[this.state.imageIndex]
+
+	console.log("HEY", this.images, this.state.imageIndex)
+
 
 	return (
 	    <div style={{"textAlign":"center"}}>
@@ -301,7 +306,7 @@ export default App
 // - Look over cropping behaviour perhaps?
 
 // Shortest term:
-// - Add in cropping - transfer active mask and visibility
+// - Add in cropping - need to fix the active image index
 // - Integrate different masks into UI stuff and test it out. Remember to fix draw function to draw all masks that aren't hidden - passed in by ImageViewer.
 // - Going to need a more complex UI. The standard UI and the segmentation active learning UI. Might need to split these into 2, where the seg UI is a simplified version of the standard one. In this case, I might want to have some basic building blocks of UIs, like drop-downs or lists, done separately so that they can be re-used. Drop-downs should be easy, if we want lists that can have multiple actions this may be harder work
 // - Integrate a graph cuts sitch using a Gaussian for the regional term

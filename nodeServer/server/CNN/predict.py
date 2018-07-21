@@ -1,64 +1,85 @@
-import tensorflow as tf
 import numpy as np
-
-from tensorflow.contrib import predictor
-
+import tensorflow as tf
 import os
 
-import SimpleITK as sitk
-
-from imageReader import readFunc
-from utils import getDatasetInfo, splitArr
+from keras.optimizers import Adam, SGD
 
 from dltk.core import metrics as metrics
 
-def writeNIFTI(arr, folder, name, original):
+from cnnUtils import loadModel
+from imageUtils import getDatasetInfo
+from imageReader import readFunc
+
+import pickle
+
+import SimpleITK as sitk
+
+from model import weighted_dice_coefficient_loss
+
+
+def writeNIFTI(arr, folder, name):
     new_sitk = sitk.GetImageFromArray(arr.astype(np.int32))
     #new_sitk.CopyInformation(original['sitk'])
     path = os.path.join(folder, "{}.nii.gz".format(name))
     sitk.WriteImage(new_sitk, path)
 
 def predict():
-    modelPath = "./models"
-    outputFolder = "./predictions"
+    model = loadModel(1)
+    
     folder = "/home/vincent/Documents/imperial/individual project/datasets/decathlon/Task02_Heart"
     trainPaths = getDatasetInfo(folder)
-    train_filenames, val_filenames = splitArr(trainPaths, 0.75)
-    size = [33, 80, 80]
-    nn = predictor.from_saved_model(os.path.join(modelPath, "1531182194"))
 
-    # Fetch the output probability op of the trained network
-    y_prob = nn._fetch_tensors['y_prob']
-    num_classes = y_prob.get_shape().as_list()[-1]
+    outputFolder = "./predictions"
 
-    readParams = {"folder":folder, "depth":132, "size":size, "whiten": True}
-    for example in readFunc(val_filenames, None, readParams):
-        img = example["features"]["x"]
-        img = np.array(img).reshape(1, *size, 1)
-        # Make prediction
-        results = nn({"x":img})
-
-        # Calculate the prediction from the probabilities
-        pred = results["y_prob"]
-        pred = np.argmax(pred, -1)
-
-        # Calculate the Dice coefficienti
-        label = example["labels"]["y"]
-        dsc = metrics.dice(pred, label, 2)[1:].mean()
-        print(dsc)
-
-        ID = example["subject_id"]
-
-        writeNIFTI(example["features"]["x"], outputFolder, "{}_whit".format(ID), example)
-        writeNIFTI(label, outputFolder, "{}_truth".format(ID), example)
-        writeNIFTI(pred[0], outputFolder, "{}_pred".format(ID), example)
-
-    readParams = {"folder":folder, "depth":132, "size":size, "whiten": False}
-    for example in readFunc(val_filenames, None, readParams):
-        writeNIFTI(example["features"]["x"], outputFolder, "{}".format(ID), example)
-
+    print("Getting images")
+    f = open("imgs.pkl", "rb")
+    mngr = pickle.load(f)
+    f.close()
+    imgsAll, labelsAll = mngr.getData()
+    
+    imgs = []
+    labels = []
+    for i, img in enumerate(imgsAll):
+        if i > 4:
+            imgs.append(img)
+            labels.append(labelsAll[i])
+    #sgd = SGD(lr=0.0002, decay=1.2e-2, momentum=0.9, nesterov=True)
+    #model.compile(optimizer = sgd, loss = 'binary_crossentropy', metrics = ['accuracy'])
+    print("img", np.array(imgs).shape)
+    result = model.predict(np.array(imgs))#, np.array(labels))
+    print("result", result.shape)
+    print(np.array(labels).shape, result.shape)
+    with tf.Session() as sess:
+        print(sess.run(weighted_dice_coefficient_loss(np.array(labels), result)))
+    ones = 0
+    zeroes = 0
+    counts  = [0,0]
+    counts2 = [0,0]
+    counts3 = [0,0]
+    for i, label in enumerate(result):
+        #newLabel = np.moveaxis(label, 0, 3)
+        print(label.shape)
+        newLabel = np.argmax(label, axis=0)
+        print(newLabel.shape)
+        newLabel2 = np.argmax(labels[i], axis=0)
+        for row in newLabel:
+            for col in row:
+                for depth in col:
+                    #print(depth)
+                    counts[depth] += 1
+        for row in newLabel2:
+            for col in row:
+                for depth in col:
+                    #print(depth)
+                    counts3[depth] += 1
+        writeNIFTI(newLabel, outputFolder, "{}_pred".format(i))
+        writeNIFTI(newLabel2, outputFolder, "{}_truth".format(i))
+        writeNIFTI(imgs[i][0], outputFolder, "{}_actual".format(i))
+    print(counts, counts3)
         
 if __name__ == '__main__':
+    np.random.seed(42)
+    tf.set_random_seed(42)
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
     tf.logging.set_verbosity(tf.logging.ERROR)
     os.environ["CUDA_VISIBLE_DEVICES"] = '0'

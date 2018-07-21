@@ -1,26 +1,40 @@
-from utils import resize3D
-from imageReader import readFunc
+
+
+
+
+
+
+
+
+
+##
+## This file is for code scraps and for testing stuff
+##
+from imageUtils import DataManager, getDatasetInfo
+from train import getImages
 from predict import writeNIFTI
-from utils import getDatasetInfo, splitArr
+from imageReader import readFunc
 
+import os
+import tensorflow as tf 
 
-modelPath = "./models"
-outputFolder = "./predictions"
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+tf.logging.set_verbosity(tf.logging.ERROR)
+os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+
 folder = "/home/vincent/Documents/imperial/individual project/datasets/decathlon/Task02_Heart"
+size = [64, 64, 64] # 32,80,80
+
 trainPaths = getDatasetInfo(folder)
-train_filenames, val_filenames = splitArr(trainPaths, 0.75)
-size = [33, 80, 80]
+imgs = []
+labels = []
+i = 0
+for img in readFunc(trainPaths[:1], None,
+                    {"folder":folder, "depth":132, "size":size, "whiten":False}):
+    writeNIFTI(img["features"]["x"], "./predictions", "test")
+    writeNIFTI(img["labels"]["y"], "./predictions", "test_lbl")
 
-readParams = {"folder":folder, "depth":132, "size":size, "whiten":False}
-for example in readFunc(val_filenames[:1], None, readParams):
-    label = example["labels"]["y"]
-    ID = example["subject_id"]
-    writeNIFTI(example["features"]["x"], outputFolder, "{}".format(ID), example)
-    writeNIFTI(label, outputFolder, "{}_truth".format(ID), example)
-
-readParams = {"folder":folder, "depth":132, "size":size, "whiten":True}
-for example in readFunc(val_filenames[:1], None, readParams):
-    label = example["labels"]["y"]
-    ID = example["subject_id"]
-    writeNIFTI(example["features"]["x"], outputFolder, "{}_whit".format(ID), example)
-    writeNIFTI(label, outputFolder, "{}_truth".format(ID), example)
+for img in readFunc(trainPaths[:1], None,
+                    {"folder":folder, "depth":132, "size":[132,320,320], "whiten":False}, crop=False):
+    writeNIFTI(img["features"]["x"], "./predictions", "test")
+    writeNIFTI(img["labels"]["y"], "./predictions", "test_lbl")
