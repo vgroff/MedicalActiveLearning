@@ -36,7 +36,7 @@ app.get('/graphCuts', function response(req, res) {
      
     // E.g : http://localhost:3000/name?firstname=Mike&lastname=Will
     // so, first name = Mike and last name = Will
-    var process = spawn('python',[__dirname+"/main.py",
+    var process = spawn('python3',[__dirname+"/main.py",
 				  req.query.image] );
  
     // Takes stdout data from script which executed

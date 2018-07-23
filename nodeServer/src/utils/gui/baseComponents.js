@@ -88,6 +88,7 @@ export class RadioList extends Component {
 		    checked.push(false)
 		}
 	    }
+	    console.log("CHK", checked)
 	    this.setState({checked:checked})
 	    this.props.onChange(index)
 	}

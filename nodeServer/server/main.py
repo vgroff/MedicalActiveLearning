@@ -1,6 +1,7 @@
-import sys, json, numpy as np
+import sys, json
+import numpy as np
 
-import graphCut from graphCuts
+import graphCuts
 
 
 #Read data from stdin
@@ -25,3 +26,10 @@ def main():
 #start process
 if __name__ == '__main__':
     main()
+
+# To-do:
+# - Edit front-end to have a "graph-cut" button that tells you to give annotations and then produces the graph cut - need to know what to set the regional terms of scribbles to
+# - Build an easy 3-D image for nice segmenting, or use one we already have if unnecessary - perhaps use a pre-cropped one? Might be good to deal with this soon. I the long term, will need to uncrop them aswell.
+# - Look into what the edge factor needs to be when normalised?
+
+# 73AAE9D75A7CFCD732DC359F26

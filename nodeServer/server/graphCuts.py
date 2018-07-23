@@ -28,8 +28,8 @@ def graphCut(img, probs):
                                 edge = edgeCoeff*edgeFactor(img[i,j,k],
                                                             img[img2d, coord[0], coord[1]], 1)
                                 g.add_edge(nodes[index], nodes[otherIndex], edge, edge)
-                                counts[i,j,k] += 1
-                                counts[img2d, coord[0], coord[1]] += 1
+                                #counts[i,j,k] += 1
+                                #counts[img2d, coord[0], coord[1]] += 1
                             except(IndexError):
                                 pass
                 otherIndex = (i+1)*shape[1]*shape[2] + j*shape[2] + k
@@ -40,12 +40,12 @@ def graphCut(img, probs):
                     edge = edgeCoeff*edgeFactor(img[i,j,k],
                                                 img[i+1, j, k], 1)
                     g.add_edge(nodes[index], nodes[otherIndex], edge, edge)
-                    counts[i,j,k] += 1
-                    counts[i+1, j, k] += 1
+                    #counts[i,j,k] += 1
+                    #counts[i+1, j, k] += 1
                 except(IndexError):
                     pass
 
-    print(counts, counts[3,0,0])              
+    #print(counts)              
     flow = g.maxflow()
 
     for i in range(shape[0]):
@@ -61,16 +61,24 @@ def graphCut(img, probs):
         
 if __name__ == '__main__':
     img = np.array([
-        np.array([np.array([0,0,0,0]), np.array([0,0,0,0]), np.array([0,0,0,0]), np.array([0,0,0,0])]),
-        np.array([np.array([0,0,0,0]), np.array([0,0,0,0]), np.array([0,0,0,0]), np.array([0,0,0,0])]),
-        np.array([np.array([0,0,0,0]), np.array([0,0,0,0]), np.array([0,0,0,0]), np.array([0,0,0,0])]),
-        np.array([np.array([0,0,0,0]), np.array([0,0,0,0]), np.array([0,0,0,0]), np.array([0,0,0,0])])
+        np.array([np.array([0,0,0,0]), np.array([0,0,0,0]),
+                  np.array([0,0,0,0]), np.array([0,0,0,0])]),
+        np.array([np.array([0,0,0,0]), np.array([0,0,0,0]),
+                  np.array([0,0,0,0]), np.array([0,0,0,0])]),
+        np.array([np.array([0,0,0,0]), np.array([0,0,0,0]),
+                  np.array([0,0,0,0]), np.array([0,0,0,0])]),
+        np.array([np.array([0,0,0,0]), np.array([0,0,0,0]),
+                  np.array([0,0,0,0]), np.array([0,0,0,0])])
         ])
 
     probs = np.array([
-        np.array([np.array([0.5,0.5,0.5,0.5]), np.array([0.5,0.5,0.5,0.5]), np.array([0.5,0.5,0.5,0.5]), np.array([0.5,0.5,0.5,0.5])]),
-        np.array([np.array([0.5,0.5,0.5,0.5]), np.array([0.5,0.5,0.5,0.5]), np.array([0.5,0.5,0.5,0.5]), np.array([0.5,0.5,0.5,0.5])]),
-        np.array([np.array([0.5,0.5,0.5,0.5]), np.array([0.5,0.5,0.5,0.5]), np.array([0.5,0.5,0.5,0.5]), np.array([0.5,0.5,0.5,0.5])]),
-        np.array([np.array([0.5,0.5,0.5,0.5]), np.array([0.5,0.5,0.5,0.5]), np.array([0.5,0.5,0.5,0.5]), np.array([0.5,0.5,0.5,0.5])])
+        np.array([np.array([0.5,0.5,0.5,0.5]), np.array([0.5,0.5,0.5,0.5]),
+                  np.array([0.5,0.5,0.5,0.5]), np.array([0.5,0.5,0.5,0.5])]),
+        np.array([np.array([0.5,0.5,0.5,0.5]), np.array([0.5,0.5,0.5,0.5]),
+                  np.array([0.5,0.5,0.5,0.5]), np.array([0.5,0.5,0.5,0.5])]),
+        np.array([np.array([0.5,0.5,0.5,0.5]), np.array([0.5,0.5,0.5,0.5]),
+                  np.array([0.5,0.5,0.5,0.5]), np.array([0.5,0.5,0.5,0.5])]),
+        np.array([np.array([0.5,0.5,0.5,0.5]), np.array([0.5,0.5,0.5,0.5]),
+                  np.array([0.5,0.5,0.5,0.5]), np.array([0.5,0.5,0.5,0.5])])
         ])
     graphCut(img, probs)

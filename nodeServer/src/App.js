@@ -18,6 +18,7 @@ class App extends Component {
 	this.maskColours = ["#FF0000", "#FFFF00"]
 	this.maskColourNames = ["Background", "Object", "Object2"]
 	this.actions = ["segment","box"]
+	this.specialAction = null
 	// Server test
 	var arr = [[1,2],[3, 4]]
 	fetch("/graphCuts?image=" + JSON.stringify(arr)).then(function(response) {
@@ -104,8 +105,10 @@ class App extends Component {
     }
 
     setActiveMask(maskIndex) {
-	this.setState({activeMask: maskIndex})
-	this.images[this.state.imageIndex].setActiveMask(maskIndex)
+	if (this.specialAction === null) {
+	    this.setState({activeMask: maskIndex})
+	    this.images[this.state.imageIndex].setActiveMask(maskIndex)
+	}
     }
 
     cropImage() {
@@ -127,6 +130,8 @@ class App extends Component {
 	this.setState({activeMask: maskIndex,
 		       maskVisibility: vis})
 	this.refs.maskVisibility.setChecked(vis)
+	console.log("CALL", maskIndex)
+	this.refs.activeMask.onChange(maskIndex)
     }
 
     
@@ -137,6 +142,11 @@ class App extends Component {
 	else {
 	    return display
 	}
+    }
+
+    startGraphCuts() {
+	this.addNewMask()
+	this.specialAction = 1
     }
 
     
@@ -209,7 +219,7 @@ class App extends Component {
 	    {this.state.imageIndex === -1 ? null :
 	     <div style={borderStyle}>
 		<p>Active Mask:</p>
-		<RadioList options={range(0, currImg.getNumMasks())}
+		<RadioList ref="activeMask" options={range(0, currImg.getNumMasks())}
 		exclusionary={true}
 		defaultVal={0} onChange={this.setActiveMask.bind(this)} divStyleOuter={divStyle}
 		radioStyle={elementStyle} labelStyle={elementStyle}
@@ -232,7 +242,7 @@ class App extends Component {
 	    
 	    </div>
 
-	    <RadioList options={["Correct Segmenetation", "Crop Image"]}
+	    <RadioList options={["Alter Mask", "Crop Image"]}
 	    exclusionary={true} defaultVal={0}
 	    onChange={(val) => {this.setState({actionIndex:val})}}
 	    divStyleOuter={divStyle} radioStyle={elementStyle} labelStyle={elementStyle}
@@ -255,6 +265,8 @@ class App extends Component {
 	    <input style={sliderStyle} type="range"
 	    min={1} max={50} defaultValue={this.state.brushSize}
 	    onChange={(e) => {this.setBrushSize(parseInt(e.target.value))}}></input>
+
+	    <button onClick={this.startGraphCuts.bind(this)}>Graph Cuts</button>
 	    
 	    </div>
 	    </div>
@@ -305,14 +317,13 @@ export default App
 // - Temp mask should show on all images - they all need to be re-drawn
 // - Look over cropping behaviour perhaps?
 
-// Shortest term:
-// - Add in cropping - need to fix the active image index
-// - Integrate different masks into UI stuff and test it out. Remember to fix draw function to draw all masks that aren't hidden - passed in by ImageViewer.
-// - Going to need a more complex UI. The standard UI and the segmentation active learning UI. Might need to split these into 2, where the seg UI is a simplified version of the standard one. In this case, I might want to have some basic building blocks of UIs, like drop-downs or lists, done separately so that they can be re-used. Drop-downs should be easy, if we want lists that can have multiple actions this may be harder work
-// - Integrate a graph cuts sitch using a Gaussian for the regional term
+/* Shortest term TO-DO:
+ * - Might want to get Python to draw out a cropped image to be used
+ * - Create a new mask and somehow hard-code it in as the mask that needs to be chosen - reject changes? Might need to do the radio list correctly instead (pass in "checked" (maskVis) as a prop?). Add a "bias" to mask index that is only 1 during graph cuts to shift the colours around (or abs(-2) in order to keep the foreground colour the same?)
+ * - Pass this mask and the current image to the server
+ */
 
 /* Short-term TO-DO:
- * - Have multiple images and masks at once - ability to add new masks with their colour and need to index them, can also hide or show them - show mutliple at once! Load masks with each new image if allowing switching of images - FIX BACKGROUND MASK!
  * - Do a simple graph cuts with 0.5 probabilities for unmarked pixels - maybe use cropped images?
  * - Add in the CNN, try it trained as-is and then with more training
  */
@@ -321,6 +332,7 @@ export default App
  * Long-term TO-DO:
  * - Dynamically calculate width required (hardcode toolbar width?)
  * - need fixes for pixel sizes if high resolution (i.e. have a minimum pic size depending on res? calculate the width dynamically instead of setting it)
+ * - Change the radio lists so that checked is a prop and onChange at the list level calls an onChange with the new checked array
  */
 
 
