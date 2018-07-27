@@ -1,5 +1,14 @@
 import React, { Component } from 'react'
 
+function disableBodyScroll() {
+    var body = document.getElementsByTagName('body')[0]
+    body.style.overflowY = 'hidden'
+}
+function enableBodyScroll() {
+    var body = document.getElementsByTagName('body')[0]
+    body.style.overflowY = 'auto'
+}
+
 
 export class ImageView2D extends Component {
     
@@ -9,6 +18,7 @@ export class ImageView2D extends Component {
 	this.mouseDown = false
 	this.drawingRect = false
 	this.resizingRect = -1
+	this.height = 400
 	//this.events = {"change":this.props.onChange}
     }
     
@@ -16,12 +26,18 @@ export class ImageView2D extends Component {
     drawImage() {
 	if (this.props.images.length) {
 	    this.props.images[this.state.nextImageIndex].drawImage(this.refs.canvas,
+								   this.height,
 								   this.props.level,
 								   this.props.window,
 								   this.props.maskVisibility,
 								   this.props.maskColours)
 	    this.state.currImageIndex = this.state.nextImageIndex
-	    console.log("drawn")
+	}
+    }
+
+    preRenderImages() {
+	for (var i = 0; i < this.props.images.length; i++) {
+	    this.props.images[i].preRenderImage(this.height, this.props.level, this.props.window)
 	}
     }
 
@@ -59,6 +75,7 @@ export class ImageView2D extends Component {
 	    if (this.props.action==="segment") {
 		this.refs.canvas.style.cursor = "default";
 		var rect = this.refs.canvas.getBoundingClientRect()
+		//console.log(this.props.maskLabel)
 		this.props.images[this.state.currImageIndex].updateTempMask(
 		    x - rect.left, y - rect.top, this.props.maskLabel, this.props.brushSize)
 		if (this.mouseDown === true) {
@@ -180,6 +197,18 @@ export class ImageView2D extends Component {
 	    }
 	}
 	this.mouseDown = false
+	enableBodyScroll()
+    }
+
+    onScroll(e) {
+	e.preventDefault();
+	if (Math.abs(e.deltaY) > 0) {
+	    this.nextImage(Math.abs(e.deltaY)/e.deltaY);
+	}
+    }
+
+    handleMouseOver(e) {
+	disableBodyScroll()
     }
 
     componentDidMount() {
@@ -194,13 +223,13 @@ export class ImageView2D extends Component {
 	    this.drawImage()
 	}
 	return (
-	    <div>
+	    <div onWheel={this.onScroll.bind(this)}>
 	    <canvas ref="canvas"
-	    onWheel={(e) => {e.preventDefault(); this.nextImage(Math.abs(e.deltaY)/e.deltaY);}}
 	    onMouseMove={(e) => {this.handleMouseMove(e.clientX, e.clientY)}}
 	    onMouseDown={(e) => {this.handleMouseDown(e.clientX, e.clientY)}}
 	    onMouseUp={(e) => {this.mouseDown = false}}
-	    onMouseOut={(e) => {this.handleMouseOut()}}/>
+	    onMouseOut={(e) => {this.handleMouseOut()}}
+	    onMouseOver={(e) => {this.handleMouseOver()}}/>
 	    </div>
 	)
     }

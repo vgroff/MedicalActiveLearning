@@ -35,14 +35,10 @@ def predict():
     f = open("imgs.pkl", "rb")
     mngr = pickle.load(f)
     f.close()
-    imgsAll, labelsAll = mngr.getData()
-    
-    imgs = []
-    labels = []
-    for i, img in enumerate(imgsAll):
-        if i > 4:
-            imgs.append(img)
-            labels.append(labelsAll[i])
+    nStart = 19
+    n = 1
+    imgs, labels = mngr.getTrainImages(nStart, n)
+    imgsActual = mngr.getImages(nStart, n)
     #sgd = SGD(lr=0.0002, decay=1.2e-2, momentum=0.9, nesterov=True)
     #model.compile(optimizer = sgd, loss = 'binary_crossentropy', metrics = ['accuracy'])
     print("img", np.array(imgs).shape)
@@ -74,7 +70,8 @@ def predict():
                     counts3[depth] += 1
         writeNIFTI(newLabel, outputFolder, "{}_pred".format(i))
         writeNIFTI(newLabel2, outputFolder, "{}_truth".format(i))
-        writeNIFTI(imgs[i][0], outputFolder, "{}_actual".format(i))
+        writeNIFTI(imgsActual[i][0], outputFolder, "{}_actual".format(i))
+        writeNIFTI(imgs[i][0], outputFolder, "{}_processed".format(i))
     print(counts, counts3)
         
 if __name__ == '__main__':

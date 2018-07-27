@@ -60,69 +60,55 @@ export class RadioList extends Component {
 
     constructor(props) {
 	super(props)
-	var checked = []
-	for (var i = 0; i < this.props.options.length; i++) {
-	    if (this.props.exclusionary === true) {
-		if (i === this.props.defaultVal) {
-		    checked.push(true)
-		}
-		else {
-		    checked.push(false)
-		}
-	    }
-	    else {
-		checked.push(this.props.defaultVal[i])
-	    }
-	}
-	this.state = {checked:checked}
     }
 
     onChange(index) {
 	if (this.props.exclusionary === true) {
+	    this.props.onChange(index)
+	}
+	else {
+	    var checked = []
+	    for (var i = 0; i < this.props.checked.length; i++) {
+		if (i === index) {
+		    checked.push(!(this.props.checked[index]))
+		}
+		else {
+		    checked.push(this.props.checked[i])
+		}
+	    }
+	    this.props.onChange(checked)
+	}
+    }
+
+    render() {
+	if (this.props.exclusionary === true) {
 	    var checked = []
 	    for (var i = 0; i < this.props.options.length; i++) {
-		if (i === index) {
+		if (i === this.props.checked) {
 		    checked.push(true)
 		}
 		else {
 		    checked.push(false)
 		}
 	    }
-	    console.log("CHK", checked)
-	    this.setState({checked:checked})
-	    this.props.onChange(index)
 	}
 	else {
-	    var checked = []
-	    for (var i = 0; i < this.props.options.length; i++) {
-		if (i === index) {
-		    checked.push(!(this.state.checked[index]))
-		}
-		else {
-		    checked.push(this.state.checked[i])
-		}
-	    }
-	    this.setState({checked:checked})
-	    this.props.onChange(checked)
+	    var checked = this.props.checked
 	}
-    }
-
-    setChecked(checked) {
-	this.setState({checked:checked})
-    }
-
-    render() {
+	
 	return (
-	    <div style={this.props.divStyleOuter}>
-	    {this.props.options.map(function(label, index) {
+		<div style={this.props.divStyleOuter}>
+		{this.props.options.map(function(label, index) {
 		return (
 		    <RadioButton label={label} val={index} onClick={this.onChange.bind(this)}
-		    checked={this.state.checked[index]} key={index}
+		    checked={checked[index]}
+		    key={index}
 		    labelStyle={this.props.labelStyle}
 		    divStyle={this.props.divStyleInner} radioStyle={this.props.radioStyle} />
 		)
 	    }.bind(this))}
 	    </div>
 	)
+
     }
 }

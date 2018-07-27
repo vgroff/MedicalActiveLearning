@@ -22,6 +22,12 @@ export class ImageView3D extends Component {
 	this.refs.imgZ.setImageIndex(0)
     }
 
+    preRender() {
+	this.refs.imgX.preRenderImages()
+	this.refs.imgY.preRenderImages()
+	this.refs.imgZ.preRenderImages()
+    }
+
     render() {
 	if (this.props.image) {
 	    console.log("Drawing 3d")

@@ -18,22 +18,28 @@ export class Image {
 	this.mask = []
 	this.tempMask = []
 	for (var i = 0; i < data.length; i++) {
-	    this.mask.push([])
-	    this.tempMask.push([])
+	    var mask = []
+	    var tempMask = []
 	    for (var j = 0 ; j < data[0].length; j++) {
-		this.mask[i].push(0)
-		this.tempMask[i].push(0)
+		mask.push(0)
+		tempMask.push(0)
 	    }
+	    this.mask.push(new Uint8Array(mask))
+	    this.tempMask.push(new Uint8Array(tempMask))
 	}
 	this.masks = [this.mask]
 	this.currentMask = 0
 	this.boundingRect = [0,0,0,0]
 	this.boundingRectPix = [0,0,0,0]
 	this.events = {"rectChange":[], "maskChange":[]}
+	
+	this.preRender = null
+	this.preRenderLevel = null
+	this.preRenderWindow = null
     }
 
-    drawImage(canvas, level, window, maskVisibility, maskColours) {
-	console.log("draw")
+    drawImage(canvas, canvasHeight, level, window, maskVisibility, maskColours) {
+	console.log("draw", level, window)
 	// Get the dimensions
 	var height = this.data.length
 	var width  = this.data[0].length
@@ -41,7 +47,7 @@ export class Image {
 	var pixWidth = this.pixWidth
 	
 	// Height of the canvas is always 400
-	var size   = 400
+	var size   = canvasHeight
 	var actualSize = height*pixHeight
 	
 	// Size the canvas correctly
@@ -53,30 +59,18 @@ export class Image {
 	// Clear the canvas
 	var ctx = canvas.getContext("2d")
 	ctx.clearRect(0, 0, width*scale, height*scale);
-	console.log("drawing", maskVisibility)
+	
+	if (this.preRender !== null && this.preRenderLevel === level
+	    && this.preRenderWindow === window) {
+	    ctx.drawImage(this.preRender, 0, 0)
+	}
+	else {
+	    this.drawImageOnly(canvas, canvasHeight, level, window, maskVisibility, maskColours)
+	}
+	console.log("drawing mask")
 	// Draw the image onto the canvas
 	for (var row = 0; row < height; row++) {
 	    for (var col = 0; col < width; col++) { 
-		var grayVal = (this.data[row][col])
-		// Transfer function
-		if (grayVal < level - window/2) {
-		    grayVal = 0
-		}
-		else if (grayVal > level + window/2) {
-		    grayVal = 255
-		}
-		else {
-		    grayVal = (grayVal - (level - window/2))*255/window
-		}
-		grayVal = Math.round(grayVal)
-		ctx.fillStyle = rgbToHex(grayVal, grayVal, grayVal); // Set the color to the one specified
-		ctx.fillRect(Math.floor(col * pixWidth * scale), Math.floor(row * pixHeight*scale), Math.ceil(pixWidth*scale), Math.ceil(pixHeight*scale)); // Actually draw the rectangle
-
-		// TEMP: colour the mask (could be an option?)
-		if (this.mask[row][col] !== 0) {
-		    ctx.fillStyle = "#FFFFFF"; // Set the color to the one specified
-		    //ctx.fillRect(Math.floor(col * pixWidth * scale), Math.floor(row * pixHeight*scale), Math.ceil(pixWidth*scale), Math.ceil(pixHeight*scale));
-		}
 		for (var i = 0; i < this.masks.length; i++) {
 		    if (maskVisibility[i] === false) {
 			continue
@@ -125,6 +119,60 @@ export class Image {
 	ctx.lineWidth = 3
 	ctx.strokeStyle = 'yellow';
 	ctx.stroke()
+    }
+
+    drawImageOnly(canvas, canvasHeight, level, window) {
+	// Get the dimensions
+	var height = this.data.length
+	var width  = this.data[0].length
+	var pixHeight = this.pixHeight
+	var pixWidth = this.pixWidth
+	
+	// Height of the canvas is always 400
+	var size   = canvasHeight
+	var actualSize = height*pixHeight
+	
+	// Size the canvas correctly
+	var scale = size/actualSize
+	this.scale = scale
+	canvas.height = size
+	canvas.width  = width * pixWidth * scale
+
+	// Clear the canvas
+	var ctx = canvas.getContext("2d")
+	ctx.clearRect(0, 0, width*scale, height*scale);
+	// Draw the image onto the canvas
+	for (var row = 0; row < height; row++) {
+	    for (var col = 0; col < width; col++) { 
+		var grayVal = (this.data[row][col])
+		var oldGray = grayVal
+		// Transfer function
+		if (grayVal < level - window/2) {
+		    grayVal = 0
+		}
+		else if (grayVal > level + window/2) {
+		    grayVal = 255
+		}
+		else {
+		    grayVal = (grayVal - (level - window/2))*255/window
+		}
+		grayVal = Math.round(grayVal)
+		//if (grayVal < 0 || grayVal > 255) {
+		//    console.log("GRAY", grayVal > level + window/2, oldGray, grayVal, level, window)
+		//}
+		ctx.fillStyle = rgbToHex(grayVal, grayVal, grayVal); // Set the color to the one specified
+		ctx.fillRect(Math.floor(col * pixWidth * scale), Math.floor(row * pixHeight*scale), Math.ceil(pixWidth*scale), Math.ceil(pixHeight*scale)); // Actually draw the rectangle
+		
+	    }
+	}
+    }
+
+    preRenderImage(canvasHeight, level, window) {
+	var canvas = document.createElement("canvas")
+	this.drawImageOnly(canvas, canvasHeight, level, window)
+	this.preRender = canvas
+	this.preRenderLevel = level
+	this.preRenderWindow = window
     }
 
     resetTempMask() {

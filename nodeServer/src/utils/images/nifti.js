@@ -2,8 +2,7 @@ var nifti = require('nifti-reader-js')
 import {Image} from "./image.js"
 import {Image3D} from "./image3d.js"
 
-// Take NIFTI file data and return the grayscale image values
-export function convertNifti(data) {
+export function getImageData(data) {
     var niftiHeader = null,
 	niftiImage = null,
 	niftiExt = null;
@@ -30,7 +29,7 @@ export function convertNifti(data) {
 	    image = new Uint8Array(niftiImage)
 	}
 	else if (niftiHeader.numBitsPerVoxel == 16) {
-	    image = new Uint16Array(niftiImage)
+	    image = new Uint16Array(niftiImage)	    
 	}
 	else if (niftiHeader.numBitsPerVoxel == 32) {
 	    image = new Uint32Array(niftiImage)
@@ -44,32 +43,25 @@ export function convertNifti(data) {
 	    return
 	}
 	console.log(niftiHeader)
-	
-	var dataY = []
-	for (var y = 0; y < height; y++) {
-	    dataY.push([])
-	    for (var imgN = 0; imgN < niftiHeader.dims[3]; imgN++) {
-		dataY[y].push([])
+	var max = 0
+	for (var imgN = 0; imgN < niftiHeader.dims[3]; imgN++) {
+	    // Iterate over the number of expected images (3rd dimension)
+	    var imgStart = height*width*imgN 
+	    // Copy the array over to a 2-d array 
+	    for (var y = 0; y < height; y++) {
 		for (var x = 0; x < width; x++) {
-		    dataY[y][imgN].push(-1)
+		    var idx = (imgStart + width * y + x);
+		    if (max < image[idx]) {
+			max = image[idx]
+		    }
 		}
 	    }
 	}
-
-
-	var dataZ = []
-	for (var x = 0; x < width; x++) {
-	    dataZ.push([])
-	    for (var imgN = 0; imgN < niftiHeader.dims[3]; imgN++) {
-		dataZ[x].push([])
-		for (var y = 0; y < height; y++) {
-		    dataZ[x][imgN].push(-1)
-		}
-	    }
-	}
-
-
+	console.log("MAX", max)
 	var dataX = []
+	var mean = 0
+	var stdDev = 0
+	var counts = 0
 	for (var imgN = 0; imgN < niftiHeader.dims[3]; imgN++) {
 	    // Iterate over the number of expected images (3rd dimension)
 	    dataX.push([])
@@ -79,24 +71,28 @@ export function convertNifti(data) {
 		dataX[imgN].push([])
 		for (var x = 0; x < width; x++) {
 		    var idx = (imgStart + width * y + x);
-		    dataX[imgN][y].push(image[idx])
-		    dataY[x][niftiHeader.dims[3] - 1 - imgN][y] = image[idx]
-		    dataZ[y][niftiHeader.dims[3] - 1 - imgN][x] = image[idx]
+		    dataX[imgN][y].push(image[idx] / max)
+		    if (image[idx] / max > 0.01) {
+			mean += image[idx]/max
+			counts += 1
+		    }
 		}
 	    }
 	}
+	console.log("MEAN", mean/(counts), dataX)
 	let pixDims = niftiHeader.pixDims
-	var image3D = new Image3D(dataX, pixDims[1], pixDims[2], pixDims[3])
-
-	var xImages = dataX.map(img => new Image(img, pixDims[1], pixDims[2]))
-	var yImages = dataY.map(img => new Image(img, pixDims[3], pixDims[2]))
-	var zImages = dataZ.map(img => new Image(img, pixDims[3], pixDims[1]))
-
-	var imgs = [xImages, yImages, zImages, image3D]
-	return imgs
+	return [dataX, pixDims[1], pixDims[2], pixDims[3], mean/counts]
     }
     else {
 	alert("File not recognised")
 	return false
     }
+}
+
+// Take NIFTI file data and return the grayscale image values
+export function convertNifti(data) {
+    var res = getImageData(data)
+    var dataX = res[0]
+    var image3D = new Image3D(dataX, res[1], res[2], res[3])
+    return [image3D, res[4]]
 }

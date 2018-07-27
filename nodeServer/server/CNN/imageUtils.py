@@ -6,45 +6,26 @@ import random
 
 
 class ImageManager():
-    def __init__(self, path, imgSize):
-        self.data = []
-        self.labels = []
+    def __init__(self, readFn):
+        self.imgs      = []
+        self.trainImgs = []
+        self.labels    = []
+        self.imgPaths  = []
+        for img in readFn:
+            self.trainImgs.append(img["imgTr"])
+            self.imgs.append(img["img"])
+            self.labels.append(img["label"])
+            self.imgPaths.append(img["imgPath"])
 
-        i = 0
-        pics = os.listdir(os.getcwd() + path)
-        random.shuffle(pics)
-        for img in pics:
-            # load the image, pre-process it, and store it in the data list
-            imgPath = os.getcwd() + path + img
+    def getTrainImages(self, start=0, size=None):
+        if size == None:
+            size = len(self.trainImgs)
+        return self.trainImgs[start:start+size], self.labels[start:start+size]
 
-            image = cv2.imread(imgPath)
-            image = cv2.resize(image, (imgSize, imgSize))
-            image = img_to_array(image)
-            self.data.append(image)
-
-            # extract the class label from the image path and update the
-            # labels list
-            label = imgPath.split(os.path.sep)[-1].split(".")[0]
-            if label == "dog":
-                label = np.array([1,0])
-            else:
-                label = np.array([0,1])
-            self.labels.append(label)
-
-    def getImages(self, start, end):
-        return self.data[start:end], self.labels[start:end]
+    def getImages(self, start, size):
+        return self.imgs[start:start+size]
 
 
-class DataManager():
-    def __init__(self, data, labels):
-        self.labels = labels
-        self.data = data
-
-    def getData(self, start=0, end=None):
-        if (end != None):
-            return self.data[start:], self.labels[start:]
-        else:
-            return self.data[start:end], self.labels[start:end]
 
 def getDatasetInfo(folder):
     with open(os.path.join(folder, "dataset.json")) as f:
@@ -64,7 +45,7 @@ def splitArr(arr, fraction):
     return arr1, arr2
 
 
-def cropToSeg(labels, image, margin, minMargin=1, randomized=False, process="cubePadding"):
+def cropToSeg(labels, image, imageOrig, margin, minMargin=1, randomized=False, process="cubePadding"):
     rowBounds   = [labels.shape[0],-1]
     colBounds   = [labels.shape[1],-1]
     depthBounds = [labels.shape[2],-1]
@@ -119,6 +100,9 @@ def cropToSeg(labels, image, margin, minMargin=1, randomized=False, process="cub
     image = image[rowMarginBounds[0]:rowMarginBounds[1]+1,
                   colMarginBounds[0]:colMarginBounds[1]+1,
                   depthBounds[0]:depthMarginBounds[1]+1]
+    imageOrig = imageOrig[rowMarginBounds[0]:rowMarginBounds[1]+1,
+                          colMarginBounds[0]:colMarginBounds[1]+1,
+                          depthBounds[0]:depthMarginBounds[1]+1]
     maxSize = max(labels.shape)
     padding = [[(maxSize - image.shape[0])//2, (maxSize - image.shape[0] + 1)//2],
                [(maxSize - image.shape[1])//2, (maxSize - image.shape[1] + 1)//2],
@@ -128,7 +112,9 @@ def cropToSeg(labels, image, margin, minMargin=1, randomized=False, process="cub
     image = tf.Session().run(image)
     labels = tf.pad(labels, paddings, "CONSTANT")
     labels = tf.Session().run(labels)
-    return labels, image
+    imageOrig = tf.pad(imageOrig, paddings, "CONSTANT")
+    imageOrig = tf.Session().run(imageOrig)
+    return labels, image, imageOrig
     
 # Can either:
 # - Forcefully size to an appropriate aspect ratio

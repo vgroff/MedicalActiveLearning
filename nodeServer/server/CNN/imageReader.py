@@ -16,12 +16,13 @@ def readFunc(dataset, mode, params, crop=True):
         imgPath = dataPoint["image"]
         img_sitk = sitk.ReadImage(os.path.join(folder, imgPath))
         img = sitk.GetArrayFromImage(img_sitk).astype(np.float32)
+        imgOrig = sitk.GetArrayFromImage(img_sitk).astype(np.float32)
         if (crop == True):
             # Only read label if training
             labelPath = dataPoint["label"]
             label_sitk = sitk.ReadImage(os.path.join(folder, labelPath))
             label = sitk.GetArrayFromImage(label_sitk).astype(np.float32)
-            label, img = cropToSeg(label, img, 5, 1, randomized=True)
+            label, img, imgOrig = cropToSeg(label, img, imgOrig, 10, 1, randomized=True)
         else:
             #img = whitening(img)
             img = np.stack([img], axis=-1).astype(np.float32)
@@ -84,8 +85,13 @@ def readFunc(dataset, mode, params, crop=True):
                 img = np.stack([img], axis=-1).astype(np.float32)
                 img = resize3D(img, False, *params["size"])
                 img = tf.Session().run(img)
+                imgOrig = np.stack([imgOrig], axis=-1).astype(np.float32)
+                imgOrig = resize3D(imgOrig, False, *params["size"])
+                imgOrig = tf.Session().run(imgOrig)
             yield {'features': {'x': img},
                    'labels': {'y': catLabels},
+                   'original': imgOrig,
+                   'imgPath': imgPath,
                    'sitk': img_sitk,
                    'subject_id': ID+1}
     print("leaving reader")
