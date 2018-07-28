@@ -45,7 +45,7 @@ export class Image3D {
 	return this.imagesX[0].masks.length
     }
 
-    addNewMask() {
+    addNewMask(mask) {
 	for (var nImg = 0; nImg < this.imagesX.length; nImg++) {
 	    this.imagesX[nImg].addNewMask()
 	}
@@ -124,6 +124,16 @@ export class Image3D {
 	this.imagesX[nImg].tempMask[row][col] = val
 	this.imagesY[col].tempMask[(this.nImages-1) - nImg][row] = val
 	this.imagesZ[row].tempMask[(this.nImages-1) - nImg][col] = val
+    }
+
+    copyMask(mask, maskIndex) {
+	for (var nImg = 0; nImg < this.nImages; nImg++) {
+	    for (var y = 0; y < this.height; y++) {
+		for (var x = 0; x < this.width; x++) {
+		    this.setMask(nImg, y, x, mask[nImg][y][x], maskIndex)
+		}
+	    }
+	}
     }
 
     setBoundingRect(nImg1, row1, col1, nImg2, row2, col2) {

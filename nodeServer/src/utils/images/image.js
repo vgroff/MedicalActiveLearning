@@ -185,7 +185,7 @@ export class Image {
 	}
     }
 
-    addNewMask() {
+    addNewMask(mask) {
 	var mask = []
 	for (var i = 0; i < this.data.length; i++) {
 	    mask.push([])

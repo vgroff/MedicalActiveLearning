@@ -161,7 +161,6 @@ class App extends Component {
 	var currImg = this.images[this.state.imageIndex]
 	currImg.addNewMask()
 	var maskIndex = currImg.getNumMasks() - 1
-	console.log(maskIndex)
 	var vis = this.state.maskVisibility.slice()
 	vis.push(true)
 	this.images[this.state.imageIndex].setActiveMask(maskIndex)
@@ -201,14 +200,9 @@ class App extends Component {
 		    }
 		}
 	    }
-	    //console.log(imgArr, JSON.stringify(imgArr))
-	    // imgArr = [ [ [0.1, 0.2, 0.1], [0.5, 0.5, 0.6], [0.55, 0.25, 0.1] ],
-	    // 	       [ [0.1, 0.2, 0.1], [0.5, 0.5, 0.6], [0.55, 0.25, 0.1] ] ]
-	    // labelArr = [ [ [2, 0, 0], [1, 0, 1], [1, 2, 0] ],
-	    //  		 [ [0, 0, 0], [0, 0, 0], [0, 0, 0] ] ]
-	    var url = "/graphCuts"
+	    var errHandle = function(err) {console.log(err)}
 	    console.log("Making server request...")
-	    fetch(url, {
+	    fetch("/graphCuts", {
 		method: 'POST',
 		headers: {
 		    'Accept': 'application/json',
@@ -218,15 +212,21 @@ class App extends Component {
 				      "scribbles":JSON.stringify(labelArr)})
 	    })
 		.then(function(response) {
-		    console.log(response)
-		    console.log("Turning into text")
+		    console.log("Response recieved")
 		    return response.text()
-		}).then(function(text) {
-		    console.log("Got text: ", text)
-		    console.log(JSON.parse(text));
-		});
-	    console.log("Request made")
-	    
+		}.bind(this))
+		.then(function(text) {
+		    var mask = JSON.parse(text)
+		    console.log(mask)
+		    var currImg = this.images[this.state.imageIndex]
+		    currImg.addNewMask()
+		    currImg.copyMask(mask, currImg.imagesX[0].masks.length - 1)
+		    var vis = this.state.maskVisibility.slice()
+		    vis.push(true)
+		    this.setState({maskVisibility: vis})
+		    console.log(currImg.getNumMasks())
+		    console.log(vis.length)
+		}.bind(this)).catch(function(err) {console.log("hi", err)});
 	}
     }
 
@@ -290,7 +290,7 @@ class App extends Component {
 	    {this.state.imageIndex === -1 ? null :
 	     <div style={borderStyle}>
 		<p>Show/Hide Masks:</p>
-		<RadioList ref="maskVisibility" options={range(0, currImg.getNumMasks())}
+		<RadioList ref="maskVisibility" options={range(0, this.state.maskVisibility.length)}
 		exclusionary={false}
 		checked={this.state.maskVisibility} onChange={this.showMasks.bind(this)}
 		divStyleOuter={divStyle}
@@ -302,7 +302,7 @@ class App extends Component {
 	    {this.state.imageIndex === -1 ? null :
 	     <div style={borderStyle}>
 		<p>Active Mask:</p>
-		<RadioList ref="activeMask" options={range(0, currImg.getNumMasks())}
+		<RadioList ref="activeMask" options={range(0, this.state.maskVisibility.length)}
 		exclusionary={true}
 		checked={this.state.activeMask} onChange={this.setActiveMask.bind(this)}
 		divStyleOuter={divStyle}
@@ -415,8 +415,10 @@ export default App
  */
 
 /* Shortest term TO-DO:
- * - If background selected when doing graph cuts something weird happens
- * - Send image over + produce correct image (fix reading func.), then try a graph cuts 
+ * - Give option to "end" graph cuts, try it out with a full (unresized) image, using crop
+ * - Give option to colour masks, App has masks colour by index for each mask + list of colours
+ * - Start mixing together CNN and graph cuts WITHOUT LEARNING - just send pic to CNN, then correct with graph cuts. Need to pad+resize and unresize+unpad images from CNN result back to "normal" image
+ * - Offer multiple CNNs + active learning + active image database + eventual augmentation
  */
 
 
