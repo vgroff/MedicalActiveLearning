@@ -13,25 +13,15 @@ class App extends Component {
 	super(props)
 	this.state = {imageIndex: -1, imageNames: [], activeMask: -1, maskVisibility: [],
 		      tempWindow:1, tempLevel:0.5, window:1, level: 0.5, maskIndex: 1, 
-		      brushSize:20, maskLabel:1, actionIndex:0, loading:false,
-		      graphCutsText: "Start Graph Cuts"}
+		      brushSize:20, maskLabel:1, actionIndex:0, loading:false, specialAction:null,
+		      graphCutsText: "Graph Cuts Segmentation", maskColourIndexes:null}
 	this.images = []
 	this.maskColours = ["#FF0000", "#FFFF00"]
-	this.maskColourNames = ["Background", "Object", "Object2"]
+	this.colours = ["#FF0000", "#0000FF", "#00FF00", "#00FFFF"]
+	this.colourNames = ["Red", "Blue", "Green", "Cyan"]
+	this.maskColourNames = ["Background", "Object"]
 	this.actions = ["segment","box"]
-	this.specialAction = null
 	this.colourBias = 0
-	// Server test
-	// console.log("trying")
-	// var arr  = [[1,2],[3,4]]
-	// var arr2 = [[5,6],[7,8]]
-	// fetch("/graphCuts?image=" + JSON.stringify(arr)
-	//     + "&scribbles=" + JSON.stringify(arr2)).then(function(response) {
-	//     console.log(response)
-	//     return response.text();
-	// }).then(function(text) {
-	//     console.log(text);
-	// });
     }
 
     loadImage(file) {
@@ -48,7 +38,6 @@ class App extends Component {
 		this.images.push(img)
 		var imageNames = this.state.imageNames.slice(0)
 		imageNames.push(file.name)
-		this.specialAction = null
 		this.colourBias = 0
 		this.setMaskLabel(1)
 		var window
@@ -62,7 +51,8 @@ class App extends Component {
 		    this.setState({imageIndex: this.images.length - 1, imageNames: imageNames,
 				   activeMask: 0, maskVisibility:[true], 
 				   tempWindow:window, tempLevel:meanVal,
-				   window: window, level: meanVal},
+				   window: window, level: meanVal, specialAction: null,
+				   graphCutsText:"Graph Cuts Segmentation", maskColourIndexes:[0]},
 				  function() {
 				      this.refs.imageView.preRender()
 				      this.setState({loading: false})
@@ -140,8 +130,14 @@ class App extends Component {
 	this.setState({maskVisibility: masks})
     }
 
+    setMaskColour(index) {
+	var maskColourIndexes = this.state.maskColourIndexes.slice()
+	maskColourIndexes[this.state.activeMask] = index
+	this.setState({maskColourIndexes:maskColourIndexes})
+    }
+
     setActiveMask(maskIndex) {
-	if (this.specialAction === null) {
+	if (this.state.specialAction === null) {
 	    this.setState({activeMask: maskIndex})
 	    this.images[this.state.imageIndex].setActiveMask(maskIndex)
 	}
@@ -163,8 +159,13 @@ class App extends Component {
 	var maskIndex = currImg.getNumMasks() - 1
 	var vis = this.state.maskVisibility.slice()
 	vis.push(true)
+	var nColours = this.colours.length
+	var maskColours = this.state.maskColourIndexes.slice()
+	var colourIndex = maskColours.length % nColours
+	maskColours.push(colourIndex)
 	this.images[this.state.imageIndex].setActiveMask(maskIndex)
-	this.setState({activeMask: maskIndex, maskVisibility: vis})
+	this.setState({activeMask: maskIndex, maskVisibility: vis,
+		       maskColourIndexes: maskColours})
     }
 
     
@@ -178,55 +179,73 @@ class App extends Component {
     }
 
     graphCuts() {
-	if (this.specialAction !== 1) {
+	if (this.state.specialAction === null) {
 	    this.colourBias = -2
 	    this.addNewMask()
-	    this.specialAction = 1
-	    this.setState({graphCutsText:"Confirm annotations"})
+	    this.setState({specialAction:1, graphCutsText:"Confirm annotations"})
 	}
 	else {
-	    var imgArr = []
-	    var labelArr = []
 	    var currImg = this.images[this.state.imageIndex]
-	    for (var i = 0; i < currImg.nImages; i++) {
-		imgArr.push([])
-		labelArr.push([])
-		for (var j = 0; j < currImg.height; j++) {
-		    imgArr[i].push([])
-		    labelArr[i].push([])
-		    for (var k = 0; k < currImg.width; k++) {
-			imgArr[i][j].push(currImg.imagesX[i].data[j][k])
-			labelArr[i][j].push(currImg.imagesX[i].masks[this.state.activeMask][j][k])
-		    }
-		}
-	    }
+	    var imgArr = currImg.getImgArr()
+	    var labelArr = currImg.getMaskArr(this.state.activeMask)
 	    var errHandle = function(err) {console.log(err)}
 	    console.log("Making server request...")
-	    fetch("/graphCuts", {
+	    fetch("/segment", {
 		method: 'POST',
 		headers: {
 		    'Accept': 'application/json',
 		    'Content-Type': 'application/json'
 		},
 		body: JSON.stringify({"image": JSON.stringify(imgArr),
-				      "scribbles":JSON.stringify(labelArr)})
-	    })
-		.then(function(response) {
-		    console.log("Response recieved")
-		    return response.text()
-		}.bind(this))
-		.then(function(text) {
-		    var mask = JSON.parse(text)
-		    console.log(mask)
-		    var currImg = this.images[this.state.imageIndex]
-		    currImg.addNewMask()
-		    currImg.copyMask(mask, currImg.imagesX[0].masks.length - 1)
-		    var vis = this.state.maskVisibility.slice()
-		    vis.push(true)
-		    this.setState({maskVisibility: vis})
-		    console.log(currImg.getNumMasks())
-		    console.log(vis.length)
-		}.bind(this)).catch(function(err) {console.log("hi", err)});
+				      "scribbles": JSON.stringify(labelArr),
+				      "action":"graphCuts"})
+	    }).then(function(response) {
+		console.log("Response recieved")
+		return response.text()
+	    }.bind(this)).then(function(text) {
+		var mask = JSON.parse(text)
+		var currImg = this.images[this.state.imageIndex]
+		this.addNewMask()
+		currImg.copyMask(mask, currImg.imagesX[0].masks.length - 1)
+		this.forceUpdate()
+	    }.bind(this)).catch(function(err) {console.log(err)});
+	}
+    }
+
+    endGraphCuts() {
+	if (this.state.specialAction === 1) {
+	    this.setState({specialAction: null, graphCutsText:"Graph Cuts Segmentation"})
+	}
+    }
+
+    cnnSeg() {
+	if (this.state.specialAction === null) {
+	    var currImg = this.images[this.state.imageIndex]
+	    var imgArr = currImg.getImgArr()
+	    console.log(imgArr[24][25][26])
+	    var labelArr = currImg.getMaskArr(this.state.activeMask)
+	    console.log("Making server request...")
+	    fetch("/segment", {
+		method: 'POST',
+		headers: {
+		    'Accept': 'application/json',
+		    'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({"image": JSON.stringify(imgArr),
+				      "scribbles":JSON.stringify(labelArr),
+				      "action": "cnnSeg"})
+	    }).then(function(response) {
+		console.log("Response recieved")
+		return response.text()
+	    }.bind(this)).then(function(text) {
+		console.log("text", text)
+		var mask = JSON.parse(text)
+		//console.log("mask", mask)
+		var currImg = this.images[this.state.imageIndex]
+		this.addNewMask()
+		currImg.copyMask(mask, currImg.imagesX[0].masks.length - 1)
+		this.forceUpdate()
+	    }.bind(this)).catch(function(err) {console.log(err)});
 	}
     }
 
@@ -248,9 +267,15 @@ class App extends Component {
 
 	var currImg = this.images[this.state.imageIndex]
 
-	console.log("RENDERING", this.state.loading)
-
-
+	var colourIndexes = this.state.maskColourIndexes
+	if (colourIndexes !== null) {
+	    var maskColours = []
+	    for (var i = 0; i < colourIndexes.length; i++) {
+		maskColours.push([this.colours[colourIndexes[i]], "#FFFF00"])
+	    }
+	}
+	console.log(colourIndexes, maskColours)
+	
 	return (
 	    <div style={{"textAlign":"center"}}>
 	    <div style={outerStyle}>
@@ -309,6 +334,7 @@ class App extends Component {
 		radioStyle={elementStyle} labelStyle={elementStyle}
 		divStyleInner={{"display":"inline-block", "width":"70%", "textAlign":"left"}}
 		/>
+		<DropDown options={this.colourNames} onChange={this.setMaskColour.bind(this)} />
 		<button onClick={(e) => {this.addNewMask(e.target.value)}}>Add New Mask</button>
 		</div>}
 
@@ -352,7 +378,13 @@ class App extends Component {
 	    min={1} max={50} defaultValue={this.state.brushSize}
 	    onChange={(e) => {this.setBrushSize(parseInt(e.target.value))}}></input>
 
+	    {this.state.specialAction === null ?
+	     <button onClick={this.cnnSeg.bind(this)}>CNN Segmentation</button>
+		 : null}
 	    <button onClick={this.graphCuts.bind(this)}>{this.state.graphCutsText}</button>
+	    {this.state.specialAction === 1 ?
+	     <button onClick={this.endGraphCuts.bind(this)}> End Graph Cuts</button>
+			   : null}
 	    
 	    </div>
 	    </div>
@@ -383,7 +415,7 @@ class App extends Component {
 	    maskVisibility={this.state.maskVisibility} 
 	    level = {this.state.level} window = {this.state.window}
 	    brushSize={this.state.brushSize}
-	    maskColours = {this.maskColours} maskLabel={this.state.maskIndex}
+	    maskColours = {maskColours} maskLabel={this.state.maskIndex}
 	    action={this.actions[this.state.actionIndex]}/>
 	    </div>
 
@@ -415,9 +447,8 @@ export default App
  */
 
 /* Shortest term TO-DO:
- * - Give option to "end" graph cuts, try it out with a full (unresized) image, using crop
- * - Give option to colour masks, App has masks colour by index for each mask + list of colours
- * - Start mixing together CNN and graph cuts WITHOUT LEARNING - just send pic to CNN, then correct with graph cuts. Need to pad+resize and unresize+unpad images from CNN result back to "normal" image
+ * - Need to feed in images that arent cubes already
+ * - Need to add in option for doing CNN then graph cuts without learning 
  * - Offer multiple CNNs + active learning + active image database + eventual augmentation
  */
 

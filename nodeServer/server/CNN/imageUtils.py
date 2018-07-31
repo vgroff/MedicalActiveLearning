@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 import json
 import os
 import random
@@ -45,7 +46,7 @@ def splitArr(arr, fraction):
     return arr1, arr2
 
 
-def cropToSeg(labels, image, imageOrig, margin, minMargin=1, randomized=False, process="cubePadding"):
+def cropToSeg(labels, image, imageOrig, margin,  minMargin=1, minSize=0, randomized=False, process="cubePadding"):
     rowBounds   = [labels.shape[0],-1]
     colBounds   = [labels.shape[1],-1]
     depthBounds = [labels.shape[2],-1]
@@ -103,26 +104,42 @@ def cropToSeg(labels, image, imageOrig, margin, minMargin=1, randomized=False, p
     imageOrig = imageOrig[rowMarginBounds[0]:rowMarginBounds[1]+1,
                           colMarginBounds[0]:colMarginBounds[1]+1,
                           depthBounds[0]:depthMarginBounds[1]+1]
-    maxSize = max(labels.shape)
+    image, padding = cubePadding(image, minSize)
+    labels = cubePadding(labels, minSize)
+    imageOrig = cubePadding(imageOrig, minSize)
+    return labels, image, imageOrig, [rowMarginBounds, colMarginBounds, depthMarginBounds], padding
+
+
+def cubePadding(image, minCubeLength):
+    maxSize = max(image.shape)
+    if (maxSize < minCubeLength):
+        maxSize = minCubeLength
     padding = [[(maxSize - image.shape[0])//2, (maxSize - image.shape[0] + 1)//2],
                [(maxSize - image.shape[1])//2, (maxSize - image.shape[1] + 1)//2],
                [(maxSize - image.shape[2])//2, (maxSize - image.shape[2] + 1)//2]]
-    paddings = tf.constant(padding)
-    image = tf.pad(image, paddings, "CONSTANT")
+    image = tf.pad(image, padding, "CONSTANT")
     image = tf.Session().run(image)
-    labels = tf.pad(labels, paddings, "CONSTANT")
-    labels = tf.Session().run(labels)
-    imageOrig = tf.pad(imageOrig, paddings, "CONSTANT")
-    imageOrig = tf.Session().run(imageOrig)
-    return labels, image, imageOrig
-    
-# Can either:
-# - Forcefully size to an appropriate aspect ratio
-# - Pad out either with 0s or with mean values to an appropriate aspect ratio
-# - Resize
-# - OR some combination of the above
-# - OR use random fix-sized crops - meh
+    return image, padding
 
+def unpad(image, bounds):
+    rowMarginBounds = bounds[0]
+    colMarginBounds = bounds[1]
+    depthMarginBounds = bounds[2]
+    image = image[rowMarginBounds[0]:rowMarginBounds[1]+1,
+                  colMarginBounds[0]:colMarginBounds[1]+1,
+                  depthBounds[0]:depthMarginBounds[1]+1]
+    return image
+
+def toCategorical(label):
+    catLabels = np.zeros(list(label.shape)+[2])
+    #print(catLabels.shape)
+    for i, row in enumerate(label):
+        for j, col in enumerate(row):
+            for k, depth in enumerate(col):
+                catLabels[i, j, k, int(round(depth))] = 1
+    catLabels = resize3D(catLabels, False, *params["size"])
+    catLabels = tf.Session().run(catLabels)
+    return catLabels
 
 def resize_by_axis(image, dim_1, dim_2, ax, is_grayscale):
 

@@ -41,6 +41,36 @@ export class Image3D {
 	return images
     }
 
+    getImgArr() {
+	var currImg = this
+	var imgArr = []
+	for (var i = 0; i < currImg.nImages; i++) {
+	    imgArr.push([])
+	    for (var j = 0; j < currImg.height; j++) {
+		imgArr[i].push([])
+		for (var k = 0; k < currImg.width; k++) {
+		    imgArr[i][j].push(currImg.imagesX[i].data[j][k])
+		}
+	    }
+	}
+	return imgArr
+    }
+
+    getMaskArr(maskIndex) {
+	var currImg = this
+	var labelArr = []
+	for (var i = 0; i < currImg.nImages; i++) {
+	    labelArr.push([])
+	    for (var j = 0; j < currImg.height; j++) {
+		labelArr[i].push([])
+		for (var k = 0; k < currImg.width; k++) {
+		    labelArr[i][j].push(currImg.imagesX[i].masks[maskIndex][j][k])
+		}
+	    }
+	}
+	return labelArr
+    }
+
     getNumMasks() {
 	return this.imagesX[0].masks.length
     }

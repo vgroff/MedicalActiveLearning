@@ -57,7 +57,7 @@ export function getImageData(data) {
 		}
 	    }
 	}
-	console.log("MAX", max)
+	//max = 1
 	var dataX = []
 	var mean = 0
 	var stdDev = 0

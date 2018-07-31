@@ -14,7 +14,7 @@ export class DropDown extends Component {
 	    
 	    <label style={this.props.labelStyle}>{this.props.label}</label>
 	    <select style={this.props.dropDownStyle}
-	    onChange={(e) => {this.props.onChange(e.target.value)}}
+	    onChange={(e) => {this.props.onChange(parseInt(e.target.value))}}
 	    defaultValue={this.state.maskLabel}>
 
 	    {this.props.options.map(function(option, index) {

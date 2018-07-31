@@ -22,7 +22,7 @@ app.get('/', function response(req, res) {
     res.sendFile(path.join(__dirname, '../index.html'));
 });
 // Test app
-app.post('/graphCuts', function response(req, res) {
+app.post('/segment', function response(req, res) {
     //res.send("Welcome")
 
     // Use child_process.spawn method from 
@@ -38,7 +38,9 @@ app.post('/graphCuts', function response(req, res) {
     // E.g : http://localhost:3000/name?firstname=Mike&lastname=Will
     // so, first name = Mike and last name = Will
     console.log("Request Received. Spawing Python process...")
-    var process = spawn('python3',[__dirname+"/main.py"]);//,
+
+    var process = spawn('python3',[__dirname+"/main.py",
+				  req.body.action]);//,
 				   //req.body.image,
 				   //req.body.scribbles] );
  
@@ -46,13 +48,13 @@ app.post('/graphCuts', function response(req, res) {
     // with arguments and send this data to res object
     var resp = ""
     process.stdout.on('data', function(data) {
-	console.log(data.toString())
+	//console.log("SENDING:", data.toString())
 	var str = data.toString()
 	resp += str
 	var l = str.length
-	console.log(str.slice(l-5, l-1), str.slice(l-5, l-1) === "Done")
 	if (str.slice(l-5, l-1) === "Done") {
-	    console.log("Sending: " + resp.slice(0, resp.length-5))
+	    console.log("Done sending")
+	    //console.log("Sending: " + resp.slice(0, resp.length-5))
 	    res.send(resp.slice(0, resp.length-5))
 	}
 	//data.toString());
@@ -60,15 +62,14 @@ app.post('/graphCuts', function response(req, res) {
     process.stderr.on('data', function(data) {
 	errMsg = "Server Err: " + data.toString()
 	console.log(errMsg)
-	//res.send(errMsg)
+	//res.send("Server Error occurred")
     } )
     process.on("close", function() {	
     })
     
-    data = JSON.parse(req.body.image)
-    process.stdin.write(JSON.stringify(data) + "\n");
-    data = JSON.parse(req.body.scribbles)
-    process.stdin.write(JSON.stringify(data));
+    //data = JSON.parse(req.body.image)
+    process.stdin.write(req.body.image + "\n");
+    process.stdin.write(req.body.scribbles);
     process.stdin.end();
     
 });

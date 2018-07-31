@@ -29,12 +29,6 @@ trainPaths = getDatasetInfo(folder)
 imgs = []
 labels = []
 i = 0
-for img in readFunc(trainPaths[:1], None,
-                    {"folder":folder, "depth":132, "size":size, "whiten":False}):
-    writeNIFTI(img["features"]["x"], "./predictions", "test")
-    writeNIFTI(img["labels"]["y"], "./predictions", "test_lbl")
-
-for img in readFunc(trainPaths[:1], None,
-                    {"folder":folder, "depth":132, "size":[132,320,320], "whiten":False}, crop=False):
-    writeNIFTI(img["features"]["x"], "./predictions", "test")
-    writeNIFTI(img["labels"]["y"], "./predictions", "test_lbl")
+for img in readFunc(trainPaths[19:20], None,
+                    {"folder":folder, "depth":132, "size":size, "whiten":True}):
+    

@@ -1,7 +1,11 @@
-import sys, json
+import sys, json, os
 import numpy as np
-
+import tensorflow as tf
 from graphCuts import graphCut
+from CNN.imageUtils import cubePadding, resize3D, toCategorical
+from CNN.cnnUtils import loadModel
+
+from dltk.io.preprocessing import whitening
 
 
 def listsToArray(lists):
@@ -18,7 +22,7 @@ def gaussian(x, mean, stdDev):
     coeff = (1/(stdDev*(2*np.pi)**0.5))
     return np.exp( - (x-mean)**2/(2*stdDev**2) ) 
 
-def buildProbsArr(img, label):
+def buildGaussProbs(img, label):
     shape = label.shape
     arr = np.zeros(list(label.shape) + [2])
     sumArr = [0,0]
@@ -56,82 +60,68 @@ def buildProbsArr(img, label):
     return arr, stdDev
     
 
-def main(img, label):
+def main(img, label, cnn=True):
 
-    #print("Converting lists to arrays...")
     img   = listsToArray(img)
     label = listsToArray(label)
-    #print("Converted img to shape {} and label to shape {}".format(img.shape, label.shape))
-    #print("Building probs array...")
-    probs, stdDev = buildProbsArr(img, label)
-    #print("Doing graph cut with stdDev {} ....".format(stdDev))
-    seg = graphCut(img, probs, stdDev)
-    #print("Graph cuts complete.")
     
-    return seg
+    if (cnn == True):
+        cnnSize = 64
+        shape = [cnnSize]*3
+        img, padding = cubePadding(img, cnnSize)
+        label, padding = cubePadding(label, cnnSize)
+        img = whitening(img)
+        img = np.stack([img], axis=-1).astype(np.float32)
+        img = resize3D(img, False, *shape)
+        img = tf.Session().run(img)
+        img = np.moveaxis(img, 3, 0)
+        print("HEYHEY", img.shape, file=sys.stderr)
+        #img = np.swapaxes(img, 0,3)
+        #print(img[0][24][25][26])
+        #return label
+        #catLabels = toCategorical(label)
+        #catLabels = resize3D(catLabels, False, *shape)
+        #catLabels = tf.Session().run(catLabels)
+        model = loadModel(1)
+        result = model.predict(np.array([img]))
+        #result = np.swapaxes(result[0], 0, 3)
+        print("HEYHEY", result.shape, file=sys.stderr)
+        result = np.argmax(result[0], axis=0)
+        return result
+    else:
+        probs, stdDev = buildGaussProbs(img, label)
+        seg = graphCut(img, probs, stdDev)
+        return seg
 
 #start process
 if __name__ == '__main__':
     #img = json.loads(sys.argv[1])
     #label = json.loads(sys.argv[2])
     #print("Loading data from std in...")
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+    tf.logging.set_verbosity(tf.logging.ERROR)
+    os.environ["CUDA_VISIBLE_DEVICES"] = '0'
     
+    action = sys.argv[1]
     lines = sys.stdin.readlines()
     img = json.loads(lines[0][:-1])
     label = json.loads(lines[1])
-    seg = main(img, label)
+    
+    if action == "cnnSeg":
+        cnn = True
+    elif action == "graphCuts":
+        cnn = False
+    seg = main(img, label, cnn)
     seg = seg.astype(int)
     np.set_printoptions(threshold=np.nan)
     print(np.array2string(seg, separator=", "))
     print("Done")
 
-# Something weird is going on. Reducing the edge coefficient to zero produces the best results, but it should be helping out. Is the formula incorrect? Do we use another std.dev? Play around and see.
-    
-# To-do:
-# - Get a nice unwhitened 3-D image
-# - Test it out :|
+# Notes:
+# - Need a better CNN...
 
-# 73AAE9D75A7CFCD732DC359F26
+# TO-DO:
+# - Send pic to CNN, then correct with graph cuts. Need to pad+resize and unresize+unpad images from CNN result back to "normal" image. Write a generic pad+resize function that takes the size as an argument - only resize if need be, otherwise pad - (shortened version of cropToSeg - fix that too) but save the original start and end indices so that it can be undone - test it all. 
 
-    # img = np.array([
-    #     np.array([np.array([0.80,0.85,0.90,0.80]),
-    #               np.array([0.90,0.80,0.90,0.85]),
-    #               np.array([0.75,0.85,0.76,0.85]),
-    #               np.array([0.85,0.85,0.80,0.80])]),
-        
-    #     np.array([np.array([0.85,0.80,0.25,0.20]),
-    #               np.array([0.90,0.75,0.20,0.20]),
-    #               np.array([0.85,0.90,0.65,0.65]),
-    #               np.array([0.85,0.80,0.60,0.65])]),
-        
-    #     np.array([np.array([0.45,0.35,0.20,0.23]),
-    #               np.array([0.40,0.32,0.42,0.45]),
-    #               np.array([0.35,0.35,0.55,0.65]),
-    #               np.array([0.35,0.31,0.55,0.55])]),
-        
-    #     np.array([np.array([0.10,0.10,0.20,0.17]),
-    #               np.array([0.15,0.15,0.25,0.12]),
-    #               np.array([0.05,0.10,0.55,0.65]),
-    #               np.array([0.10,0.05,0.56,0.60])])
-    #     ])
-    # label = np.array([
-    #     np.array([np.array([1,0,0,0]),
-    #               np.array([0,0,0,0]),
-    #               np.array([0,0,0,0]),
-    #               np.array([0,1,0,0])]),
-        
-    #     np.array([np.array([0,0,2,0]),
-    #               np.array([0,0,0,0]),
-    #               np.array([0,0,0,1]),
-    #               np.array([0,0,0,0])]),
-        
-    #     np.array([np.array([0,0,0,2]),
-    #               np.array([0,0,0,0]),
-    #               np.array([0,0,0,0]),
-    #               np.array([0,0,0,0])]),
-        
-    #     np.array([np.array([0,0,0,2]),
-    #               np.array([0,0,0,0]),
-    #               np.array([0,0,2,0]),
-    #               np.array([0,0,0,0])])
-    # ])
+
+

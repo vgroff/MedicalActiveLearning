@@ -22,7 +22,7 @@ def readFunc(dataset, mode, params, crop=True):
             labelPath = dataPoint["label"]
             label_sitk = sitk.ReadImage(os.path.join(folder, labelPath))
             label = sitk.GetArrayFromImage(label_sitk).astype(np.float32)
-            label, img, imgOrig = cropToSeg(label, img, imgOrig, 10, 1, randomized=True)
+            label, img, imgOrig, bounds, padding = cropToSeg(label, img, imgOrig, 9, 1, params["size"][0], randomized=True)
         else:
             #img = whitening(img)
             img = np.stack([img], axis=-1).astype(np.float32)
