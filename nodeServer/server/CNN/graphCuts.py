@@ -10,11 +10,11 @@ def graphCut(img, probs, edgeVal=1):
     total = shape[0]*shape[1]*shape[2]
     # Create a graph with integer capacities.
     g = maxflow.Graph[float](total, total*26)
-    # Add total (non-terminal) nodes. Get the index to the first one.
+    # Add two (non-terminal) nodes. Get the index to the first one.
     nodes = g.add_nodes(total)
 
     edgeFactors = np.zeros(shape)
-    edgeCoeff = 2
+    edgeCoeff = 0.15
     for i in range(shape[0]):
         for j in range(shape[1]):
             for k in range(shape[2]):

@@ -3,6 +3,8 @@ import tensorflow as tf
 import numpy as np
 import os
 import math
+import random
+from scipy.ndimage import zoom
 
 from dltk.io.preprocessing import whitening
 
@@ -96,3 +98,110 @@ def readFunc(dataset, mode, params, crop=True):
                    'subject_id': ID+1}
     print("leaving reader")
     return
+
+    
+
+def getImages(folder, dataset, size, valFraction, augment=True, margins=[2,9], minMargins=[1,2]):
+    shape      = [size]*3
+    trImgs     = []
+    trLabels   = []
+    trImgInfo  = []
+    valImgs    = []
+    valLabels  = []
+    valImgInfo = []
+    valSplit   = int(round((1-valFraction)*len(dataset)))
+    print("Training on {}, validating on {}".format(valSplit, len(dataset) - valSplit))
+    
+    for ID, dataPoint in enumerate(dataset):
+        if (augment == True and ID < valSplit):
+            orientations = random.sample(range(0, 6), 3)
+        else:
+            orientations = [True]
+        for orientationIndex, orientation in enumerate(orientations):
+            print("Image {} orientation {}".format(ID, orientationIndex))#, end="\r")
+            info = {}
+            imgPath = dataPoint["image"]
+            info["path"] = imgPath
+            img_sitk = sitk.ReadImage(os.path.join(folder, imgPath))
+            img = sitk.GetArrayFromImage(img_sitk).astype(np.float32)
+            imgOrig = sitk.GetArrayFromImage(img_sitk).astype(np.float32)
+            labelPath = dataPoint["label"]
+            label_sitk = sitk.ReadImage(os.path.join(folder, labelPath))
+            label = sitk.GetArrayFromImage(label_sitk).astype(np.float32)
+            label, img, imgOrig, bounds, padding = cropToSeg(label, img, imgOrig,
+                                                             margins[1], margins[0],
+                                                             size, minMargins, randomized=True)
+
+            print("Original size", img.shape[0])
+
+            img = whitening(img)
+            resizeFactor = 1
+            if (int(img.shape[0]) != size):
+                resizeFactor = size / int(img.shape[0])
+                img = zoom(img, resizeFactor)
+                imgOrig = zoom(imgOrig, resizeFactor)
+            img = np.stack([img], axis=-1)
+            
+            
+            catLabels = np.zeros(list(label.shape)+[2])
+            for i, row in enumerate(label):
+                for j, col in enumerate(row):
+                    for k, depth in enumerate(col):
+                        catLabels[i, j, k, int(round(depth))] = 1
+            catLabels = zoom(catLabels, [resizeFactor]*3+[1])
+
+
+            # img = np.stack([img], axis=-1).astype(np.float32)
+            # img = resize3D(img, False, *shape)
+            # img = tf.Session().run(img)
+            # imgOrig = np.stack([imgOrig], axis=-1).astype(np.float32)
+            # imgOrig = resize3D(imgOrig, False, *shape)
+            # imgOrig = tf.Session().run(imgOrig)
+        
+            if (augment == False and ID < valSplit):
+                img = np.moveaxis(img, 3, 0)
+                catLabels = np.moveaxis(catLabels, 3, 0)
+                info["imgOrig"] = imgOrig
+                trImgs.append(img)
+                trLabels.append(catLabels)
+                trImgInfo.append(info)
+            elif (ID >= valSplit):
+                img = np.moveaxis(img, 3, 0)
+                catLabels = np.moveaxis(catLabels, 3, 0)
+                info["imgOrig"] = imgOrig
+                #print(img.shape, catLabels.shape)
+                valImgs.append(img)
+                valLabels.append(catLabels)
+                valImgInfo.append(info)
+            else:
+                newImg = np.copy(img)
+                newCatLabels = np.copy(catLabels)
+                if (orientation == 0):
+                    pass
+                elif (orientation == 1 or orientation == 2):
+                    newImg = np.moveaxis(newImg, orientation, 0)
+                    newCatLabels = np.moveaxis(newCatLabels, orientation, 0)
+                elif (orientation == 3):
+                    newImg = np.moveaxis(newImg, 0, 2)
+                    newCatLabels = np.moveaxis(newCatLabels, 0, 2)
+                elif (orientation == 4):
+                    newImg = np.swapaxes(newImg, 2, 1)
+                    newCatLabels = np.swapaxes(newCatLabels, 2, 1)
+                elif (orientation == 5):
+                    newImg = np.swapaxes(newImg, 0, 2)
+                    newCatLabels = np.swapaxes(newCatLabels, 0, 2)
+                for i in range(3):
+                    if (random.random() > 0.5):
+                        newImg = np.flip(newImg, axis=i)
+                        newCatLabels = np.flip(newCatLabels, axis=i)
+                newImg = np.moveaxis(newImg, 3, 0)
+                newCatLabels = np.moveaxis(newCatLabels, 3, 0)
+                #print(newImg.shape, newCatLabels.shape)
+                trImgs.append(newImg)
+                trLabels.append(newCatLabels)
+                trImgInfo.append(info)
+    return [ [trImgs, trLabels, trImgInfo], [valImgs, valLabels, valImgInfo] ]
+    
+
+
+# 

@@ -7,24 +7,25 @@ import random
 
 
 class ImageManager():
-    def __init__(self, readFn):
-        self.imgs      = []
-        self.trainImgs = []
-        self.labels    = []
-        self.imgPaths  = []
-        for img in readFn:
-            self.trainImgs.append(img["imgTr"])
-            self.imgs.append(img["img"])
-            self.labels.append(img["label"])
-            self.imgPaths.append(img["imgPath"])
+    def __init__(self, data):
+        self.trainImgs    = data[0][0]
+        self.trainLabels  = data[0][1]
+        self.trainImgInfo = data[0][2]
+        self.valImgs      = data[1][0]
+        self.valLabels    = data[1][1]
+        self.valImgInfo   = data[1][2]
 
     def getTrainImages(self, start=0, size=None):
         if size == None:
             size = len(self.trainImgs)
-        return self.trainImgs[start:start+size], self.labels[start:start+size]
+        return self.trainImgs[start:start+size], self.trainLabels[start:start+size], self.trainImgInfo[start:start+size]
 
-    def getImages(self, start, size):
-        return self.imgs[start:start+size]
+    def getValImages(self, start=0, size=None):
+        if size == None:
+            size = len(self.valImgs)
+        return self.valImgs[start:start+size], self.valLabels[start:start+size], self.valImgInfo[start:start+size]
+    
+
 
 
 
@@ -46,7 +47,7 @@ def splitArr(arr, fraction):
     return arr1, arr2
 
 
-def cropToSeg(labels, image, imageOrig, margin,  minMargin=1, minSize=0, randomized=False, process="cubePadding"):
+def cropToSeg(labels, image, imageOrig, margin,  minMargin=1, minSize=0, minPadding=[0,0], randomized=False, process="cubePadding"):
     rowBounds   = [labels.shape[0],-1]
     colBounds   = [labels.shape[1],-1]
     depthBounds = [labels.shape[2],-1]
@@ -104,9 +105,16 @@ def cropToSeg(labels, image, imageOrig, margin,  minMargin=1, minSize=0, randomi
     imageOrig = imageOrig[rowMarginBounds[0]:rowMarginBounds[1]+1,
                           colMarginBounds[0]:colMarginBounds[1]+1,
                           depthBounds[0]:depthMarginBounds[1]+1]
-    image, padding = cubePadding(image, minSize)
-    labels = cubePadding(labels, minSize)
-    imageOrig = cubePadding(imageOrig, minSize)
+    if (max(image.shape) > minSize):
+        # If the image is already larger than the minimum size,
+        # pad largest edge with randomized min padding
+        minSize = int(round((minPadding[1] - minPadding[0]) * random.random() + minPadding[0] + minSize))
+    if process=="cubePadding":
+        image, padding = cubePadding(image, minSize)
+        labels = cubePadding(labels, minSize)[0]
+        imageOrig = cubePadding(imageOrig, minSize)[0]
+    else:
+        padding = []
     return labels, image, imageOrig, [rowMarginBounds, colMarginBounds, depthMarginBounds], padding
 
 

@@ -215,13 +215,35 @@ export class Image3D {
     }
 
     cropToBoundingRect() {
+	var img1 = (this.nImages) - this.boundingRect[0]
+	var img2 = (this.nImages) - this.boundingRect[3]
+	var row1 = this.boundingRect[2]
+	var row2 = this.boundingRect[5]
+	var col1 = this.boundingRect[1]
+	var col2 = this.boundingRect[4]
+	var temp
+	if (img1 > img2) {
+	    temp = img1
+	    img1 = img2
+	    img2 = temp
+	}
+	if (row1 > row2) {
+	    temp = row1
+	    row1 = row2
+	    row2 = temp
+	}
+	if (col1 > col2) {
+	    temp = col1
+	    col1 = col2
+	    col2 = temp
+	}
 	var data = []
-	for (var img = this.boundingRect[0]; img < this.boundingRect[3]; img++) {
+	for (var img = img1; img < img2; img++) {
 	    data.push([])
-	    for (var row = this.boundingRect[2]; row < this.boundingRect[5]; row++) {
-		data[img - this.boundingRect[0]].push([])
-		for (var col = this.boundingRect[1]; col < this.boundingRect[4]; col++) {
-		    data[img - this.boundingRect[0]][row - this.boundingRect[2]].push(this.imagesX[img].data[row][col])
+	    for (var row = row1; row < row2; row++) {
+		data[img - img1].push([])
+		for (var col = col1; col < col2; col++) {
+		    data[img - img1][row - row1].push(this.imagesX[img].data[row][col])
 		}
 	    }
 	}
@@ -231,18 +253,16 @@ export class Image3D {
 	    if (i > 0) {
 		croppedImg.addNewMask()
 	    }
-	    for (var img = this.boundingRect[0]; img < this.boundingRect[3]; img++) {
-		for (var row = this.boundingRect[2]; row < this.boundingRect[5]; row++) {
-		    for (var col = this.boundingRect[1]; col < this.boundingRect[4]; col++) {
-			croppedImg.setMask(img - this.boundingRect[0], row - this.boundingRect[2],
-					   col - this.boundingRect[1],
+	    for (var img = img1; img < img2; img++) {
+		for (var row = row1; row < row2; row++) {
+		    for (var col = col1; col < col2; col++) {
+			croppedImg.setMask(img - img1, row - row1,
+					   col - col1,
 					   this.imagesX[img].masks[i][row][col], i)
 		    }
 		}
 	    }
 	}
-	console.log(croppedImg.boundingRect)
-	console.log("crp", croppedImg)
 	return croppedImg
     }
     

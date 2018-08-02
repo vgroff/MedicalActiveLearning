@@ -35,14 +35,15 @@ class App extends Component {
 		var res = convertNifti(evt.target.result)
 		var img = res[0]
 		var meanVal = res[1]
+		var maxVal = res[2]
 		this.images.push(img)
 		var imageNames = this.state.imageNames.slice(0)
 		imageNames.push(file.name)
 		this.colourBias = 0
 		this.setMaskLabel(1)
 		var window
-		if (meanVal > 0.5) {
-		    window = 2*(1 - meanVal)
+		if (meanVal > maxVal/2) {
+		    window = 2*(maxVal - meanVal)
 		}
 		else {
 		    window = 2*meanVal
@@ -69,7 +70,8 @@ class App extends Component {
 	var fr = new FileReader()
 	fr.onloadend = function(evt) {
 	    if (evt.target.readyState === FileReader.DONE) {
-		var imgs = getImageData(evt.target.result)[0]
+		var imgs = getImageData(evt.target.result, true)[0]
+		console.log("msk", imgs)
 		this.addNewMask()
 		var currImg = this.images[this.state.imageIndex]
 		for (var nImg = 0; nImg < imgs.length; nImg++) {
@@ -222,7 +224,6 @@ class App extends Component {
 	if (this.state.specialAction === null) {
 	    var currImg = this.images[this.state.imageIndex]
 	    var imgArr = currImg.getImgArr()
-	    console.log(imgArr[24][25][26])
 	    var labelArr = currImg.getMaskArr(this.state.activeMask)
 	    console.log("Making server request...")
 	    fetch("/segment", {
@@ -240,13 +241,64 @@ class App extends Component {
 	    }.bind(this)).then(function(text) {
 		console.log("text", text)
 		var mask = JSON.parse(text)
-		//console.log("mask", mask)
+		console.log("mask", mask)
 		var currImg = this.images[this.state.imageIndex]
 		this.addNewMask()
 		currImg.copyMask(mask, currImg.imagesX[0].masks.length - 1)
 		this.forceUpdate()
 	    }.bind(this)).catch(function(err) {console.log(err)});
 	}
+    }
+
+    cnnGraphSeg() {
+	if (this.state.specialAction === null) {
+	    var currImg = this.images[this.state.imageIndex]
+	    var imgArr = currImg.getImgArr()
+	    var labelArr = currImg.getMaskArr(this.state.activeMask)
+	    console.log("Making server request...")
+	    fetch("/segment", {
+		method: 'POST',
+		headers: {
+		    'Accept': 'application/json',
+		    'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({"image": JSON.stringify(imgArr),
+				      "scribbles":JSON.stringify(labelArr),
+				      "action": "cnnGraphSeg"})
+	    }).then(function(response) {
+		console.log("Response recieved")
+		return response.text()
+	    }.bind(this)).then(function(text) {
+		console.log("text", text)
+		var mask = JSON.parse(text)
+		console.log("mask", mask)
+		var currImg = this.images[this.state.imageIndex]
+		this.addNewMask()
+		currImg.copyMask(mask, currImg.imagesX[0].masks.length - 1)
+		this.forceUpdate()
+	    }.bind(this)).catch(function(err) {console.log(err)});
+	}
+    }
+
+    printPic() {
+	var currImg = this.images[this.state.imageIndex]
+	var imgArr = currImg.getImgArr()
+	console.log(imgArr)
+	var labelArr = currImg.getMaskArr(this.state.activeMask)
+	console.log("Making server request...")
+	fetch("/segment", {
+	    method: 'POST',
+	    headers: {
+		'Accept': 'application/json',
+		'Content-Type': 'application/json'
+	    },
+	    body: JSON.stringify({"image": JSON.stringify(imgArr),
+				  "scribbles":JSON.stringify(labelArr),
+				  "action": "print"})
+	}).then(function(response) {
+	    console.log("Response recieved")
+	    return response.text()
+	}.bind(this))	
     }
 
     
@@ -274,7 +326,6 @@ class App extends Component {
 		maskColours.push([this.colours[colourIndexes[i]], "#FFFF00"])
 	    }
 	}
-	console.log(colourIndexes, maskColours)
 	
 	return (
 	    <div style={{"textAlign":"center"}}>
@@ -380,10 +431,13 @@ class App extends Component {
 
 	    {this.state.specialAction === null ?
 	     <button onClick={this.cnnSeg.bind(this)}>CNN Segmentation</button>
-		 : null}
+			   : null}
+	    {this.state.specialAction === null ?
+	     <button onClick={this.cnnGraphSeg.bind(this)}>CNN+Graph Cuts Segmentation</button>
+			   : null}
 	    <button onClick={this.graphCuts.bind(this)}>{this.state.graphCutsText}</button>
 	    {this.state.specialAction === 1 ?
-	     <button onClick={this.endGraphCuts.bind(this)}> End Graph Cuts</button>
+	     <button onClick={this.endGraphCuts.bind(this)}>End Graph Cuts</button>
 			   : null}
 	    
 	    </div>
@@ -447,7 +501,7 @@ export default App
  */
 
 /* Shortest term TO-DO:
- * - Need to feed in images that arent cubes already
+ * - Need to feed in images that arent cubes already - change scrolling behaviour to canvas instead of div
  * - Need to add in option for doing CNN then graph cuts without learning 
  * - Offer multiple CNNs + active learning + active image database + eventual augmentation
  */

@@ -40,23 +40,15 @@ def predict():
     f.close()
     nStart = 19
     n = 1
-    imgs, labels = mngr.getTrainImages(nStart, n)
-    print(imgs[0][0][24][25][26])
-    imgsActual = mngr.getImages(nStart, n)
-    print(imgsActual[0][0][24][25][26])
-    img2 = whitening(imgsActual[0][0])
-    print(img2[24][25][26])
-    img2 = np.stack([img2], axis=0).astype(np.float32)
-    #img2 = np.swapaxes(img2, 0,3)
+    imgs, labels, info = mngr.getValImages()
     
-    #sgd = SGD(lr=0.0002, decay=1.2e-2, momentum=0.9, nesterov=True)
-    #model.compile(optimizer = sgd, loss = 'binary_crossentropy', metrics = ['accuracy'])
-    print("img", np.array(imgs).shape)
-    result = model.predict(np.array([img2]))#, np.array(labels))
-    print("result", result.shape)
-    print(np.array(labels).shape, result.shape)
-    with tf.Session() as sess:
-        print(sess.run(weighted_dice_coefficient_loss(np.array(labels), result)))
+    imgsActual = [info[i]["imgOrig"] for i in range(len(info))]
+
+    print("img/label shape", np.array(imgs).shape, np.array(labels[0]).shape)
+    result = model.predict(np.array(imgs))#, np.array(labels))
+    print("result", result[0].shape)
+    print(result.shape)
+
     ones = 0
     zeroes = 0
     counts  = [0,0]
@@ -78,9 +70,10 @@ def predict():
                 for depth in col:
                     #print(depth)
                     counts3[depth] += 1
+        print("dice:", tf.Session().run(weighted_dice_coefficient_loss(np.array(labels[i], dtype="float64"), np.array(result[i], dtype="float64"))))
         writeNIFTI(newLabel, outputFolder, "{}_pred".format(i))
         writeNIFTI(newLabel2, outputFolder, "{}_truth".format(i))
-        writeNIFTI(np.around(imgsActual[i][0]), outputFolder, "{}_actual".format(i))
+        writeNIFTI(np.around(imgsActual[i]), outputFolder, "{}_actual".format(i))
         writeNIFTI(imgs[i][0], outputFolder, "{}_processed".format(i))
     print(counts, counts3)
         

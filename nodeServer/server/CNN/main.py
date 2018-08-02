@@ -2,23 +2,12 @@ import sys, json, os
 import numpy as np
 import tensorflow as tf
 from graphCuts import graphCut
-from CNN.imageUtils import cubePadding, resize3D, toCategorical
-from CNN.cnnUtils import loadModel
+from imageUtils import cubePadding, resize3D, toCategorical
+from cnnUtils import loadModel
 from scipy.ndimage import zoom
 
 
 from dltk.io.preprocessing import whitening
-
-import SimpleITK as sitk
-
-
-
-def writeNIFTI(arr, folder, name):
-    new_sitk = sitk.GetImageFromArray(arr.astype(np.int32))
-    #new_sitk.CopyInformation(original['sitk'])
-    path = os.path.join(folder, "{}.nii.gz".format(name))
-    sitk.WriteImage(new_sitk, path)
-
 
 
 def listsToArray(lists):
@@ -33,7 +22,7 @@ def listsToArray(lists):
 
 def gaussian(x, mean, stdDev):
     coeff = (1/(stdDev*(2*np.pi)**0.5))
-    return np.exp( - (x-mean)**2/(2*stdDev**2) )
+    return np.exp( - (x-mean)**2/(2*stdDev**2) ) 
 
 def buildGaussProbs(img, label):
     shape = label.shape
@@ -73,7 +62,7 @@ def buildGaussProbs(img, label):
     return arr, stdDev
     
 
-def main(img, label, cnn=True, graphCuts=True):
+def main(img, label, cnn=True):
 
     img   = listsToArray(img)
     label = listsToArray(label)
@@ -96,28 +85,21 @@ def main(img, label, cnn=True, graphCuts=True):
 
         model = loadModel(1)
         result = model.predict(np.array([img]))
-        if graphCuts == False:
-            result = np.argmax(result[0], axis=0)
-            print("NUM OBJECT PIX:", np.count_nonzero(result == 1), file=sys.stderr)
-            #result = np.moveaxis(result, 3, 0)
-            result = zoom(result, 1/resizeFactor)
-            #result = result[0]
-            result = result[ padding[0][0] : int(result.shape[0]) - padding[0][1],
-                             padding[1][0] : int(result.shape[1]) - padding[1][1],
-                             padding[2][0] : int(result.shape[2]) - padding[2][1]]
+        result = np.argmax(result[0], axis=0)
+        print("NUM OBJECT PIX:", np.count_nonzero(result == 1), file=sys.stderr)
+        #result = np.moveaxis(result, 3, 0)
+        result = zoom(result, 1/resizeFactor)
+        #result = result[0]
+        result = result[ padding[0][0] : int(result.shape[0]) - padding[0][1],
+                         padding[1][0] : int(result.shape[1]) - padding[1][1],
+                         padding[2][0] : int(result.shape[2]) - padding[2][1]]
         
-            print("NUM OBJECT PIX:", np.count_nonzero(result == 1), file=sys.stderr)
-            return result
-        else:
-            probs = result[0]
-            img = img[0]
-            probs = np.moveaxis(probs, 0, 3)
-            stdDev = 0.1
+        print("NUM OBJECT PIX:", np.count_nonzero(result == 1), file=sys.stderr)
+        return result
     else:
         probs, stdDev = buildGaussProbs(img, label)
-    print(img.shape, probs.shape, file=sys.stderr)
-    seg = graphCut(img, probs, stdDev)
-    return seg
+        seg = graphCut(img, probs, stdDev)
+        return seg
 
 #start process
 if __name__ == '__main__':
@@ -132,32 +114,16 @@ if __name__ == '__main__':
     lines = sys.stdin.readlines()
     img = json.loads(lines[0][:-1])
     label = json.loads(lines[1])
-
-    graphCuts = True
+    
     if action == "cnnSeg":
         cnn = True
-        graphCuts = False
-    elif action == "cnnGraphSeg":
-        cnn = True
-        graphCuts = True
     elif action == "graphCuts":
         cnn = False
-
-    if action == "print":
-        img   = listsToArray(img)
-        label = listsToArray(label)
-        outputFolder = "clientPrint/"
-        folder = "/home/vincent/Documents/imperial/individual project/MedicalActiveCNN/nodeServer/server/"
-        folder += outputFolder
-        writeNIFTI(img, folder, "img")
-        writeNIFTI(label, folder, "lbl")
-        print(" Done")
-    else:    
-        seg = main(img, label, cnn, graphCuts)
-        seg = np.asarray(np.around(seg), dtype=int)
-        np.set_printoptions(threshold=np.nan)
-        print(np.array2string(seg, separator=", "))
-        print("Done")
+    seg = main(img, label, cnn)
+    seg = np.asarray(np.around(seg), dtype=int)
+    np.set_printoptions(threshold=np.nan)
+    print(np.array2string(seg, separator=", "))
+    print("Done")
 
 # Notes:
 # - Getting shitty results still - try in trash.py?

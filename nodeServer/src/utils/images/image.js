@@ -32,7 +32,6 @@ export class Image {
 	this.boundingRect = [0,0,0,0]
 	this.boundingRectPix = [0,0,0,0]
 	this.events = {"rectChange":[], "maskChange":[]}
-	
 	this.preRender = null
 	this.preRenderLevel = null
 	this.preRenderWindow = null
@@ -160,7 +159,11 @@ export class Image {
 		//if (grayVal < 0 || grayVal > 255) {
 		//    console.log("GRAY", grayVal > level + window/2, oldGray, grayVal, level, window)
 		//}
+
 		ctx.fillStyle = rgbToHex(grayVal, grayVal, grayVal); // Set the color to the one specified
+		if (ctx.fillStyle == "#NaN#NaN#NaN") {
+		    console.log(oldGray, grayVal)
+		}
 		ctx.fillRect(Math.floor(col * pixWidth * scale), Math.floor(row * pixHeight*scale), Math.ceil(pixWidth*scale), Math.ceil(pixHeight*scale)); // Actually draw the rectangle
 		
 	    }

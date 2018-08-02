@@ -2,7 +2,7 @@ var nifti = require('nifti-reader-js')
 import {Image} from "./image.js"
 import {Image3D} from "./image3d.js"
 
-export function getImageData(data) {
+export function getImageData(data,  norm) {
     var niftiHeader = null,
 	niftiImage = null,
 	niftiExt = null;
@@ -17,25 +17,34 @@ export function getImageData(data) {
 	console.log("header", niftiHeader)
 	niftiImage = nifti.readImage(niftiHeader, data);
 	// Get the dimensions
-	var height = niftiHeader.dims[1]
-	var width = niftiHeader.dims[2]
+	var height = niftiHeader.dims[2]
+	var width = niftiHeader.dims[1]
 	var depth = niftiHeader.dims[3]
 	if (nifti.hasExtension(niftiHeader)) {
 	    niftiExt = nifti.readExtensionData(niftiHeader, data);
 	}
 	// Depending on the bitdepth, convert the current image to an array
 	var image
+	var maxVal
 	if (niftiHeader.numBitsPerVoxel == 8) {
 	    image = new Uint8Array(niftiImage)
+	    maxVal = 2**8 - 1
 	}
 	else if (niftiHeader.numBitsPerVoxel == 16) {
-	    image = new Uint16Array(niftiImage)	    
+	    image = new Uint16Array(niftiImage)
+	    maxVal = 2**16 - 1
 	}
-	else if (niftiHeader.numBitsPerVoxel == 32) {
+	else if (niftiHeader.numBitsPerVoxel == 32 && niftiHeader.datatypeCode === 8) {
 	    image = new Uint32Array(niftiImage)
+	    maxVal = 2**32 - 1
+	}
+	else if (niftiHeader.numBitsPerVoxel == 32 && niftiHeader.datatypeCode === 16) {
+	    image = new Float32Array(niftiImage)
+	    maxVal = 2**32 - 1
 	}
 	else if (niftiHeader.numBitsPerVoxel == 64) {
 	    image = new Uint64Array(niftiImage)
+	    maxVal = 2**64 - 1
 	}
 	else {
 	    console.log("Error, unrecognized bit depth in image")
@@ -57,7 +66,6 @@ export function getImageData(data) {
 		}
 	    }
 	}
-	//max = 1
 	var dataX = []
 	var mean = 0
 	var stdDev = 0
@@ -71,9 +79,13 @@ export function getImageData(data) {
 		dataX[imgN].push([])
 		for (var x = 0; x < width; x++) {
 		    var idx = (imgStart + width * y + x);
-		    dataX[imgN][y].push(image[idx] / max)
+		    var val = image[idx]
+		    if (norm === true) {
+			val = val/max
+		    }
+		    dataX[imgN][y].push(val)
 		    if (image[idx] / max > 0.01) {
-			mean += image[idx]/max
+			mean += val
 			counts += 1
 		    }
 		}
@@ -81,7 +93,7 @@ export function getImageData(data) {
 	}
 	console.log("MEAN", mean/(counts), dataX)
 	let pixDims = niftiHeader.pixDims
-	return [dataX, pixDims[1], pixDims[2], pixDims[3], mean/counts]
+	return [dataX, pixDims[2], pixDims[1], pixDims[3], mean/counts, max]
     }
     else {
 	alert("File not recognised")
@@ -90,9 +102,9 @@ export function getImageData(data) {
 }
 
 // Take NIFTI file data and return the grayscale image values
-export function convertNifti(data) {
-    var res = getImageData(data)
+export function convertNifti(data, norm) {
+    var res = getImageData(data, norm)
     var dataX = res[0]
     var image3D = new Image3D(dataX, res[1], res[2], res[3])
-    return [image3D, res[4]]
+    return [image3D, res[4], res[5]]
 }

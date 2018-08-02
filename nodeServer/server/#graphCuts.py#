@@ -14,7 +14,7 @@ def graphCut(img, probs, edgeVal=1):
     nodes = g.add_nodes(total)
 
     edgeFactors = np.zeros(shape)
-    edgeCoeff = 2
+    edgeCoeff = 5
     for i in range(shape[0]):
         for j in range(shape[1]):
             for k in range(shape[2]):

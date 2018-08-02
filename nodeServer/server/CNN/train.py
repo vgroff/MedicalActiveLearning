@@ -10,42 +10,45 @@ from cnnUtils import saveModel, loadModel
 from imageUtils import ImageManager, getDatasetInfo
 from model import getUNet, getUNet2, getPCNet
 
-from imageReader import readFunc
+from imageReader import getImages
 
 from keras.optimizers import Adam, SGD
 from model import weighted_dice_coefficient_loss
 
 
-def getImages(folder, size):
-    print("Getting images")
-    trainPaths = getDatasetInfo(folder)
-    imgs = []
-    labels = []
-    imageOrigs = []
-    i = 0
-    for img in readFunc(trainPaths, None,
-                        {"folder":folder, "depth":132, "size":size, "whiten":True}):
-        i += 1
-        print("Image {}".format(i), end="\r")
-        image = img["features"]["x"]
-        label = img["labels"]["y"]
-        imageOrig = img["original"]
-        imgPath = img["imgPath"]
-        newImg = np.swapaxes(image, 0,3)
-        newLabel = np.swapaxes(label, 0,3)
-        imageOrig = np.swapaxes(imageOrig, 0, 3)
-        yield { "imgTr": newImg, "label": newLabel, "img": imageOrig , "imgPath": imgPath }
+# def getImages(folder, size):
+#     print("Getting images")
+#     trainPaths = getDatasetInfo(folder)
+#     imgs = []
+#     labels = []
+#     imageOrigs = []
+#     i = 0
+#     for img in readFunc(trainPaths[:4], None,
+#                         {"folder":folder, "depth":132, "size":size, "whiten":True}):
+#         i += 1
+#         print("Image {}".format(i), end="\r")
+#         image = img["features"]["x"]
+#         label = img["labels"]["y"]
+#         imageOrig = img["original"]
+#         imgPath = img["imgPath"]
+#         newImg = np.swapaxes(image, 0,3)
+#         newLabel = np.swapaxes(label, 0,3)
+#         imageOrig = np.swapaxes(imageOrig, 0, 3)
+#         yield { "imgTr": newImg, "label": newLabel, "img": imageOrig , "imgPath": imgPath }
 
 def train():
-    useOldImg = True
+    useOldImg   = True
     useOldModel = True
     nClasses = 2
+    length = 80
     if (useOldImg == False):
         folder = "/home/vincent/Documents/imperial/individual project/datasets/decathlon/Task02_Heart"
-        size = [64, 64, 64] # 32,80,80
-        func = getImages(folder, size)
-        mngr = ImageManager(func)
-        imgs, labels = mngr.getTrainImages()
+        size = [length]*3 # 32,80,80
+        dataset = getDatasetInfo(folder)
+        data = getImages(folder, dataset, length, 0.2, True, [0, 9], [1,2])
+        mngr = ImageManager(data)
+        imgs, labels, info = mngr.getTrainImages()
+        valImgs, valLabels, valInfo = mngr.getValImages()
         f = open("imgs.pkl", "wb")
         pickle.dump(mngr, f)
         f.close()
@@ -54,22 +57,26 @@ def train():
         f = open("imgs.pkl", "rb")
         mngr = pickle.load(f)
         f.close()
-        imgs, labels = mngr.getTrainImages()
+        imgs, labels, info = mngr.getTrainImages()
+        valImgs, valLabels, valInfo = mngr.getValImages()
     print("Getting net...")
     if (useOldModel == False):
-        model = getUNet2((1,64,64,64), nClasses, lr=5e-4)
+        model = getUNet2((1,length,length,length), nClasses, lr=4e-5)
     else:
         model = loadModel(1)
-        adam = Adam(lr = 0.2e-4)
-        model.compile(optimizer = adam, loss = weighted_dice_coefficient_loss)
-    print("Training")
+        lr = 3.5e-4
+        adam = Adam(lr=lr)
+        sgd = SGD(lr=lr, momentum=0.95, decay=0.0, nesterov=True)
+        model.compile(optimizer = sgd, loss = weighted_dice_coefficient_loss)
+    print("Training on {}, validating on {}".format(len(imgs), len(valImgs)))
     learning_rate_reduction = ReduceLROnPlateau(monitor='loss',
                                                 patience=2,
                                                 verbose=1,
-                                                factor=0.65,
-                                                min_lr=1.0e-5)
-    model.fit(np.array(imgs), np.array(labels), batch_size=1, verbose=1, epochs=35, shuffle=True,
-              validation_split=0.2, callbacks=[learning_rate_reduction])
+                                                factor=0.7,
+                                                min_lr=1e-5)
+    model.fit(np.array(imgs), np.array(labels), batch_size=1, verbose=1, epochs=10, shuffle=True,
+              validation_data=(np.array(valImgs), np.array(valLabels)),
+              callbacks=[learning_rate_reduction])
     saveModel(model)
 
 if __name__ == '__main__':
@@ -81,8 +88,13 @@ if __name__ == '__main__':
     train()
 
 # TO-DO:
-# - Do graphcuts/BIFSeg, using front-end
-# - Resize the output image correctly back to original size
+# Train on lower learning rate with SGD!
+# Need proper image augmentation. IDEAS:
+# - More samples
+# - Rotations
+# For multiple segmentations, might be most efficient to have a segmentation with large margins and then cut that up multiple times.
+
+
 
 
 
