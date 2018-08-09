@@ -75,9 +75,9 @@ def predict():
                     #print(depth)
                     counts3[depth] += 1
         print("dice:", tf.Session().run(weighted_dice_coefficient_loss(np.array(labels[i], dtype="float64"), np.array(result[i], dtype="float64"))))
-        writeNIFTI(newLabel, outputFolder, "{}_pred".format(i))
-        writeNIFTI(newLabel2, outputFolder, "{}_truth".format(i))
-        writeNIFTI(imgsActual[i], outputFolder, "{}_actual".format(i))
+        writeNIFTI(newLabel.astype(np.float32), outputFolder, "{}_pred".format(i))
+        writeNIFTI(newLabel2.astype(np.float32), outputFolder, "{}_truth".format(i))
+        writeNIFTI(imgsActual[i].astype(np.float32), outputFolder, "{}_actual".format(i))
         #writeNIFTI(imgs[i][0], outputFolder, "{}_processed".format(i))
     print(counts, counts3)
         

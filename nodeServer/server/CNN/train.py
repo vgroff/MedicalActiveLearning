@@ -38,9 +38,6 @@ def quickTrain(model, img, weighting, segmentation, epochs=1):
         for j, col in enumerate(row):
             for k, val in enumerate(col):
                 labels[int(round(val)),i,j,k] = 1
-                if (int(round(val)) == 1):
-                    c += 1
-    print(c)
     #print("train to fit", segmentation, file=sys.stderr)
     lr = 2e-4#2.5e-5#1.2e-4#7.5e-5
     adam = Adam(lr=lr)

@@ -58,6 +58,7 @@ app.post('/segment', function response(req, res) {
     var print = ""
     process.stdout.on('data', async function(data) {
 	var str = data.toString()
+	console.log(str)
 	resp += str
 	log  += str
 	var l = str.length

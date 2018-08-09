@@ -4,7 +4,8 @@ import numpy as np
 import os
 import math
 import random
-from scipy.ndimage import zoom
+#from scipy.ndimage import zoom
+from skimage.transform import rescale as zoom
 
 from dltk.io.preprocessing import whitening
 
@@ -99,7 +100,6 @@ def readFunc(dataset, mode, params, crop=True):
     print("leaving reader")
     return
 
-    
 
 def getImages(folder, dataset, size, valFraction, augment=True, margins=[2,9], minMargins=[1,2]):
     shape      = [size]*3
@@ -114,7 +114,7 @@ def getImages(folder, dataset, size, valFraction, augment=True, margins=[2,9], m
     
     for ID, dataPoint in enumerate(dataset):
         if (augment == True and ID < valSplit):
-            orientations = random.sample(range(0, 6), 3)
+            orientations = random.sample(range(0, 6), 1)
         else:
             orientations = [True]
         for orientationIndex, orientation in enumerate(orientations):
@@ -125,21 +125,24 @@ def getImages(folder, dataset, size, valFraction, augment=True, margins=[2,9], m
             img_sitk = sitk.ReadImage(os.path.join(folder, imgPath))
             img = sitk.GetArrayFromImage(img_sitk).astype(np.float32)
             imgOrig = sitk.GetArrayFromImage(img_sitk).astype(np.float32)
+            maxVal = img.max()
+            img /= maxVal
+            imgOrig /= maxVal
             labelPath = dataPoint["label"]
             label_sitk = sitk.ReadImage(os.path.join(folder, labelPath))
-            label = sitk.GetArrayFromImage(label_sitk).astype(np.float32)
+            label = sitk.GetArrayFromImage(label_sitk).astype(np.int8)
             label, img, imgOrig, bounds, padding = cropToSeg(label, img, imgOrig,
                                                              margins[1], margins[0],
                                                              size, minMargins, randomized=True)
 
             print("Original size", img.shape[0])
 
-            img = whitening(img)
             resizeFactor = 1
             if (int(img.shape[0]) != size):
                 resizeFactor = size / int(img.shape[0])
-                img = zoom(img, resizeFactor, order=1)
-                imgOrig = zoom(imgOrig, resizeFactor, order=1)
+                img = zoom(img, resizeFactor, order=1, multichannel=False)
+                imgOrig = zoom(imgOrig, resizeFactor, order=1, multichannel=False)
+            img = whitening(img)
             img = np.stack([img], axis=-1)
             
             
@@ -148,7 +151,7 @@ def getImages(folder, dataset, size, valFraction, augment=True, margins=[2,9], m
                 for j, col in enumerate(row):
                     for k, depth in enumerate(col):
                         catLabels[i, j, k, int(round(depth))] = 1
-            catLabels = zoom(catLabels, [resizeFactor]*3+[1], order=1)
+            catLabels = zoom(catLabels, [resizeFactor]*3+[1], order=1,  multichannel=True)
 
 
             # img = np.stack([img], axis=-1).astype(np.float32)

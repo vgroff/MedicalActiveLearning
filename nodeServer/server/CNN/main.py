@@ -4,8 +4,8 @@ import tensorflow as tf
 from graphCuts import graphCut
 from imageUtils import cubePadding, resize3D, toCategorical
 from cnnUtils import loadModel
-from scipy.ndimage import zoom
-#from skimage.transform import rescale as zoom
+#from scipy.ndimage import zoom
+from skimage.transform import rescale as zoom
 import queue
 
 from train import quickTrain
@@ -15,6 +15,9 @@ from dltk.io.preprocessing import whitening
 
 import SimpleITK as sitk
 
+from model import weighted_dice_coefficient_loss, weightedDiceLoss
+
+#from skimage.transform import rescale as zoom
 
 
 def writeNIFTI(arr, folder, name):
@@ -174,9 +177,9 @@ def main(imgOrig, labelOrig, cnn=True, graphCuts=True, BIFSeg=True):
         img, padding = cubePadding(imgOrig, cnnSize)
         label, padding = cubePadding(labelOrig, cnnSize)
         size = img.shape[0]
-        img = whitening(img)
         resizeFactor = cnnSize / size
-        img = zoom(img, resizeFactor, order=1)
+        img = zoom(img, resizeFactor, order=1, multichannel=False)
+        img = whitening(img)
         img = np.stack([img], axis=0).astype(np.float32)
         #img = np.moveaxis(img, 3, 0)
 
@@ -190,7 +193,7 @@ def main(imgOrig, labelOrig, cnn=True, graphCuts=True, BIFSeg=True):
             result = np.argmax(result[0], axis=0)
             print("NUM OBJECT PIX:", np.count_nonzero(result == 1), file=sys.stderr)
             #result = np.moveaxis(result, 3, 0)
-            result = zoom(result, 1/resizeFactor, order=1)
+            result = zoom(result, 1/resizeFactor, order=1, multichannel=False )
             #result = result[0]
             result = result[ padding[0][0] : int(result.shape[0]) - padding[0][1],
                              padding[1][0] : int(result.shape[1]) - padding[1][1],
@@ -200,8 +203,9 @@ def main(imgOrig, labelOrig, cnn=True, graphCuts=True, BIFSeg=True):
             return result
         else:
             # Resize probs.
+            resultOrig = result[0]
             result = result[0]
-            result = zoom(result, [1] + [1/resizeFactor]*3, order=1)
+            result = zoom(result, [1] + [1/resizeFactor]*3, order=1, multichannel=False)
             probsPadded = result
             result = result[ :,
                              padding[0][0] : int(result.shape[1]) - padding[0][1],
@@ -231,29 +235,30 @@ def main(imgOrig, labelOrig, cnn=True, graphCuts=True, BIFSeg=True):
 
     seg = graphCut(segImg, probs, stdDev)
 
-    if (BIFSeg == True):
-        #np.set_printoptions(precision=8)
-        #weightArr = np.ones(probs.shape)
-        #updateGeodesics(0.4, 0.2, 0.02, segImg, probs, seg, weightArr)
-        #weightArr = buildWeightArr(segImg, seg, probs, distanceLim=0.4, stdDev=0.2, minProbDiff=0.2, scribbleWeight=10)
-        #print("SEG\n", seg)
-        #print("PROBS\n", probs)
-        #print(padding)
-        #print("Weights\n",weightArr)
+    if (BIFSeg == True):                       
+                        
         seg = cubePadding(seg, cnnSize)[0]
         resizeFactor = cnnSize / size
-        seg = zoom(seg, resizeFactor, order=1)
+        seg = zoom(seg, resizeFactor, order=1, multichannel=False)
+
         weighting = buildWeightArr(img, seg, probsPadded)
+        #segCat = np.zeros(weighting.shape)
+        #for i, row in enumerate(seg):
+        #    for j, col in enumerate(row):
+        #        for k, val in enumerate(col):
+        #            segCat[int(round(val)), i, j, k] = 1
+        #weighted_dice_coefficient_loss(segCat.astype(np.float32), resultOrig.astype(np.float32))
+        #weightedDiceLoss(weighting, segCat.astype(np.float32), resultOrig.astype(np.float32))
         #weightZoom = zoom(weighting, [1] + [1/resizeFactor]*3, order=1)
         #weightZoom = weightZoom[ 0,
         #                         padding[0][0] : int(weighting.shape[1]) - padding[0][1],
         #                         padding[1][0] : int(weighting.shape[2]) - padding[1][1],
         #                         padding[2][0] : int(weighting.shape[3]) - padding[2][1]]
         stackedImg = np.stack([img], axis=0)
-        quickTrain(model, stackedImg, weighting, seg, 15)
+        quickTrain(model, stackedImg, weighting, seg, 5)
         result = model.predict(np.array([stackedImg]))
         result = result[0]
-        result = zoom(result, [1] + [1/resizeFactor]*3, order=1)
+        result = zoom(result, [1] + [1/resizeFactor]*3, order=1, multichannel=False )
         result = result[ :,
                          padding[0][0] : int(result.shape[1]) - padding[0][1],
                          padding[1][0] : int(result.shape[2]) - padding[1][1],
@@ -281,52 +286,52 @@ if __name__ == '__main__':
     tf.logging.set_verbosity(tf.logging.ERROR)
     os.environ["CUDA_VISIBLE_DEVICES"] = '0'
     
-    #action = sys.argv[1]
-    #lines = sys.stdin.readlines()
-    #img = json.loads(lines[0][:-1])
-    #label = json.loads(lines[1])
+    action = sys.argv[1]
+    lines = sys.stdin.readlines()
+    img = json.loads(lines[0][:-1])
+    label = json.loads(lines[1])
 
-    action = "cnnGraphBIFSeg"
-    img = np.array([
-        np.array([np.array([0.80,0.85,0.90,0.80]),
-                  np.array([0.90,0.80,0.90,0.85]),
-                  np.array([0.75,0.85,0.76,0.85]),
-                  np.array([0.85,0.85,0.80,0.80])]),
+    # action = "cnnGraphBIFSeg"
+    # img = np.array([
+    #     np.array([np.array([0.80,0.85,0.90,0.80]),
+    #               np.array([0.90,0.80,0.90,0.85]),
+    #               np.array([0.75,0.85,0.76,0.85]),
+    #               np.array([0.85,0.85,0.80,0.80])]),
         
-        np.array([np.array([0.85,0.80,0.25,0.20]),
-                  np.array([0.90,0.75,0.20,0.20]),
-                  np.array([0.85,0.90,0.65,0.65]),
-                  np.array([0.85,0.80,0.60,0.65])]),
+    #     np.array([np.array([0.85,0.80,0.25,0.20]),
+    #               np.array([0.90,0.75,0.20,0.20]),
+    #               np.array([0.85,0.90,0.65,0.65]),
+    #               np.array([0.85,0.80,0.60,0.65])]),
         
-        np.array([np.array([0.45,0.35,0.20,0.23]),
-                  np.array([0.40,0.32,0.42,0.45]),
-                  np.array([0.35,0.35,0.55,0.55]),
-                  np.array([0.35,0.31,0.60,0.65])]),
+    #     np.array([np.array([0.45,0.35,0.20,0.23]),
+    #               np.array([0.40,0.32,0.42,0.45]),
+    #               np.array([0.35,0.35,0.55,0.55]),
+    #               np.array([0.35,0.31,0.60,0.65])]),
         
-        np.array([np.array([0.10,0.10,0.20,0.17]),
-                  np.array([0.15,0.15,0.25,0.12]),
-                  np.array([0.05,0.10,0.55,0.65]),
-                  np.array([0.10,0.05,0.56,0.60])])
+    #     np.array([np.array([0.10,0.10,0.20,0.17]),
+    #               np.array([0.15,0.15,0.25,0.12]),
+    #               np.array([0.05,0.10,0.55,0.65]),
+    #               np.array([0.10,0.05,0.56,0.60])])
 
-        ])
-    label =  np.array([
-        np.array([np.array([1,0,1,0]),
-                  np.array([0,0,0,0]),
-                  np.array([0,0,0,0]),
-                  np.array([0,0,0,0])]),
-        np.array([np.array([0,0,0,0]),
-                  np.array([0,0,0,0]),
-                  np.array([0,0,1,0]),
-                  np.array([0,0,0,0])]),
-        np.array([np.array([0,0,0,0]),
-                  np.array([0,0,0,0]),
-                  np.array([0,0,2,0]),
-                  np.array([0,0,0,0])]),
-        np.array([np.array([0,0,0,0]),
-                  np.array([0,0,0,0]),
-                  np.array([0,0,2,0]),
-                  np.array([0,0,0,0])]),
-        ])
+    #     ])
+    # label =  np.array([
+    #     np.array([np.array([1,0,1,0]),
+    #               np.array([0,0,0,0]),
+    #               np.array([0,0,0,0]),
+    #               np.array([0,0,0,0])]),
+    #     np.array([np.array([0,0,0,0]),
+    #               np.array([0,0,0,0]),
+    #               np.array([0,0,1,0]),
+    #               np.array([0,0,0,0])]),
+    #     np.array([np.array([0,0,0,0]),
+    #               np.array([0,0,0,0]),
+    #               np.array([0,0,2,0]),
+    #               np.array([0,0,0,0])]),
+    #     np.array([np.array([0,0,0,0]),
+    #               np.array([0,0,0,0]),
+    #               np.array([0,0,2,0]),
+    #               np.array([0,0,0,0])]),
+    #     ])
     
     graphCuts = True
     BIFSeg = False
@@ -360,13 +365,11 @@ if __name__ == '__main__':
         print("Done")
 
 # TO-DO NOW:
-# - Weight array is clearly wrong in multiple parts
-# - Segmentation is fucked
+# - segmentation needs to be categorical!
 
-
-# - For BIFSeg, also need to consider how it will affect the weight array. Everything needs to be resized beforehand, then the weight array is produced
-# - Check that the predict function is doing everything ok. Some training images look weird, with bits missing...
-# - Have the print function say "Start:" as well as "Done"
+# - Check that the predict function is doing everything ok. Some training images look weird, with bits missing... Zoom function is borked I think
+# - Seriously need to find a good zoom function
+# - Need to reduce the time taken
 # - Start writing project! U-net and BIFSeg
 
 
@@ -380,3 +383,4 @@ if __name__ == '__main__':
 # - Offer "types" of CNNs, each with a specialization in an organ/tumour/imaging type. Offer ability to build new ones or to add images to existing ones.
 # - Consider fine-tuning later layers only
 # - Consider a geodesic mode on the front end, where the brush size is influenced by (2D) geodesic distances? Could have a slider to control the relative importance of the physical and geodesic distance, as well as a second variable to control the strength of the paths (sigma in the boundary eq.) and a "maxRadius" option too?
+# - Change the front-end scrolling behaviour so that it jumps images if need be

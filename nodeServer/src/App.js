@@ -49,7 +49,7 @@ class App extends Component {
 	fr.onloadend = function(evt) {
 	    if (evt.target.readyState === FileReader.DONE) {
 		console.log("Image loaded")
-		var res = convertNifti(evt.target.result)
+		var res = convertNifti(evt.target.result, true)
 		var img = res[0]
 		var meanVal = res[1]
 		var maxVal = res[2]
