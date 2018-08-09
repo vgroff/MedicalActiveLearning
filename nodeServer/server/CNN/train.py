@@ -5,6 +5,7 @@ from keras.callbacks import ReduceLROnPlateau
 
 import os
 import pickle
+import sys
 
 from cnnUtils import saveModel, loadModel
 from imageUtils import ImageManager, getDatasetInfo
@@ -13,29 +14,43 @@ from model import getUNet, getUNet2, getPCNet
 from imageReader import getImages
 
 from keras.optimizers import Adam, SGD
-from model import weighted_dice_coefficient_loss
+from model import weighted_dice_coefficient_loss, weightedDiceLoss
 
+from functools import partial
 
-# def getImages(folder, size):
-#     print("Getting images")
-#     trainPaths = getDatasetInfo(folder)
-#     imgs = []
-#     labels = []
-#     imageOrigs = []
-#     i = 0
-#     for img in readFunc(trainPaths[:4], None,
-#                         {"folder":folder, "depth":132, "size":size, "whiten":True}):
-#         i += 1
-#         print("Image {}".format(i), end="\r")
-#         image = img["features"]["x"]
-#         label = img["labels"]["y"]
-#         imageOrig = img["original"]
-#         imgPath = img["imgPath"]
-#         newImg = np.swapaxes(image, 0,3)
-#         newLabel = np.swapaxes(label, 0,3)
-#         imageOrig = np.swapaxes(imageOrig, 0, 3)
-#         yield { "imgTr": newImg, "label": newLabel, "img": imageOrig , "imgPath": imgPath }
+def prepImageManager(folders, size):
+    mngr = None
+    for i, folder in folders:
+        print("Folder {}/{}".format(i+1,len(folders)))
+        shape = [size]*3
+        dataset = getDatasetInfo(folder)
+        data = getImages(folder, dataset, length, 0.2, True, [0, 9], [1,2])
+        if (mngr):
+            mngr.addData(data)
+        else:
+            mngr = ImageManager(data)
+    return mngr
 
+def quickTrain(model, img, weighting, segmentation, epochs=1):
+    labels = np.zeros(weighting.shape)
+    c = 0
+    for i, row in enumerate(segmentation):
+        for j, col in enumerate(row):
+            for k, val in enumerate(col):
+                labels[int(round(val)),i,j,k] = 1
+                if (int(round(val)) == 1):
+                    c += 1
+    print(c)
+    #print("train to fit", segmentation, file=sys.stderr)
+    lr = 2e-4#2.5e-5#1.2e-4#7.5e-5
+    adam = Adam(lr=lr)
+    sgd = SGD(lr=lr, momentum=0.95, decay=0.0, nesterov=False)
+    loss = partial(weightedDiceLoss, weighting)
+    model.compile(optimizer = adam, loss = loss)
+    model.fit(np.array([img]), np.array([labels]), validation_split=0.0, batch_size=1, verbose=1, epochs=epochs)#, 
+              #callbacks=[learning_rate_reduction])
+
+    
 def train():
     useOldImg   = True
     useOldModel = True
@@ -64,18 +79,19 @@ def train():
         model = getUNet2((1,length,length,length), nClasses, lr=4e-5)
     else:
         model = loadModel(1)
-        lr = 3.5e-4
+        lr = 2.5e-5#1.2e-4#7.5e-5
+        epochs = 5
         adam = Adam(lr=lr)
-        sgd = SGD(lr=lr, momentum=0.95, decay=0.0, nesterov=True)
-        model.compile(optimizer = sgd, loss = weighted_dice_coefficient_loss)
+        sgd = SGD(lr=lr, momentum=0.95, decay=0.0, nesterov=False)
+        model.compile(optimizer = adam, loss = weighted_dice_coefficient_loss)
     print("Training on {}, validating on {}".format(len(imgs), len(valImgs)))
     learning_rate_reduction = ReduceLROnPlateau(monitor='loss',
-                                                patience=2,
+                                                patience=3,
                                                 verbose=1,
-                                                factor=0.7,
+                                                factor=0.75,
                                                 min_lr=1e-5)
-    model.fit(np.array(imgs), np.array(labels), batch_size=1, verbose=1, epochs=10, shuffle=True,
-              validation_data=(np.array(valImgs), np.array(valLabels)),
+    model.fit(np.array(imgs), np.array(labels), batch_size=1, verbose=1, epochs=epochs,
+              shuffle=True, validation_data=(np.array(valImgs), np.array(valLabels)),
               callbacks=[learning_rate_reduction])
     saveModel(model)
 
@@ -88,11 +104,8 @@ if __name__ == '__main__':
     train()
 
 # TO-DO:
-# Train on lower learning rate with SGD!
-# Need proper image augmentation. IDEAS:
-# - More samples
-# - Rotations
-# For multiple segmentations, might be most efficient to have a segmentation with large margins and then cut that up multiple times.
+# - Multiple datasets at once
+# - Not sure that mean weighted dice coefficient works with resized images. They will be both pushed towards 1 - but this might actually be ok but for graph cuts and for validation data, maybe. Could try a more normal loss function otherwise
 
 
 

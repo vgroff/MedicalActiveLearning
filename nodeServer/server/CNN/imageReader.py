@@ -138,8 +138,8 @@ def getImages(folder, dataset, size, valFraction, augment=True, margins=[2,9], m
             resizeFactor = 1
             if (int(img.shape[0]) != size):
                 resizeFactor = size / int(img.shape[0])
-                img = zoom(img, resizeFactor)
-                imgOrig = zoom(imgOrig, resizeFactor)
+                img = zoom(img, resizeFactor, order=1)
+                imgOrig = zoom(imgOrig, resizeFactor, order=1)
             img = np.stack([img], axis=-1)
             
             
@@ -148,7 +148,7 @@ def getImages(folder, dataset, size, valFraction, augment=True, margins=[2,9], m
                 for j, col in enumerate(row):
                     for k, depth in enumerate(col):
                         catLabels[i, j, k, int(round(depth))] = 1
-            catLabels = zoom(catLabels, [resizeFactor]*3+[1])
+            catLabels = zoom(catLabels, [resizeFactor]*3+[1], order=1)
 
 
             # img = np.stack([img], axis=-1).astype(np.float32)
@@ -174,29 +174,35 @@ def getImages(folder, dataset, size, valFraction, augment=True, margins=[2,9], m
                 valLabels.append(catLabels)
                 valImgInfo.append(info)
             else:
-                newImg = np.copy(img)
-                newCatLabels = np.copy(catLabels)
+                newImg = img
+                newCatLabels = catLabels
                 if (orientation == 0):
                     pass
                 elif (orientation == 1 or orientation == 2):
                     newImg = np.moveaxis(newImg, orientation, 0)
                     newCatLabels = np.moveaxis(newCatLabels, orientation, 0)
+                    imgOrig = np.moveaxis(imgOrig, orientation, 0)
                 elif (orientation == 3):
                     newImg = np.moveaxis(newImg, 0, 2)
                     newCatLabels = np.moveaxis(newCatLabels, 0, 2)
+                    imgOrig = np.moveaxis(imgOrig, 0, 2)
                 elif (orientation == 4):
                     newImg = np.swapaxes(newImg, 2, 1)
                     newCatLabels = np.swapaxes(newCatLabels, 2, 1)
+                    imgOrig = np.swapaxes(imgOrig, 2, 1)
                 elif (orientation == 5):
                     newImg = np.swapaxes(newImg, 0, 2)
                     newCatLabels = np.swapaxes(newCatLabels, 0, 2)
+                    imgOrig = np.swapaxes(imgOrig, 0, 2)
                 for i in range(3):
                     if (random.random() > 0.5):
                         newImg = np.flip(newImg, axis=i)
                         newCatLabels = np.flip(newCatLabels, axis=i)
+                        imgOrig = np.flip(imgOrig, axis=i)
                 newImg = np.moveaxis(newImg, 3, 0)
                 newCatLabels = np.moveaxis(newCatLabels, 3, 0)
                 #print(newImg.shape, newCatLabels.shape)
+                info["imgOrig"] = imgOrig
                 trImgs.append(newImg)
                 trLabels.append(newCatLabels)
                 trImgInfo.append(info)

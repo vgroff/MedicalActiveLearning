@@ -24,7 +24,15 @@ class ImageManager():
         if size == None:
             size = len(self.valImgs)
         return self.valImgs[start:start+size], self.valLabels[start:start+size], self.valImgInfo[start:start+size]
-    
+
+    def addData(self, data):
+        self.trainImgs    += data[0][0]
+        self.trainLabels  += data[0][1]
+        self.trainImgInfo += data[0][2]
+        self.valImgs      += data[1][0]
+        self.valLabels    += data[1][1]
+        self.valImgInfo   += data[1][2]
+  
 
 
 

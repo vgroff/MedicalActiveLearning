@@ -5,6 +5,22 @@ import {convertNifti, getImageData} from "./utils/images/nifti.js"
 import {DropDown, RadioList} from "./utils/gui/baseComponents.js"
 import {range} from "./utils/misc.js"
 
+async function fetchSeg(imgArr, labelArr, action) {
+    console.log("Making server request...")
+    var res = await fetch("/segment", {
+	method: 'POST',
+	headers: {
+	    'Accept': 'application/json',
+	    'Content-Type': 'application/json',
+	    "Connection": "close"
+	},
+	body: JSON.stringify({"image": JSON.stringify(imgArr),
+			      "scribbles": JSON.stringify(labelArr),
+			      "action":action})
+    })
+    res = await res.text()
+    return res
+}
 
 
 class App extends Component {
@@ -22,6 +38,7 @@ class App extends Component {
 	this.maskColourNames = ["Background", "Object"]
 	this.actions = ["segment","box"]
 	this.colourBias = 0
+	this.specialMask = null
     }
 
     loadImage(file) {
@@ -81,6 +98,9 @@ class App extends Component {
 					    this.state.activeMask)
 			}
 		    }
+		}
+		if (this.specialMask !== null) {
+		    this.setActiveMask(this.specialMask)
 		}
 		this.forceUpdate()
 		
@@ -216,6 +236,7 @@ class App extends Component {
 
     endGraphCuts() {
 	if (this.state.specialAction === 1) {
+	    this.colourBias = 0
 	    this.setState({specialAction: null, graphCutsText:"Graph Cuts Segmentation"})
 	}
     }
@@ -250,35 +271,44 @@ class App extends Component {
 	}
     }
 
-    cnnGraphSeg() {
+    cnnGraphSeg(BIFSeg) {
+	var currImg = this.images[this.state.imageIndex]
+	var first = false
 	if (this.state.specialAction === null) {
-	    var currImg = this.images[this.state.imageIndex]
-	    var imgArr = currImg.getImgArr()
-	    var labelArr = currImg.getMaskArr(this.state.activeMask)
-	    console.log("Making server request...")
-	    fetch("/segment", {
-		method: 'POST',
-		headers: {
-		    'Accept': 'application/json',
-		    'Content-Type': 'application/json'
-		},
-		body: JSON.stringify({"image": JSON.stringify(imgArr),
-				      "scribbles":JSON.stringify(labelArr),
-				      "action": "cnnGraphSeg"})
-	    }).then(function(response) {
-		console.log("Response recieved")
-		return response.text()
-	    }.bind(this)).then(function(text) {
-		console.log("text", text)
-		var mask = JSON.parse(text)
-		console.log("mask", mask)
-		var currImg = this.images[this.state.imageIndex]
-		this.addNewMask()
-		currImg.copyMask(mask, currImg.imagesX[0].masks.length - 1)
-		this.forceUpdate()
-	    }.bind(this)).catch(function(err) {console.log(err)});
+	    first = true
+	    this.colourBias = -2
+	    this.addNewMask()
+	    this.specialMask = currImg.getNumMasks() - 1
+	    this.setState({specialAction:2})
 	}
+	var action
+	if (BIFSeg === true) {
+	    action = "cnnGraphBIFSeg"
+	}
+	else {
+	    action = "cnnGraphSeg"
+	}
+	var imgArr = currImg.getImgArr()
+	var labelArr = currImg.getMaskArr(this.state.activeMask)
+	fetchSeg(imgArr, labelArr, action).then(function(text) {
+	    console.log("text", text)
+	    var mask = JSON.parse(text)
+	    console.log("mask", mask)
+	    var currImg   = this.images[this.state.imageIndex]
+	    var currMaskIndex = this.state.activeMask
+	    this.addNewMask()
+	    currImg.copyMask(mask, currImg.imagesX[0].masks.length - 1)
+	    this.setState({activeMask: this.specialMask})
+	    this.images[this.state.imageIndex].setActiveMask(this.specialMask)
+	    this.forceUpdate()
+	}.bind(this)).catch(function(err) {console.log(err)});
     }
+
+    endCnnGraphSeg() {
+	this.colourBias = 0
+	this.setState({specialAction:null})
+    }
+
 
     printPic() {
 	var currImg = this.images[this.state.imageIndex]
@@ -405,7 +435,7 @@ class App extends Component {
 	    
 	    </div>
 
-	    <RadioList options={["Alter Mask", "Crop Image"]}
+	    <RadioList options={["Segmentation", "Crop Image"]}
 	    exclusionary={true} checked={this.state.actionIndex}
 	    onChange={(val) => {this.setState({actionIndex:val})}}
 	    divStyleOuter={divStyle} radioStyle={elementStyle} labelStyle={elementStyle}
@@ -430,15 +460,24 @@ class App extends Component {
 	    onChange={(e) => {this.setBrushSize(parseInt(e.target.value))}}></input>
 
 	    {this.state.specialAction === null ?
+	     <button onClick={this.graphCuts.bind(this)}>{this.state.graphCutsText}</button>
+			    :null}
+	    {this.state.specialAction === 1 ?
+	     <button onClick={this.endGraphCuts.bind(this)}>End Graph Cuts</button>
+			   : null}
+	    {this.state.specialAction === null ?
 	     <button onClick={this.cnnSeg.bind(this)}>CNN Segmentation</button>
 			   : null}
 	    {this.state.specialAction === null ?
 	     <button onClick={this.cnnGraphSeg.bind(this)}>CNN+Graph Cuts Segmentation</button>
 			   : null}
-	    <button onClick={this.graphCuts.bind(this)}>{this.state.graphCutsText}</button>
-	    {this.state.specialAction === 1 ?
-	     <button onClick={this.endGraphCuts.bind(this)}>End Graph Cuts</button>
-			   : null}
+	    {this.state.specialAction === 2 ?
+	     <div>
+	     <button onClick={this.cnnGraphSeg.bind(this,false)}>Add Annotations (Graph Cuts)</button>
+	     <button onClick={this.cnnGraphSeg.bind(this,true)}>Add Annotations (BIFSeg)</button>
+	     <button onClick={this.endCnnGraphSeg.bind(this)}>Confirm Segmentation</button>
+	     </div>
+			      : null}
 	    
 	    </div>
 	    </div>
@@ -501,8 +540,8 @@ export default App
  */
 
 /* Shortest term TO-DO:
- * - Need to feed in images that arent cubes already - change scrolling behaviour to canvas instead of div
- * - Need to add in option for doing CNN then graph cuts without learning 
+ * - Change CNN method to copy onto correct thing. on wrong mask after graph cuts
+ * - CNN+graphCuts+graphCuts annotations - does CNN+graphCuts button automatically ask? Send over and save the probs? Save on server-side?
  * - Offer multiple CNNs + active learning + active image database + eventual augmentation
  */
 

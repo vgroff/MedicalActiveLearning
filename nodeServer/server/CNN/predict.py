@@ -7,8 +7,8 @@ from keras.optimizers import Adam, SGD
 from dltk.core import metrics as metrics
 
 from cnnUtils import loadModel
-from imageUtils import getDatasetInfo
-from imageReader import readFunc
+from imageUtils import getDatasetInfo, ImageManager
+from imageReader import readFunc, getImages
 
 import pickle
 
@@ -20,7 +20,7 @@ from dltk.io.preprocessing import whitening
 
 
 def writeNIFTI(arr, folder, name):
-    new_sitk = sitk.GetImageFromArray(arr.astype(np.int32))
+    new_sitk = sitk.GetImageFromArray(arr)
     #new_sitk.CopyInformation(original['sitk'])
     path = os.path.join(folder, "{}.nii.gz".format(name))
     sitk.WriteImage(new_sitk, path)
@@ -35,16 +35,20 @@ def predict():
     outputFolder = "./predictions"
 
     print("Getting images")
-    f = open("imgs.pkl", "rb")
-    mngr = pickle.load(f)
-    f.close()
-    nStart = 19
-    n = 1
-    imgs, labels, info = mngr.getValImages()
-    
-    imgsActual = [info[i]["imgOrig"] for i in range(len(info))]
+    # f = open("imgs.pkl", "rb")
+    # mngr = pickle.load(f)
+    # f.close()
+    # nStart = 19
+    # n = 1
+    # imgs, labels, info = mngr.getValImages()
+    # imgsActual = [info[i]["imgOrig"] for i in range(len(info))]
 
-    print("img/label shape", np.array(imgs).shape, np.array(labels[0]).shape)
+    data = getImages(folder, trainPaths[:1], 80, 0)
+    mngr = ImageManager(data)
+    imgs, labels, info = mngr.getTrainImages()
+    imgsActual = [info[i]["imgOrig"] for i in range(len(imgs))]
+    
+    print("img/label shape", np.array(imgs).shape, np.array(labels[0]).shape, imgsActual[0].shape)
     result = model.predict(np.array(imgs))#, np.array(labels))
     print("result", result[0].shape)
     print(result.shape)
@@ -73,8 +77,8 @@ def predict():
         print("dice:", tf.Session().run(weighted_dice_coefficient_loss(np.array(labels[i], dtype="float64"), np.array(result[i], dtype="float64"))))
         writeNIFTI(newLabel, outputFolder, "{}_pred".format(i))
         writeNIFTI(newLabel2, outputFolder, "{}_truth".format(i))
-        writeNIFTI(np.around(imgsActual[i]), outputFolder, "{}_actual".format(i))
-        writeNIFTI(imgs[i][0], outputFolder, "{}_processed".format(i))
+        writeNIFTI(imgsActual[i], outputFolder, "{}_actual".format(i))
+        #writeNIFTI(imgs[i][0], outputFolder, "{}_processed".format(i))
     print(counts, counts3)
         
 if __name__ == '__main__':

@@ -35,7 +35,7 @@ export function getImageData(data,  norm) {
 	    maxVal = 2**16 - 1
 	}
 	else if (niftiHeader.numBitsPerVoxel == 32 && niftiHeader.datatypeCode === 8) {
-	    image = new Uint32Array(niftiImage)
+	    image = new Int32Array(niftiImage)
 	    maxVal = 2**32 - 1
 	}
 	else if (niftiHeader.numBitsPerVoxel == 32 && niftiHeader.datatypeCode === 16) {

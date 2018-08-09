@@ -48,7 +48,11 @@ def weighted_dice_coefficient(y_true, y_pred, axis=(-3, -2, -1), smooth=0.00001)
                               axis=axis) + smooth/2)/(K.sum(y_true,
                                                             axis=axis) + K.sum(y_pred,
                                                                                axis=axis) + smooth))
-
+def weightedDiceLoss(weighting, y_true, y_pred, axis=(-3, -2, -1), smooth=0.00001):
+    return -K.mean(2. * (K.sum(y_true * y_pred * weighting,
+                               axis=axis) + smooth/2)/(K.sum(y_true * weighting,
+                                                             axis=axis) + K.sum(y_pred * weighting,
+                                                                                axis=axis) + smooth))    
 
 def weighted_dice_coefficient_loss(y_true, y_pred):
     return -weighted_dice_coefficient(y_true, y_pred)
@@ -141,6 +145,11 @@ def create_context_module(input_layer, n_level_filters, dropout_rate=0.3, data_f
 
 def getUNet2(shape, nClasses, lr=5e-4):
     return isensee2017_model(input_shape=shape, n_labels=nClasses, initial_learning_rate=lr)
+
+
+
+
+## OLD ATTEMPTS
 
 
 def getUNet(input_size):

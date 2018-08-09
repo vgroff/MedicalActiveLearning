@@ -8,7 +8,13 @@ const compiler = webpack(config)
 const express = require("express")
 const path = require("path")
 const bodyParser = require('body-parser');
+const fs = require("fs")
 
+ongoingJobs = []
+
+function addJob(ongoingJobs, id) {
+    job = {"id":id, "lock":false};
+}
 
 
 const app = express();
@@ -23,6 +29,7 @@ app.get('/', function response(req, res) {
 });
 // Test app
 app.post('/segment', function response(req, res) {
+    req.setTimeout(0);
     //res.send("Welcome")
 
     // Use child_process.spawn method from 
@@ -39,7 +46,7 @@ app.post('/segment', function response(req, res) {
     // so, first name = Mike and last name = Will
     console.log("Request Received. Spawing Python process...")
 
-    var process = spawn('python3',[__dirname+"/main.py",
+    var process = spawn('python3',[__dirname+"/CNN/main.py",
 				  req.body.action]);//,
 				   //req.body.image,
 				   //req.body.scribbles] );
@@ -47,20 +54,36 @@ app.post('/segment', function response(req, res) {
     // Takes stdout data from script which executed
     // with arguments and send this data to res object
     var resp = ""
-    process.stdout.on('data', function(data) {
-	//console.log("SENDING:", data.toString())
+    var log = ""
+    var print = ""
+    process.stdout.on('data', async function(data) {
 	var str = data.toString()
 	resp += str
+	log  += str
 	var l = str.length
 	if (str.slice(l-5, l-1) === "Done") {
-	    console.log("Done sending")
+	    var start = 0
+	    for (var i = 0; i < resp.length; i++) {
+		print += "\n" + resp.slice(i,i+3)
+		if (resp.slice(i,i+3) === "[[[") {
+		    start = i
+		    break
+		}
+	    }
+	    console.log(start)
 	    //console.log("Sending: " + resp.slice(0, resp.length-5))
-	    res.send(resp.slice(0, resp.length-5))
+	    res.send(resp.slice(start, resp.length-5))
+	    //fs.writeFile("./respSend.txt", JSON.stringify(a))
+	    //fs.writeFile("./log.txt", log)
+	    //fs.writeFile("./print.txt", print)
+	    //fs.writeFile("./response.txt", resp.slice(start, resp.length-5))
+	    console.log("Done sending")
 	}
 	//data.toString());
     } )
     process.stderr.on('data', function(data) {
 	errMsg = "Server Err: " + data.toString()
+	log += errMsg
 	console.log(errMsg)
 	//res.send("Server Error occurred")
     } )
@@ -73,6 +96,7 @@ app.post('/segment', function response(req, res) {
     process.stdin.end();
     
 });
+
 
 app.listen(8080)
 

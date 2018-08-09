@@ -38,7 +38,7 @@ export class Image {
     }
 
     drawImage(canvas, canvasHeight, level, window, maskVisibility, maskColours) {
-	console.log("draw", level, window)
+	//console.log("draw", level, window)
 	// Get the dimensions
 	var height = this.data.length
 	var width  = this.data[0].length
@@ -66,7 +66,7 @@ export class Image {
 	else {
 	    this.drawImageOnly(canvas, canvasHeight, level, window, maskVisibility, maskColours)
 	}
-	console.log("drawing mask")
+	//console.log("drawing mask")
 	// Draw the image onto the canvas
 	for (var row = 0; row < height; row++) {
 	    for (var col = 0; col < width; col++) { 
@@ -191,10 +191,12 @@ export class Image {
     addNewMask(mask) {
 	var mask = []
 	for (var i = 0; i < this.data.length; i++) {
-	    mask.push([])
+	    var temp = []
 	    for (var j = 0 ; j < this.data[0].length; j++) {
-		mask[i].push(0)
+		temp.push(0)
 	    }
+	    mask.push(new Uint8Array(temp))
+	    
 	}
 	this.masks.push(mask)
     }
