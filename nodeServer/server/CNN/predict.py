@@ -33,20 +33,24 @@ def predict():
     trainPaths = getDatasetInfo(folder)
 
     outputFolder = "./predictions"
-
+    # 
     print("Getting images")
-    # f = open("imgs.pkl", "rb")
-    # mngr = pickle.load(f)
-    # f.close()
-    # nStart = 19
-    # n = 1
-    # imgs, labels, info = mngr.getValImages()
-    # imgsActual = [info[i]["imgOrig"] for i in range(len(info))]
-
-    data = getImages(folder, trainPaths[:1], 80, 0)
-    mngr = ImageManager(data)
+    f = open("imgs.pkl", "rb")
+    mngr = pickle.load(f)
+    f.close()
+    nStart = 19
+    n = 1
     imgs, labels, info = mngr.getTrainImages()
-    imgsActual = [info[i]["imgOrig"] for i in range(len(imgs))]
+    selection = [0,16,32,48]
+    print(len(imgs))
+    imgs, labels, info = [ [imgs[i] for i in selection], [labels[i] for i in selection],
+                           [info[i] for i in selection] ]
+    imgsActual = [info[i]["imgOrig"] for i in range(len(info))]
+
+    # data = getImages(folder, trainPaths[16:18], 80, 0)
+    # mngr = ImageManager(data)
+    # imgs, labels, info = mngr.getTrainImages()
+    # imgsActual = [info[i]["imgOrig"] for i in range(len(imgs))]
     
     print("img/label shape", np.array(imgs).shape, np.array(labels[0]).shape, imgsActual[0].shape)
     result = model.predict(np.array(imgs))#, np.array(labels))

@@ -26,8 +26,8 @@ def graphCut(img, probs, edgeVal=1):
                     if (probs1 > 1): probs1 = 1
                     if (probs2 > 1): probs2 = 1
                     g.add_tedge(nodes[index],
-                                -np.log(probs1),
-                                -np.log(probs2))
+                                -np.log(probs2),
+                                -np.log(probs1))
                 for img2d in range(i-1, i+2):
                     for coord in [[j, k+1], [j+1, k+1], [j+1, k], [j+1, k-1]]:
                         if (img2d >= 0 and coord[0] >= 0 and coord[1] >= 0) :
@@ -59,9 +59,9 @@ def graphCut(img, probs, edgeVal=1):
             for k in range(shape[2]):
                 index = i*shape[1]*shape[2] + j*shape[2] + k
                 if (probs[0,i,j,k] == -2):
-                    g.add_tedge(nodes[index], 0, 1 + maxEdge)
-                elif (probs[1,i,j,k] == -1):
                     g.add_tedge(nodes[index], 1 + maxEdge, 0)
+                elif (probs[1,i,j,k] == -1):
+                    g.add_tedge(nodes[index], 0, 1 + maxEdge)
     
     
     #print(counts)              
@@ -72,8 +72,8 @@ def graphCut(img, probs, edgeVal=1):
         for j in range(shape[1]):
             for k in range(shape[2]):
                 index = i*shape[1]*shape[2] + j*shape[2] + k
-                arr[i,j,k] = (1 + g.get_segment(nodes[index])) % 2
-    np.set_printoptions(precision=2, suppress=True)
+                arr[i,j,k] = g.get_segment(nodes[index])
+    #np.set_printoptions(precision=2, suppress=True)
     #print(img)
     #print(probs)
     #print(arr)

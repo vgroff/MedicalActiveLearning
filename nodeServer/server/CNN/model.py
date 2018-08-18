@@ -121,7 +121,7 @@ def isensee2017_model(input_shape=(4, 128, 128, 128), n_base_filters=16, depth=5
     activation_block = Activation(activation_name)(output_layer)
 
     model = Model(inputs=inputs, outputs=activation_block)
-    model.compile(optimizer=optimizer(lr=initial_learning_rate), loss=loss_function)
+    model.compile(optimizer=optimizer(lr=initial_learning_rate), metrics=["accuracy", weighted_dice_coefficient_loss], loss=loss_function)
     return model
 
 
@@ -143,8 +143,8 @@ def create_context_module(input_layer, n_level_filters, dropout_rate=0.3, data_f
     convolution2 = create_convolution_block(input_layer=dropout, n_filters=n_level_filters)
     return convolution2
 
-def getUNet2(shape, nClasses, lr=5e-4):
-    return isensee2017_model(input_shape=shape, n_labels=nClasses, initial_learning_rate=lr)
+def getUNet2(shape, nClasses, lr=5e-4, loss_function=weighted_dice_coefficient_loss, activation_name="sigmoid"):
+    return isensee2017_model(input_shape=shape, n_labels=nClasses, initial_learning_rate=lr, loss_function=loss_function, activation_name="sigmoid")
 
 
 
