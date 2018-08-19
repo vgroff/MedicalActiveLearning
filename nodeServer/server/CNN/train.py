@@ -62,11 +62,10 @@ def quickTrain(model, img, weighting, segmentation, epochs=1):
         for j, col in enumerate(row):
             for k, val in enumerate(col):
                 labels[int(round(val)),i,j,k] = 1
-    lr = 0.8e-4#2.5e-5#1.2e-4#7.5e-5
-    adam = Adam(lr=lr)
+    lr = 1.2e-4#2.5e-5#1.2e-4#7.5e-5
     sgd = SGD(lr=lr, momentum=0.95, decay=0.0, nesterov=False)
     loss = partial(weightedDiceLoss, weighting)
-    model.compile(optimizer = adam, loss = loss)
+    model.compile(optimizer = sgd, loss = loss)
     model.fit(np.array([img]), np.array([labels]), validation_split=0.0, batch_size=1, verbose=1, epochs=epochs)#, 
               #callbacks=[learning_rate_reduction])
 

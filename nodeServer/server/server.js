@@ -47,7 +47,7 @@ app.post('/segment', function response(req, res) {
     console.log("Request Received. Spawing Python process...")
 
     var process = spawn('python3',[__dirname+"/CNN/main.py",
-				  req.body.action]);//,
+				   req.body.action, "name"]);//,
 				   //req.body.image,
 				   //req.body.scribbles] );
  
@@ -86,6 +86,7 @@ app.post('/segment', function response(req, res) {
 	errMsg = "Server Err: " + data.toString()
 	log += errMsg
 	console.log(errMsg)
+	fs.writeFile("./errLog.txt", JSON.stringify(log))
 	//res.send("Server Error occurred")
     } )
     process.on("close", function() {	

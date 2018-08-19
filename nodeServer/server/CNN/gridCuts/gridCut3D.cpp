@@ -34,7 +34,6 @@ std::vector< std::vector< std::vector < double > > > gridCut3D(std::vector< std:
 	for (int z = 0; z < depth; z++) {
 		for (int y=0;y<height;y++) {
 			for (int x=0;x<width;x++) {
-				std::cout << regTerms[0][z][y][x] << " " << regTerms[1][z][y][x]<< std::endl;
 				grid->set_terminal_cap(grid->node_id(z, y, x), regTerms[0][z][y][x],
 						       regTerms[1][z][y][x]);
 				// Grid set edge
@@ -69,16 +68,6 @@ std::vector< std::vector< std::vector < double > > > gridCut3D(std::vector< std:
 		}
 	}
 
-	for (int z = 0; z < depth; z++) {
-		for (int y=0;y<height;y++) {
-			for (int x=0;x<width;x++) {
-				std::cout << counts[z][y][x] << " ";
-			}
-			std::cout << std::endl;
-		}
-		std::cout << std::endl;
-	}
-	
 	grid->compute_maxflow();
 
 	std::vector<std::vector<std::vector <double> > > segmentation;

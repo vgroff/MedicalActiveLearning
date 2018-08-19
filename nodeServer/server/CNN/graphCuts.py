@@ -5,7 +5,7 @@ def edgeFactor(i1, i2, dist, edgeVal):
     return np.exp((-(i1 - i2)**2/2*edgeVal**2))/dist
 
 
-def graphCut(img, probs, edgeVal=1):
+def graphCut(img, probs, edgeCoeff, edgeVal=1):
     shape = img.shape
     total = shape[0]*shape[1]*shape[2]
     # Create a graph with integer capacities.
@@ -14,7 +14,6 @@ def graphCut(img, probs, edgeVal=1):
     nodes = g.add_nodes(total)
 
     edgeFactors = np.zeros(shape)
-    edgeCoeff = 5
     smoothening = 1e-18
     for i in range(shape[0]):
         for j in range(shape[1]):

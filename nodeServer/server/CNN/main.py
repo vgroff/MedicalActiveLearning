@@ -7,13 +7,15 @@ from cnnUtils import loadModel
 #from scipy.ndimage import zoom
 from skimage.transform import rescale as zoom
 import queue
-import time import process_time as time
+from time import process_time as time
 import pickle
 
 from train import quickTrain
 from neuralNet import NeuralNetDatabase, NeuralNet
 
 from dltk.io.preprocessing import whitening
+
+import gridCut3D
 
 import SimpleITK as sitk
 
@@ -31,7 +33,7 @@ def writeNIFTI(arr, folder, name):
 
 
 def listsToArray(lists):
-    if (isinstance(lists, list)):
+    if (isinstance(lists, list) or isinstance(lists, tuple)):
         arr = []
         for l in lists:
             arr.append(listsToArray(l))
@@ -40,6 +42,16 @@ def listsToArray(lists):
     else:
         return lists
 
+def arrayToLists(arrays):
+    if (isinstance(arrays, np.ndarray)):
+        l = []
+        for arr in arrays:
+            l.append(arrayToLists(arr))
+        l = list(l)
+        return l
+    else:
+        return float(arrays)
+    
 def gaussian(x, mean, stdDev):
     coeff = (1/(stdDev*(2*np.pi)**0.5))
     return np.exp( - (x-mean)**2/(2*stdDev**2) )
@@ -106,34 +118,39 @@ def updateGeodesics(maxPathLength, stdDev, minEdge, img, probs, segmentation, we
             coords = q.get()
             row, col, depth = coords
             currPathLength = pathLengths[row, col, depth]
-            #print(coords, currPathLength, computedPathLengths[row,col,depth])
+            # The if statement below is mean to skip over things in the queue that we have already computed
             if (computedPathLengths[row, col, depth] >= 0 and
                 abs(currPathLength - computedPathLengths[row, col, depth]) < 0.0001):
+                # If weve got a path length saved and it is the same as the current path length
                 continue
             else:
+                # Save path length
                 computedPathLengths[row,col,depth] = currPathLength
             for direction in directions:
+                # Go in every direction
                 try:
                     newRow = row+direction[0]
                     newCol = col+direction[1]
                     newDepth = depth+direction[2]
-                    #print(probs[0, newRow, newCol, newDepth], index, otherVal)
                     if (newRow < 0 or newCol < 0 or newDepth < 0):
+                        # Dont go to negative indices
                         continue
                     otherVal = segmentation[newRow, newCol, newDepth]
                     if (probs[0, newRow, newCol, newDepth] >= 0) and index != otherVal:
+                        # If this is a normal (non-scrible) and it has the opposite marking
                         i1 = img[i, j, k]
                         i2 = img[newRow, newCol, newDepth]
                         length = 1 - np.exp(-(i2 - i1)**2/(2*stdDev**2)) + minEdge
                         newPathLength = currPathLength + length
                         if (newPathLength > maxPathLength):
+                            # If weve gone over the maximum path length, abandon
                             continue
                         destPathLength = pathLengths[newRow, newCol, newDepth]
                         if (newPathLength < destPathLength or destPathLength < 0):
+                            # If weve made a shorter path, save it and place in queue
                             q.put([newRow, newCol, newDepth])
                             weighting[0, newRow, newCol, newDepth] = 0
                             weighting[1, newRow, newCol, newDepth] = 0
-                            #print(newRow, newDepth, newCol, newPathLength, index, otherVal)
                             pathLengths[newRow, newCol, newDepth] = newPathLength
                 except IndexError as e:
                     pass
@@ -141,10 +158,10 @@ def updateGeodesics(maxPathLength, stdDev, minEdge, img, probs, segmentation, we
                     #print("{},{},{} out of bounds for array shape {}".format(newRow,newCol,newDepth, pathLengths.shape))
             nums[index] -=1
         #print(pathLengths)
-                
+
         
     
-def buildWeightArr(img, segmentation, probs, distanceLim=0.3, stdDev=0.1, minProbDiff=0.2, scribbleWeight=10):
+def buildWeightArr(img, segmentation, probs, distanceLim=0.3, stdDev=0.1, minProbDiff=0.2, scribbleWeight=6):
     weightArr = np.ones(probs.shape)
     scribbles = [[], []]
     for i, row in enumerate(probs[0]):
@@ -162,12 +179,47 @@ def buildWeightArr(img, segmentation, probs, distanceLim=0.3, stdDev=0.1, minPro
                     if (abs(probs1 - probs2) < minProbDiff):
                         weightArr[0,i,j,k] = 0
                         weightArr[1,i,j,k] = 0
-    updateGeodesics(0.4, 0.2, 0.02, img, probs, segmentation, weightArr)
+    updateGeodesics(0.2, 0.1, 0.01, img, probs, segmentation, weightArr)
     return weightArr
                     
-    # First do labels and uncertainty and lastly, geodesic
 
-def main(imgOrig, labelOrig, cnn=True, graphCuts=True, BIFSeg=True):
+def graphCuts(segImg, probs, edgeCoeff, stdDev, gridCuts, maxVal=None):
+    if (gridCuts == True):
+        if (maxVal == None):
+            maxVal = (26 * edgeCoeff) + 1
+        regTerms = []
+        softening = 1e-8
+        for p, prob in enumerate(probs):
+            regTerms.append([])
+            for i, img in enumerate(prob):
+                regTerms[-1].append([])
+                for j, row in enumerate(img):
+                    regTerms[-1][-1].append([])
+                    for k, val in enumerate(row):
+                        if (val == -2):
+                            if (p == 0): #if background penalty
+                                regTerms[-1][-1][-1].append(float(maxVal))
+                            else:
+                                regTerms[-1][-1][-1].append(float(0))
+                        elif (val == -1):
+                            if (p == 1): #if foreground penalty
+                                regTerms[-1][-1][-1].append(float(maxVal))
+                            else:
+                                regTerms[-1][-1][-1].append(float(0))
+                        else:
+                            regTerms[-1][-1][-1].append(-float(np.log(probs[(p+1)%2][i][j][k]+softening)))
+        regTermsVec = gridCut3D.CatVolume()
+        regTermsVec = regTerms
+        segImgVol   = gridCut3D.Volume()
+        segImgVol   = segImg
+        seg = gridCut3D.Volume()
+        seg = listsToArray(gridCut3D.gridCut3D(segImgVol, regTermsVec, edgeCoeff, stdDev))
+    else:
+        seg = graphCut(segImg, probs, edgeCoeff, stdDev)
+    return seg
+    
+
+def main(imgOrig, labelOrig, cnn=True, doGraphCuts=True, BIFSeg=True):
 
     manipTime = 0
     graphTime = 0
@@ -196,7 +248,7 @@ def main(imgOrig, labelOrig, cnn=True, graphCuts=True, BIFSeg=True):
         result = model.predict(np.array([img]))
         predictTime += time() - t
         
-        if graphCuts == False:
+        if doGraphCuts == False:
             result = np.argmax(result[0], axis=0)
             print("NUM OBJECT PIX:", np.count_nonzero(result == 1), file=sys.stderr)
             #result = np.moveaxis(result, 3, 0)
@@ -243,7 +295,11 @@ def main(imgOrig, labelOrig, cnn=True, graphCuts=True, BIFSeg=True):
         segImg = img
 
     t = time()
-    seg = graphCut(segImg, probs, stdDev)
+    edgeCoeff = 10
+    gridCuts = True
+    if (gridCuts):
+        segImg = arrayToLists(segImg)
+    seg = graphCuts(segImg, probs, edgeCoeff, stdDev, gridCuts)
     graphTime += time() - t
     
     if (BIFSeg == True):                       
@@ -258,7 +314,7 @@ def main(imgOrig, labelOrig, cnn=True, graphCuts=True, BIFSeg=True):
         manipTime += time() - t
 
         t = time()
-        quickTrain(model, stackedImg, weighting, seg, 7)
+        quickTrain(model, stackedImg, weighting, seg, 5)
         trainTime += time() - t
 
         t = time()
@@ -282,29 +338,27 @@ def main(imgOrig, labelOrig, cnn=True, graphCuts=True, BIFSeg=True):
         stdDev = 0.1
         manipTime = time() - t
         t = time()
-        seg = graphCut(segImg, probs, stdDev)
+        seg = graphCuts(segImg, probs, edgeCoeff, stdDev, gridCuts)                    
         graphTime += time() - t
-        print("Manip time: {}, Graph Time: {}, Pred Time: {}, Train time: {}".format(
-            manipTime, graphTime, predTime, trainTime), file=sys.stderr)
+    print("Manip time: {}, Graph Time: {}, Pred Time: {}, Train time: {}".format(
+        manipTime, graphTime, predictTime, trainTime), file=sys.stderr)
     return seg
 
-#start process
-if __name__ == '__main__':
-
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-    tf.logging.set_verbosity(tf.logging.ERROR)
-    os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+def parseArgs():
     
     action = sys.argv[1]
-    cnnName = sys.argv[2]
-    
+    cnnName = None
+    try:
+        cnnName = sys.argv[2]
+    except:
+        pass
     
     lines = sys.stdin.readlines()
     img = json.loads(lines[0][:-1])
     label = json.loads(lines[1])
 
-    f = open("nets.pkl", "rb")
-    db = pickle.load(f)
+    #f = open("nets.pkl", "rb")
+    #db = pickle.load(f)
     graphCuts = True
     BIFSeg = False
     if action == "cnnSeg":
@@ -320,7 +374,7 @@ if __name__ == '__main__':
     elif action == "graphCuts":
         cnn = False
     elif action == "query":
-        
+        pass
 
     if action == "print":
         img   = listsToArray(img)
@@ -338,13 +392,31 @@ if __name__ == '__main__':
         print(np.array2string(seg, separator=", "))
         print("Done")
 
-# TO-DO NOW:
-# - Need to reduce the time taken both on front and back end. Probably need to profile. Look into gridcuts http://gridcut.com/benchmark.php
+
+
+#start process
+if __name__ == '__main__':
+
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+    tf.logging.set_verbosity(tf.logging.ERROR)
+    os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+    parseArgs()
+
+# TO-DO Now:
+# - Offer new models shit
+# - Train the model - change to softmax, it just makes sense (check paper)
+# - Alternate updates on segmentation
+# - Do the weighting on the new loss function
+    
+# TO-DO:
+# - Write weight array as image so it can be looked at
+# - Need to reduce the time taken both on front and back end.
 # - Try BIFSeg confidence value for all non-labelled pixels with weighting=abs(probs1 - probs2)
 # - Have a second value of lambda for graphcuts for pixels that are differently labelled geodesically near a scribble?
 # - Start grid searching hyper parameters
 # - Offer creating new models
-# - Look into microsoft azure
+# - Look into microsoft azure  
+# - Alternate updates on segmentation
 # - Try active augmentation
 # - Training. Could try:
 #     - Training on lungs/pancreas first with either validation set
@@ -363,7 +435,7 @@ if __name__ == '__main__':
 
 
 
-    # action = "cnnGraphBIFSeg"
+
     # img = np.array([
     #     np.array([np.array([0.80,0.85,0.90,0.80]),
     #               np.array([0.90,0.80,0.90,0.85]),
@@ -404,4 +476,4 @@ if __name__ == '__main__':
     #               np.array([0,0,2,0]),
     #               np.array([0,0,0,0])]),
     #     ])
-    
+    # seg = main(img, label, True, True, False)

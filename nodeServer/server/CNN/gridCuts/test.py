@@ -2,7 +2,7 @@ import gridCut3D
 import numpy as np
 
 
-img = gridCut3D.CatVolume()
+img = gridCut3D.Volume()
 img = [[[0.7, 0.8, 0.7, 0.8],
         [0.7, 0.8, 0.7, 0.8],
         [0.7, 0.8, 0.7, 0.8],
@@ -57,7 +57,8 @@ for row in regTerms:
         for val in col:
             print("{}, {}".format(round(val[0],2), round(val[1],2)))
 
-
+print(type(catVol))
+print(type(img))
 seg = gridCut3D.Volume()
 seg = gridCut3D.gridCut3D(img, regTerms, 2, 0.15)
 for row in seg:
