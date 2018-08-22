@@ -1,0 +1,61 @@
+import sys, json, os, inspect, pickle
+from namesdb import NamesDatabase
+from cnnUtils import loadModel, saveModel
+from imageUtils import ImageManager, pathImgMngr
+import tensorflow as tf
+import sys
+
+def createDBs():
+    netsDB = NamesDatabase("nets")
+    netsDB.addNewName("General")
+    netsDB.saveDatabase()
+
+
+def main():
+    query = sys.argv[1]
+
+    path = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
+
+    f = open(path+"/nets.pkl", "rb")
+    netsdb = pickle.load(f)
+    f.close()
+    
+    res = -1
+    if (query == "allNets"):
+        res = netsdb.getNames()
+    else:
+        newName     = sys.argv[2]
+        hasEntry = netsdb.hasEntry(newName)
+        if (hasEntry == True):
+            pass
+        else:
+            copyingName = sys.argv[3]
+            path = os.path.dirname(os.path.abspath(inspect.stack()[0][1])) 
+            model = loadModel(copyingName)
+            saveModel(model, newName)
+            if (query == "addNewCopyData"):
+                f = open(pathImgMngr(copyingName), "rb")
+                imgMngr = pickle.load(f)
+                f.close()
+                f = open(pathImgMngr(newName), "wb")
+                pickle.dump(imgMngr, f)
+                f.close()
+            else:
+                imgMngr = ImageManager([[[],[],[]],[[],[],[]]])
+                f = open(pathImgMngr(newName), "wb")
+                pickle.dump(imgMngr, f)
+                f.close()
+            netsdb.addNewName(newName)
+            netsdb.saveDatabase()
+            res = 0
+    print(json.dumps(res))
+    print("Done")
+    #print("Done sending Python ", res, file=sys.stderr)
+
+    
+if __name__ == '__main__':
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+    tf.logging.set_verbosity(tf.logging.ERROR)
+    main()
+
+os.path.dirname(os.path.abspath(inspect.stack()[0][1]))

@@ -56,6 +56,7 @@ def predict():
     result = model.predict(np.array(imgs))#, np.array(labels))
     print("result", result[0].shape)
     print(result.shape)
+    print(result[0][0][0][0][0], result[1][0][0][0][0])
 
     ones = 0
     zeroes = 0

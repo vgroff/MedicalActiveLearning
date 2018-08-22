@@ -11,7 +11,7 @@ from time import process_time as time
 import pickle
 
 from train import quickTrain
-from neuralNet import NeuralNetDatabase, NeuralNet
+from namesdb import NamesDatabase
 
 from dltk.io.preprocessing import whitening
 
@@ -207,7 +207,10 @@ def graphCuts(segImg, probs, edgeCoeff, stdDev, gridCuts, maxVal=None):
                             else:
                                 regTerms[-1][-1][-1].append(float(0))
                         else:
-                            regTerms[-1][-1][-1].append(-float(np.log(probs[(p+1)%2][i][j][k]+softening)))
+                            val = -float(np.log(probs[(p+1)%2][i][j][k]+softening))
+                            if (val < 0):
+                                val = 0
+                            regTerms[-1][-1][-1].append(val)
         regTermsVec = gridCut3D.CatVolume()
         regTermsVec = regTerms
         segImgVol   = gridCut3D.Volume()
@@ -223,7 +226,7 @@ def main(imgOrig, labelOrig, cnn=True, doGraphCuts=True, BIFSeg=True):
 
     manipTime = 0
     graphTime = 0
-    predictTime   = 0
+    predictTime = 0
     trainTime = 0
 
     t = time()
@@ -359,6 +362,7 @@ def parseArgs():
 
     #f = open("nets.pkl", "rb")
     #db = pickle.load(f)
+    #f.close()
     graphCuts = True
     BIFSeg = False
     if action == "cnnSeg":
@@ -402,20 +406,25 @@ if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = '0'
     parseArgs()
 
+
 # TO-DO Now:
-# - Offer new models shit
-# - Train the model - change to softmax, it just makes sense (check paper)
-# - Alternate updates on segmentation
-# - Do the weighting on the new loss function
+# - Think about trying out active augmentation - adding noise and flipping axes?
+# - Alternate updates on segmentation BIFSeg
+# - Do the weighting on the new loss function for quick train
+# - Change quick train loss to WEIGHTED categorical cross entropy
+# - Gonna need to add in t1/t0
+# - Have a way of showing that the server is busy OR that a call is being made?
+
+
     
 # TO-DO:
 # - Write weight array as image so it can be looked at
+# - Look into microsoft azure  
 # - Need to reduce the time taken both on front and back end.
 # - Try BIFSeg confidence value for all non-labelled pixels with weighting=abs(probs1 - probs2)
 # - Have a second value of lambda for graphcuts for pixels that are differently labelled geodesically near a scribble?
 # - Start grid searching hyper parameters
 # - Offer creating new models
-# - Look into microsoft azure  
 # - Alternate updates on segmentation
 # - Try active augmentation
 # - Training. Could try:

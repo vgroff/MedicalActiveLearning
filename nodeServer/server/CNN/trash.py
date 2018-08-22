@@ -11,7 +11,7 @@ from predict import writeNIFTI
 
 from imageReader import getImages
 
-
+from cnnUtils import loadModel, saveModel
 from imageUtils import ImageManager, getDatasetInfo
 from train import getImages
 from predict import writeNIFTI
@@ -27,6 +27,9 @@ import numpy as np
 
 from main import main
 
+from keras import activations
+from keras.models import *
+from keras.layers import *
 
 ##
 ## This file is for code scraps and for testing stuff
@@ -35,6 +38,12 @@ from main import main
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 tf.logging.set_verbosity(tf.logging.ERROR)
 os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+
+model = loadModel(1)
+model.layers[-1].activation = activations.softmax
+saveModel(model, 1)
+#model = loadModel(1)
+
 
 # folder = "/home/vincent/Documents/imperial/individual project/datasets/decathlon/Task02_Heart"
 # outputFolder = "trash"
@@ -51,22 +60,22 @@ os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 #                                                  80, [0,0], randomized=True, process=None)
 
 
-imgPath = "/home/vincent/Documents/imperial/individual project/MedicalActiveCNN/nodeServer/server/clientPrint/"
-img_sitk = sitk.ReadImage("/home/vincent/Documents/imperial/individual project/datasets/decathlon/Task02_Heart/imagesTr/la_007.nii.gz")#imgPath+"img.nii.gz")
-labelPath = imgPath + "lbl.nii.gz"
-img = sitk.GetArrayFromImage(img_sitk)
-print(img[100][100][100], img[100][100][101])
-img = img.astype(np.float32)
-print(img[100][100][100], img[100][100][101])
-label_sitk = sitk.ReadImage(labelPath)
-label = sitk.GetArrayFromImage(label_sitk).astype(np.float32)
-print("EG", image[100][100][100], image[100][130][130])
-print(img.shape)
-seg = main(img, label, True)
-seg = np.asarray(np.around(seg), dtype=int)
-print(seg.shape, img.shape, label.shape)
-#writeNIFTI(img, outputFolder, "{}_actual".format(1))
-writeNIFTI(seg, imgPath, "{}_pred".format(1))
+# imgPath = "/home/vincent/Documents/imperial/individual project/MedicalActiveCNN/nodeServer/server/clientPrint/"
+# img_sitk = sitk.ReadImage("/home/vincent/Documents/imperial/individual project/datasets/decathlon/Task02_Heart/imagesTr/la_007.nii.gz")#imgPath+"img.nii.gz")
+# labelPath = imgPath + "lbl.nii.gz"
+# img = sitk.GetArrayFromImage(img_sitk)
+# print(img[100][100][100], img[100][100][101])
+# img = img.astype(np.float32)
+# print(img[100][100][100], img[100][100][101])
+# label_sitk = sitk.ReadImage(labelPath)
+# label = sitk.GetArrayFromImage(label_sitk).astype(np.float32)
+# print("EG", image[100][100][100], image[100][130][130])
+# print(img.shape)
+# seg = main(img, label, True)
+# seg = np.asarray(np.around(seg), dtype=int)
+# print(seg.shape, img.shape, label.shape)
+# #writeNIFTI(img, outputFolder, "{}_actual".format(1))
+# writeNIFTI(seg, imgPath, "{}_pred".format(1))
 #writeNIFTI(label, outputFolder, "{}_truth".format(1))
 
 

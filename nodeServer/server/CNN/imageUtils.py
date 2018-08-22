@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import json
-import os
+import os, inspect
 import random
 
 
@@ -32,9 +32,15 @@ class ImageManager():
         self.valImgs      += data[1][0]
         self.valLabels    += data[1][1]
         self.valImgInfo   += data[1][2]
-  
 
+    def save(self, name):
+        f = open(path, "wb")
+        pickle.dump(mngr, f)
+        f.close()
 
+def pathImgMngr(name):
+    path = os.path.dirname(os.path.abspath(inspect.stack()[0][1])) 
+    return path + "/" + name + "_img.pkl"
 
 
 def getDatasetInfo(folder):

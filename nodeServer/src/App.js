@@ -22,6 +22,63 @@ async function fetchSeg(imgArr, labelArr, action) {
     return res
 }
 
+async function queryDatabase(action, name1, name2) {
+    var body = JSON.stringify({"action":action, "name1":name1, "name2":name2})
+    console.log("Making server request...")
+    var res = await fetch("/query", {
+	method: 'POST',
+	headers: {
+	    'Accept': 'application/json',
+	    'Content-Type': 'application/json',
+	    "Connection": "close"
+	},
+	body: body
+    })
+    res = await res.text()
+    return res
+}
+
+async function trainCNN(cnnName, epochs, lr) {
+    var body = JSON.stringify({"CNNName":cnnName, "epochs":epochs, "lr":lr})
+    console.log("Making server request...")
+    var res = await fetch("/train", {
+	method: 'POST',
+	headers: {
+	    'Accept': 'application/json',
+	    'Content-Type': 'application/json',
+	    "Connection": "close"
+	},
+	body: body
+    })
+    res = await res.text()
+    var blob = new Blob([res], {type:"text/plain"}) 
+    var blobUrl = URL.createObjectURL(blob);
+    var link = document.createElement("a"); // Or maybe get it from the current document
+    link.href = blobUrl;
+    link.download = "trainingLog.txt";
+    var clickEvent = new MouseEvent("click", {
+	"view": window,
+	"bubbles": true,
+	"cancelable": false
+    });
+    link.dispatchEvent(clickEvent)
+}
+
+async function uploadImg(cnnName, img, label) {
+    var body = JSON.stringify({"CNNName":cnnName, "image":JSON.stringify(img), "label":JSON.stringify(label)})
+    console.log("Making server request...")
+    var res = await fetch("/upload", {
+	method: 'POST',
+	headers: {
+	    'Accept': 'application/json',
+	    'Content-Type': 'application/json',
+	    "Connection": "close"
+	},
+	body: body
+    })
+    res = await res.text()
+    return res
+}
 
 class App extends Component {
     
@@ -29,8 +86,9 @@ class App extends Component {
 	super(props)
 	this.state = {imageIndex: -1, imageNames: [], activeMask: -1, maskVisibility: [],
 		      tempWindow:1, tempLevel:0.5, window:1, level: 0.5, maskIndex: 1, 
-		      brushSize:20, maskLabel:1, actionIndex:0, loading:false, specialAction:null,
-		      graphCutsText: "Graph Cuts Segmentation", maskColourIndexes:null}
+		      brushSize:20, maskLabel:1, actionIndex:0, cnnIndex:0, newCNNAction:0, 
+		      loading:false, specialAction:null, CNNName: "", nEpochs:1, lr:0.00001,
+		      graphCutsText: "Graph Cuts Segmentation", maskColourIndexes:null, CNNNames:[]}
 	this.images = []
 	this.maskColours = ["#FF0000", "#FFFF00"]
 	this.colours = ["#FF0000", "#0000FF", "#00FF00", "#00FFFF"]
@@ -39,6 +97,10 @@ class App extends Component {
 	this.actions = ["segment","box"]
 	this.colourBias = 0
 	this.specialMask = null
+	this.truthMask = 0
+	this.datasetIndex = 0
+	this.getCNNs()
+
     }
 
     loadImage(file) {
@@ -109,6 +171,25 @@ class App extends Component {
 	var data = fr.readAsArrayBuffer(file)
     }
 
+    getCNNs() {
+	queryDatabase("allNets", "", "").then(function(cnnNames) {
+	    cnnNames = JSON.parse(cnnNames)
+	    this.setState({CNNNames: cnnNames})
+	}.bind(this)).catch(function(e) {console.log(e)})
+    }
+
+
+    addNewCNN() {
+	var cnnName = this.state.CNNName
+	var option = "addNew"
+	if (this.state.newCNNAction == 1) {
+	    option = "addNewCopyData"
+	}
+	var res = queryDatabase(option, cnnName, this.state.CNNNames[this.state.cnnIndex]).then( function(resp) {
+	    this.getCNNs()
+	}.bind(this))
+    }
+
     changeImage(index) {
 	this.setState({imageIndex: index})
 	this.refs.imageView.resetImageIndices()
@@ -164,6 +245,7 @@ class App extends Component {
 	    this.images[this.state.imageIndex].setActiveMask(maskIndex)
 	}
     }
+
 
     cropImage() {
 	var currImg = this.images[this.state.imageIndex]
@@ -304,11 +386,60 @@ class App extends Component {
 	}.bind(this)).catch(function(err) {console.log(err)});
     }
 
+    trainCNN() {
+	trainCNN(this.state.CNNNames[this.state.cnnIndex], this.state.nEpochs, this.state.lr)
+    }
+
     endCnnGraphSeg() {
 	this.colourBias = 0
 	this.setState({specialAction:null})
     }
 
+    changeCNN(cnnIndex) {
+	this.setState({cnnIndex:cnnIndex})
+    }
+
+    changeNewCNNAction(cnnActionIndex) {	
+	this.setState({newCNNAction:cnnActionIndex})
+    }
+
+    setCNNName(name) {
+	this.setState({CNNName: name})
+    }
+    
+    setTruthMask(truthMaskIndex) {
+	this.truthMask = truthMaskIndex
+    }
+    
+    setNEpochs(epochs){
+	if (epochs == "") {
+	    this.setState({nEpochs: 0})
+	}
+	else if (parseInt(epochs)) {
+	    this.setState({nEpochs: parseInt(epochs)})
+	}
+    }
+
+    setDatasetIndex(datasetIndex) {
+	this.datasetIndex = datasetIndex
+    }
+    
+    setLr(lr) {
+	if (lr == "") {
+	    this.setState({lr:""})
+	}
+	else if (parseFloat(lr)) {
+	    this.setState({lr:parseFloat(lr)})
+	}
+    }
+
+    addToDatabase() {
+	var currImg = this.images[this.state.imageIndex]
+	var imgArr = currImg.getImgArr()
+	var labelArr = currImg.getMaskArr(this.truthMask)
+	var cnnName = this.state.CNNNames[this.datasetIndex]
+	uploadImg(cnnName, imgArr, labelArr)
+    }
 
     printPic() {
 	var currImg = this.images[this.state.imageIndex]
@@ -341,10 +472,13 @@ class App extends Component {
 	var outerStyle = Object.assign({}, outerStyle, {"display":"inline-block","margin": "0 auto"})
 	var innerStyle = Object.assign({}, outerStyle, {"display":"inline-block"})
 	var divStyle = {"margin":"15px"}
+	var divStyle2 = {"margin":"5px"}
 	var divBorderStyle = Object.assign({}, borderStyle, divStyle)
 	var elementStyle = {"margin":"0px 10px 0px 10px", "display":"inline-block"}
+	var elementStyle2 = {"margin":"0px 5px 0px 5px", "display":"inline-block"}
 	var sliderStyle = Object.assign({}, elementStyle, {"display":"inline"})
 	var inputStyle = Object.assign({}, elementStyle, {"width": "45px"})
+	var inputStyle2 = Object.assign({}, elementStyle, {"width": "60px"})
 	var labelStyle = Object.assign({}, elementStyle, {"margin":"0px 0px 0px 10px"})
 
 	var currImg = this.images[this.state.imageIndex]
@@ -356,10 +490,46 @@ class App extends Component {
 		maskColours.push([this.colours[colourIndexes[i]], "#FFFF00"])
 	    }
 	}
+
 	
 	return (
 	    <div style={{"textAlign":"center"}}>
-	    <div style={outerStyle}>
+		<div style={outerStyle}>
+
+	    <div style={columnLeftStyle}>
+	    
+	    <div style={borderStyle}>
+	    <p>AIs:</p>
+	    <RadioList options={this.state.CNNNames} exclusionary={true}
+	    checked={this.state.cnnIndex} onChange={this.changeCNN.bind(this)}
+	    divStyleOuter={divStyle2}
+	    radioStyle={elementStyle2} labelStyle={elementStyle2}
+	    divStyleInner={{"display":"inline-block", "width":"70%", "textAlign":"left"}}
+	    />
+	    <div>
+	    <label>Epochs:</label>
+	    <input style={inputStyle} placeholder={"Epochs"}  value={this.state.nEpochs} onChange={(e) => {this.setNEpochs(e.target.value)}}></input>
+	    </div>
+	    <div>
+	    <label>Learning Rate:</label>
+	    <input style={inputStyle} placeholder={"Learning Rate"}  value={this.state.lr} onChange={(e) => {this.setLr(e.target.value)}}></input>
+	    </div>
+	    <button onClick={this.trainCNN.bind(this)} >Train AI</button>
+	    </div>
+
+	    <div style={borderStyle}>
+	    <p>Create a new AI</p>
+	    <RadioList options={["Copy selected AI", "Copy selected AI+dataset"]} exclusionary={true}
+	    checked={this.state.newCNNAction} onChange={this.changeNewCNNAction.bind(this)}
+	    divStyleOuter={divStyle2}
+	    radioStyle={elementStyle2} labelStyle={elementStyle2}
+	    divStyleInner={{"display":"inline-block", "width":"70%", "textAlign":"left"}}
+	    />
+	    <input style={inputStyle2} placeholder={"AI Name"}  value={this.state.CNNName} onChange={(e) => {this.setCNNName(e.target.value)}}></input>
+	    <button onClick={this.addNewCNN.bind(this)}>Add New AI</button>
+	    </div>
+	    
+	    </div>
 	    
 	    <div style={columnLeftStyle}>
 	    
@@ -419,7 +589,13 @@ class App extends Component {
 		<button onClick={(e) => {this.addNewMask(e.target.value)}}>Add New Mask</button>
 		</div>}
 
-
+	    {this.state.imageIndex === -1 ? null :
+	     <div style={borderStyle}>
+		<DropDown label={"Truth mask"} options={range(0,this.state.maskVisibility.length)} labelStyle={elementStyle} defaultVal={0} onChange={this.setTruthMask.bind(this)} />
+		<DropDown label={"Dataset"} options={this.state.CNNNames} labelStyle={elementStyle} defaultVal={0} onChange={this.setDatasetIndex.bind(this)} />
+		<button onClick={this.addToDatabase.bind(this)}>Add image to dataset</button>
+		</div>}
+	    
 	    <div style={borderStyle}>	    
 	    <div style={divStyle}>
 	    

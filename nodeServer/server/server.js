@@ -10,7 +10,7 @@ const path = require("path")
 const bodyParser = require('body-parser');
 const fs = require("fs")
 
-ongoingJobs = []
+var ongoingJobs = []
 
 function addJob(ongoingJobs, id) {
     job = {"id":id, "lock":false};
@@ -44,10 +44,10 @@ app.post('/segment', function response(req, res) {
      
     // E.g : http://localhost:3000/name?firstname=Mike&lastname=Will
     // so, first name = Mike and last name = Will
-    console.log("Request Received. Spawing Python process...")
+    console.log("CNN Request Received. Spawing Python process...")
 
     var process = spawn('python3',[__dirname+"/CNN/main.py",
-				   req.body.action, "name"]);//,
+				   req.body.action]);//,
 				   //req.body.image,
 				   //req.body.scribbles] );
  
@@ -97,6 +97,130 @@ app.post('/segment', function response(req, res) {
     process.stdin.write(req.body.scribbles);
     process.stdin.end();
     
+});
+
+app.post('/query', function response(req, res) {
+    req.setTimeout(0);
+
+    var spawn = require("child_process").spawn;
+
+    console.log("Query Request Received. Spawing Python process...")
+    console.log(req.body)
+    var process = spawn('python3',[__dirname+"/CNN/query.py",
+				   req.body.action, req.body.name1,
+				   req.body.name2]);//,
+
+    var resp = ""
+    var log = ""
+    process.stdout.on('data', function(data) {
+	var str = data.toString()
+	resp += str
+	log  += str
+	var l = str.length
+	console.log("str", str)
+	if (str.slice(l-5, l-1) === "Done") {
+	    resp = resp.slice(0, resp.length-5)
+	    res.send(resp)
+	    console.log("Sent: ", resp)
+	    console.log("Done sending")
+	}
+	//data.toString());
+    } )
+    
+    var errLog
+    process.stderr.on('data', function(data) {
+	errMsg = "Server Err: " + data.toString()
+	console.log(errMsg)
+	errLog += errMsg
+	fs.writeFile("./errLog.txt", JSON.stringify(errLog))
+	//res.send("Server Error occurred")
+    } )
+});
+
+app.post('/train', function response(req, res) {
+    req.setTimeout(0);
+
+    var spawn = require("child_process").spawn;
+
+    console.log("Train Request Received. Spawing Python process...")
+    console.log(req.body)
+    var process = spawn('python3',[__dirname+"/CNN/train.py",
+				   req.body.CNNName, req.body.epochs,
+				   req.body.lr]);//,
+
+    var resp = ""
+    var log = ""
+    process.stdout.on('data', function(data) {
+	var str = data.toString()
+	resp += str
+	log  += str
+	var l = str.length
+	console.log("str", str)
+	if (str.slice(l-5, l-1) === "Done") {
+	    resp = resp.slice(0, resp.length-5)
+	    // res.setHeader('Content-disposition', 'attachment; filename=trainingLog.txt');
+	    // res.setHeader('Content-type', 'text/plain');
+	    // res.send(resp)
+	    res.send(resp)
+	    //fs.writeFile("./errLog.txt", JSON.stringify(errLog))
+	    console.log("Sent: ", resp)
+	    console.log("Done sending")
+	}
+	//data.toString());
+    } )
+    
+    var errLog
+    process.stderr.on('data', function(data) {
+	errMsg = "Server Err: " + data.toString()
+	console.log(errMsg)
+	errLog += errMsg
+	fs.writeFile("./errLog.txt", JSON.stringify(errLog))
+	//res.send("Server Error occurred")
+    } )
+});
+
+app.post('/upload', function response(req, res) {
+    req.setTimeout(0);
+
+    var spawn = require("child_process").spawn;
+
+    console.log("Train Request Received. Spawing Python process...")
+    var process = spawn('python3',[__dirname+"/CNN/upload.py",
+				   req.body.CNNName]);//,
+
+    var resp = ""
+    var log = ""
+    process.stdout.on('data', function(data) {
+	var str = data.toString()
+	resp += str
+	log  += str
+	var l = str.length
+	console.log("str", str)
+	if (str.slice(l-5, l-1) === "Done") {
+	    resp = resp.slice(0, resp.length-5)
+	    // res.setHeader('Content-disposition', 'attachment; filename=trainingLog.txt');
+	    // res.setHeader('Content-type', 'text/plain');
+	    // res.send(resp)
+	    res.send(resp)
+	    //fs.writeFile("./errLog.txt", JSON.stringify(errLog))
+	    console.log("Sent: ", resp)
+	    console.log("Done sending")
+	}
+	//data.toString());
+    } )
+    
+    var errLog
+    process.stderr.on('data', function(data) {
+	errMsg = "Server Err: " + data.toString()
+	console.log(errMsg)
+	errLog += errMsg
+	fs.writeFile("./errLog.txt", JSON.stringify(errLog))
+	//res.send("Server Error occurred")
+    } )
+
+    process.stdin.write(req.body.image + "\n");
+    process.stdin.write(req.body.label);
+    process.stdin.end();
 });
 
 
