@@ -23,7 +23,7 @@ const app = express();
 app.use(csp({
   directives: {
       defaultSrc: ["*", "'self'"],
-      scriptSrc: ["*", "'self'", "http://51.140.80.222:8080"]
+      scriptSrc: ["*", "'self'"]
   },
     setAllHeaders: true
 }))
