@@ -27,8 +27,8 @@ app.use(webpackHotMiddleware(compiler)); // And this line
 app.use(express.json({limit:"500mb"}));
 app.use(csp({
   directives: {
-      defaultSrc: ["*", "self"],
-      scriptSrc: ["*", "self", "http://51.140.80.222:8080/bundle.js"]
+      defaultSrc: ["*", "'self'"],
+      scriptSrc: ["*", "'self'", "http://51.140.80.222:8080/bundle.js"]
   }
 }))
 
