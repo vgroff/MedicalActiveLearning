@@ -17,7 +17,7 @@ class NamesDatabase():
             if name == nameQuery:
                 return True
         return False
-
+q
     def getNames(self):
         names = []
         for name in self.names:

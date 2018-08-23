@@ -305,44 +305,45 @@ def main(imgOrig, labelOrig, cnn=True, doGraphCuts=True, BIFSeg=True):
     seg = graphCuts(segImg, probs, edgeCoeff, stdDev, gridCuts)
     graphTime += time() - t
     
-    if (BIFSeg == True):                       
-        t = time()        
-        seg = cubePadding(seg, cnnSize)[0]
-        resizeFactor = cnnSize / size
-        seg = zoom(seg, resizeFactor, order=1, multichannel=False)
+    if (BIFSeg == True):
+        for i in range(2):
+            t = time()        
+            seg = cubePadding(seg, cnnSize)[0]
+            resizeFactor = cnnSize / size
+            seg = zoom(seg, resizeFactor, order=1, multichannel=False)
 
-        weighting = buildWeightArr(img, seg, probsPadded)
+            weighting = buildWeightArr(img, seg, probsPadded)
 
-        stackedImg = np.stack([img], axis=0)
-        manipTime += time() - t
-
-        t = time()
-        quickTrain(model, stackedImg, weighting, seg, 5)
-        trainTime += time() - t
-
-        t = time()
-        result = model.predict(np.array([stackedImg]))
-        result = result[0]
-        result = zoom(result, [1] + [1/resizeFactor]*3, order=1, multichannel=False )
-        result = result[ :,
-                         padding[0][0] : int(result.shape[1]) - padding[0][1],
-                         padding[1][0] : int(result.shape[2]) - padding[1][1],
-                         padding[2][0] : int(result.shape[3]) - padding[2][1]]
-        probs = result
-        #print(probs)
-        for i, row in enumerate(labelOrig):
-            for j, col in enumerate(row):
-                for k, val in enumerate(col):
-                    if (val != 0):
-                        probs[0,i,j,k] = -val
-                        probs[1,i,j,k] = -val
-        #print(probs.shape, labelOrig.shape, file=sys.stderr)
-        #print(probs)
-        stdDev = 0.1
-        manipTime = time() - t
-        t = time()
-        seg = graphCuts(segImg, probs, edgeCoeff, stdDev, gridCuts)                    
-        graphTime += time() - t
+            stackedImg = np.stack([img], axis=0)
+            manipTime += time() - t
+            
+            t = time()
+            quickTrain(model, stackedImg, weighting, seg, 5)
+            trainTime += time() - t
+            
+            t = time()
+            result = model.predict(np.array([stackedImg]))
+            result = result[0]
+            result = zoom(result, [1] + [1/resizeFactor]*3, order=1, multichannel=False )
+            result = result[ :,
+                             padding[0][0] : int(result.shape[1]) - padding[0][1],
+                             padding[1][0] : int(result.shape[2]) - padding[1][1],
+                             padding[2][0] : int(result.shape[3]) - padding[2][1]]
+            probs = result
+            #print(probs)
+            for i, row in enumerate(labelOrig):
+                for j, col in enumerate(row):
+                    for k, val in enumerate(col):
+                        if (val != 0):
+                            probs[0,i,j,k] = -val
+                            probs[1,i,j,k] = -val
+                            #print(probs.shape, labelOrig.shape, file=sys.stderr)
+                            #print(probs)
+            stdDev = 0.1
+            manipTime = time() - t
+            t = time()
+            seg = graphCuts(segImg, probs, edgeCoeff, stdDev, gridCuts)                    
+            graphTime += time() - t
     print("Manip time: {}, Graph Time: {}, Pred Time: {}, Train time: {}".format(
         manipTime, graphTime, predictTime, trainTime), file=sys.stderr)
     return seg
@@ -408,13 +409,11 @@ if __name__ == '__main__':
 
 
 # TO-DO Now:
-# - Think about trying out active augmentation - adding noise and flipping axes?
 # - Alternate updates on segmentation BIFSeg
-# - Do the weighting on the new loss function for quick train
-# - Change quick train loss to WEIGHTED categorical cross entropy
 # - Gonna need to add in t1/t0
 # - Have a way of showing that the server is busy OR that a call is being made?
-
+# - Test bifseg/hyper-params
+# - Produce loss graphs
 
     
 # TO-DO:
@@ -424,12 +423,6 @@ if __name__ == '__main__':
 # - Try BIFSeg confidence value for all non-labelled pixels with weighting=abs(probs1 - probs2)
 # - Have a second value of lambda for graphcuts for pixels that are differently labelled geodesically near a scribble?
 # - Start grid searching hyper parameters
-# - Offer creating new models
-# - Alternate updates on segmentation
-# - Try active augmentation
-# - Training. Could try:
-#     - Training on lungs/pancreas first with either validation set
-#     - Changing to cross-entropy loss or to binary loss - need to round values in this case
 
 # TO-DO:
 # - Set scribble probs to infinity or 0 instead in graphcuts? already setting to 0, guessing the value is the same as infinity? Could still try setting it as inf or 1e10 or something

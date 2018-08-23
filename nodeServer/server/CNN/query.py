@@ -12,6 +12,7 @@ def createDBs():
     netsDB.saveDatabase(path)
 
 
+
 def main():
     query = sys.argv[1]
 
