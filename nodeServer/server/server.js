@@ -38,6 +38,14 @@ app.use(express.json({limit:"500mb"}));
 //     return next()
 // })
 
+app.use(csp({
+  directives: {
+      defaultSrc: ["*", "'self'"],
+      scriptSrc: ["*", "'self'"]
+  },
+    setAllHeaders: true
+}))
+
 app.get('/', function response(req, res) {
     res.sendFile(path.join(__dirname, '../index.html'));
 });
