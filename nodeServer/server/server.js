@@ -23,7 +23,7 @@ const app = express();
 app.use(csp({
   directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-line'", "'unsafe-eval'"]
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"]
   },
     setAllHeaders: true
 }))
