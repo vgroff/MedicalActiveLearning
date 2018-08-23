@@ -22,8 +22,7 @@ const app = express();
 
 app.use(csp({
   directives: {
-      defaultSrc: ["*", "'self'"],
-      scriptSrc: ["*", "'self'"]
+      defaultSrc: ["*", "'self'", "unsafe-eval", "unsafe-inline"]
   },
     setAllHeaders: true
 }))
@@ -36,15 +35,15 @@ app.use(express.json({limit:"500mb"}));
 // app.use(function(req, res, next) {
 //     res.setHeader("Content-Security-Policy", "default-src *")
 //     return next()
-// })
+// // })
 
-app.use(csp({
-  directives: {
-      defaultSrc: ["*", "'self'"],
-      scriptSrc: ["*", "'self'"]
-  },
-    setAllHeaders: true
-}))
+// app.use(csp({
+//   directives: {
+//       defaultSrc: ["*", "'self'"],
+//       scriptSrc: ["*", "'self'"]
+//   },
+//     setAllHeaders: true
+// }))
 
 app.get('/', function response(req, res) {
     res.sendFile(path.join(__dirname, '../index.html'));
