@@ -23,7 +23,7 @@ const app = express();
 app.use(function(req, res, next) {
     res.setHeader("Content-Security-Policy", "default-src *")
     return next()
-}
+})
 
 app.use(express.static(__dirname + '../dist'));
 app.use(webpackDevMiddleware(compiler));
