@@ -161,7 +161,7 @@ def train():
         imgs, labels, info = mngr.getTrainImages()
         valImgs, valLabels, valInfo = mngr.getValImages()
     print("Getting net...")
-    lr = 9e-5#2.5e-5#1.2e-4#7.5e-5
+    lr = 5e-5#2.5e-5#1.2e-4#7.5e-5
     if (useOldModel == False):
         model = getUNet2((1,length,length,length), nClasses, lr=lr, loss_function=weighted_dice_coefficient_loss, activation_name="sigmoid")
         sgd = SGD(lr=lr, momentum=0.99, decay=0.0, nesterov=False)
@@ -173,13 +173,13 @@ def train():
         model.compile(optimizer = sgd, loss = weighted_dice_coefficient_loss, metrics=[accuracy])
     print("Training on {}, validating on {}".format(len(imgs), len(valImgs)))
     learning_rate_reduction = ReduceLROnPlateau(monitor='loss',
-                                                patience=3,
+                                                patience=4,
                                                 verbose=1,
-                                                factor=0.65,
+                                                factor=0.7,
                                                 min_lr=1e-5)
     imageSets = [[90, 30, 4, False],[0, 30, 1, False],[60, 30, 5, False],[90, 30, 2, False],[30, 30, 1, False]]
     imageSets = [[0,120,1,True]]#[[60, 30, 4*1, True], [90, 30, 4*1, True], [0, 120, 1, True]]#, [90, 30, 10, False], [0, 120, 1, True]]
-    epochs = 10
+    epochs = 20
     imgGen = generateImages(imgs, labels, imageSets)
     model.fit_generator(imgGen, verbose=1, #metrics=["accuracy"],
                         steps_per_epoch=120, epochs=epochs,
