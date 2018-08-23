@@ -161,7 +161,7 @@ def train():
         imgs, labels, info = mngr.getTrainImages()
         valImgs, valLabels, valInfo = mngr.getValImages()
     print("Getting net...")
-    lr = 5e-5#2.5e-5#1.2e-4#7.5e-5
+    lr = 3e-5#2.5e-5#1.2e-4#7.5e-5
     if (useOldModel == False):
         model = getUNet2((1,length,length,length), nClasses, lr=lr, loss_function=weighted_dice_coefficient_loss, activation_name="sigmoid")
         sgd = SGD(lr=lr, momentum=0.99, decay=0.0, nesterov=False)
@@ -173,7 +173,7 @@ def train():
         model.compile(optimizer = sgd, loss = weighted_dice_coefficient_loss, metrics=[accuracy])
     print("Training on {}, validating on {}".format(len(imgs), len(valImgs)))
     learning_rate_reduction = ReduceLROnPlateau(monitor='loss',
-                                                patience=4,
+                                                patience=5,
                                                 verbose=1,
                                                 factor=0.7,
                                                 min_lr=1e-5)
