@@ -33,6 +33,7 @@ app.use(csp({
 }))
 
 app.get('/', function response(req, res) {
+    res.setHeader("Content-Security-Policy", "script-src 'self'")
     res.sendFile(path.join(__dirname, '../index.html'));
 });
 // Test app
