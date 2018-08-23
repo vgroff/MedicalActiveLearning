@@ -27,9 +27,11 @@ app.use(webpackHotMiddleware(compiler)); // And this line
 app.use(express.json({limit:"500mb"}));
 app.use(csp({
   directives: {
-      defaultSrc: ["*"]
+      defaultSrc: ["*", "self"],
+      scriptSrc: ["*", "self", "http://51.140.80.222:8080/bundle.js"]
   }
 }))
+
 app.get('/', function response(req, res) {
     res.sendFile(path.join(__dirname, '../index.html'));
 });
