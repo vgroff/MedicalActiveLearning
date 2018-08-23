@@ -9,7 +9,7 @@ const express = require("express")
 const path = require("path")
 const bodyParser = require('body-parser');
 const fs = require("fs")
-const csp = require(`helmet-csp`)
+const csp = require("helmet-csp")
 
 var ongoingJobs = []
 
