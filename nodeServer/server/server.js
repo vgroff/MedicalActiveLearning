@@ -24,6 +24,11 @@ app.use(express.static(__dirname + '../dist'));
 app.use(webpackDevMiddleware(compiler));
 app.use(webpackHotMiddleware(compiler)); // And this line
 app.use(express.json({limit:"500mb"}));
+app.use(csp({
+  directives: {
+      defaultSrc: [`'self'`]
+  }
+}))
 app.get('/', function response(req, res) {
     res.sendFile(path.join(__dirname, '../index.html'));
 });
