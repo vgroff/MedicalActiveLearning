@@ -22,6 +22,7 @@ from model import weighted_dice_coefficient_loss, weightedDiceLoss
 from functools import partial
 
 from keras.backend.common import epsilon
+from scipy.ndimage import rotate
 
 def prepImageManager(numVal, numbers, orientations, folders, size):
     mngr = None
@@ -33,7 +34,7 @@ def prepImageManager(numVal, numbers, orientations, folders, size):
         orientation = orientations[i]
         if (number < len(dataset)):
             dataset = dataset[:number]
-        data = getImages(folder, dataset, size, numVal/len(dataset), orientation, True, [0, 10], [1,2])
+        data = getImages(folder, dataset, size, numVal/len(dataset), orientation, False, [0, 10], [1,2])
         if (mngr):
             mngr.addData(data)
         else:
@@ -57,6 +58,13 @@ def generateImages(imgs, labels, imageSets):
                         if (random.random() > 0.5):
                             newImg = np.flip(newImg, axis=i)
                             newCatLabels = np.flip(newCatLabels, axis=i)
+                    maxAngle = 15
+                    axes = [[0,1],[0,2],[1,2]]
+                    random.shuffle(axes)
+                    for axis in axes:
+                        angle = random.random() * maxAngle * 2 - maxAngle 
+                        newImg = rotate(newImg, angle, axes=axis, reshape=False, output=None, order=1, mode='constant', cval=0.0)
+                        newCatLabels = rotate(newCatLabels, angle, axes=[axis[0]+1,axis[1]+1], reshape=False, output=None, order=1, mode='constant', cval=0.0)
                     noise = np.random.normal(0, 0.08, newImg.shape)
                     newTrImgs.append(newImg+noise)
                     newLabels.append(newCatLabels)
@@ -137,12 +145,12 @@ def accuracy(y_true, y_pred):
               
 def train():
     useOldImg   = True
-    useOldModel = True
+    useOldModel = False
     nClasses = 2
     length = 80
     if (useOldImg == False):
         folderStub = "/home/vincent/Documents/imperial/individual project/datasets/decathlon/Task"
-        folderNames = ["02_Heart", "05_Prostate", "06_Lung", "07_Pancreas"] 
+        folderNames = ["02_Heart", "05_Prostate", "04_Hippocampus", "07_Pancreas"] 
         folders = [folderStub+name for name in folderNames]
         numbers      = [20, 20, 35, 35]
         orientations = [2, 2, 1, 1]
@@ -150,7 +158,7 @@ def train():
         mngr = prepImageManager(numVal, numbers, orientations, folders, length)
         imgs, labels, info = mngr.getTrainImages()
         valImgs, valLabels, valInfo = mngr.getValImages()
-#        f = open("imgs.pkl", "wb")
+        f = open("imgs.pkl", "wb")
         pickle.dump(mngr, f)
         f.close()
     else:
@@ -161,7 +169,7 @@ def train():
         imgs, labels, info = mngr.getTrainImages()
         valImgs, valLabels, valInfo = mngr.getValImages()
     print("Getting net...")
-    lr = 2.5e-5#2.5e-5#1.2e-4#7.5e-5
+    lr = 35e-5#2.5e-5#1.2e-4#7.5e-5
     if (useOldModel == False):
         model = getUNet2((1,length,length,length), nClasses, lr=lr, loss_function=weighted_dice_coefficient_loss, activation_name="sigmoid")
         sgd = SGD(lr=lr, momentum=0.99, decay=0.0, nesterov=False)
@@ -170,16 +178,21 @@ def train():
         model = loadModel(1)
         adam = Adam(lr=lr, epsilon=1e-3, amsgrad=True)
         sgd = SGD(lr=lr, momentum=0.99, decay=0.0, nesterov=False)
-        model.compile(optimizer = sgd, loss = weighted_dice_coefficient_loss, metrics=[accuracy])
+        model.compile(optimizer = sgd, loss = weighted_dice_coefficient_loss, metrics=[accuracy, weighted_dice_coefficient_loss])
     print("Training on {}, validating on {}".format(len(imgs), len(valImgs)))
-    learning_rate_reduction = ReduceLROnPlateau(monitor='loss',
-                                                patience=7,
+    learning_rate_reduction = ReduceLROnPlateau(monitor='val_loss',
+                                                patience=8,
                                                 verbose=1,
-                                                factor=0.65,
+                                                factor=0.5,
                                                 min_lr=1e-5)
     imageSets = [[90, 30, 4, False],[0, 30, 1, False],[60, 30, 5, False],[90, 30, 2, False],[30, 30, 1, False]]
     imageSets = [[0,120,1,True]]#[[60, 30, 4*1, True], [90, 30, 4*1, True], [0, 120, 1, True]]#, [90, 30, 10, False], [0, 120, 1, True]]
-    epochs = 30
+    #imageSets = [[0, 30, 4, True], [30, 60, 4, True]]
+    #imageSets = [[60, 30, 4, True], [90, 30, 4, True]]
+    #valStart = 10
+    #valEnd   = 20
+    #valImgs, valLabels, valInfo = [valImgs[valStart:valEnd], valLabels[valStart:valEnd], valInfo[valStart, valEnd]]
+    epochs = 25
     imgGen = generateImages(imgs, labels, imageSets)
     model.fit_generator(imgGen, verbose=1, #metrics=["accuracy"],
                         steps_per_epoch=120, epochs=epochs,

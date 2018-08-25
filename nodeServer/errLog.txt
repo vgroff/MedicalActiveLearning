@@ -1,1 +1,1 @@
-"undefinedServer Err: Using TensorFlow backend.\nSaved model to disk\n"
+"undefinedServer Err: Using TensorFlow backend.\n"

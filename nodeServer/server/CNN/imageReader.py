@@ -115,8 +115,11 @@ def getImages(folder, dataset, size, valFraction, nOrientations=1, augment=True,
     for ID, dataPoint in enumerate(dataset):
         if (augment == True and ID < valSplit):
             orientations = random.sample(range(0, 6), nOrientations)
-        else:
+        elif (augment == False and ID < valSplit):
+            orientations = [True]*nOrientations
+        elif (ID >= valSplit):
             orientations = [True]
+
         for orientationIndex, orientation in enumerate(orientations):
             print("Image {} orientation {}".format(ID, orientation))#, end="\r")
             info = {}

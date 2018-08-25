@@ -265,5 +265,28 @@ export class Image3D {
 	}
 	return croppedImg
     }
+
+    calculateDice(mask1, mask2) {
+	var total = 0
+	var count = 0
+	for (var nImg = 0; nImg < this.nImages; nImg++) {
+	    for (var y = 0; y < this.height; y++) {
+		for (var x = 0; x < this.width; x++) {
+		    var val1 = this.imagesX[nImg].masks[mask1][y][x]
+		    var val2 = this.imagesX[nImg].masks[mask2][y][x] 
+		    if (val1 === 1) {
+			total += 1
+		    }
+		    if (val2 === 1) {
+			total += 1
+			if (val1 === val2) {
+			    count += 1
+			}
+		    }
+		}
+	    }
+	}
+	return count/total
+    }
     
 }

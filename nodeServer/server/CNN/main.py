@@ -409,11 +409,15 @@ if __name__ == '__main__':
 
 
 # TO-DO Now:
+# - Check if the lungs will work, train and fix frontend. Add rotations
+# - Rename and retrain on azure
+# - Make a dice score calculator on front-end + server status ting
 # - Alternate updates on segmentation BIFSeg
 # - Gonna need to add in t1/t0
 # - Have a way of showing that the server is busy OR that a call is being made?
 # - Test bifseg/hyper-params
 # - Produce loss graphs
+# - Refernces/to-do report
 
     
 # TO-DO:

@@ -1,0 +1,5 @@
+
+
+def calcDice(labels1, labels2):
+    labels1 = np.argmax(labels1, axis=0)
+    labels2 = np.argmax(labels2, axis=0)

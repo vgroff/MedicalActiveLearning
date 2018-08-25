@@ -38,10 +38,9 @@ def predict():
     f = open("imgs.pkl", "rb")
     mngr = pickle.load(f)
     f.close()
-    nStart = 19
-    n = 1
-    imgs, labels, info = mngr.getTrainImages()
-    selection = [0,16,32,48]
+
+    imgs, labels, info = mngr.getValImages()
+    selection = [0,5,10,15]#[0,16,32,48]
     print(len(imgs))
     imgs, labels, info = [ [imgs[i] for i in selection], [labels[i] for i in selection],
                            [info[i] for i in selection] ]
@@ -79,7 +78,20 @@ def predict():
                 for depth in col:
                     #print(depth)
                     counts3[depth] += 1
-        print("dice:", tf.Session().run(weighted_dice_coefficient_loss(np.array(labels[i], dtype="float64"), np.array(result[i], dtype="float64"))))
+        total = 0
+        count = 0
+        for index, row in enumerate(newLabel):
+            for j, col in enumerate(row):
+                for k, val in enumerate(col):
+                    val2 = newLabel2[index,j,k]
+                    if val == 1:
+                        total += 1
+                    if val2 == 1:
+                        total += 1
+                        if (val == val2):
+                            count += 2
+        print("dice score: ", count/total)               
+        print("dice coefficient:", tf.Session().run(weighted_dice_coefficient_loss(np.array(labels[i], dtype="float64"), np.array(result[i], dtype="float64"))))
         writeNIFTI(newLabel.astype(np.float32), outputFolder, "{}_pred".format(i))
         writeNIFTI(newLabel2.astype(np.float32), outputFolder, "{}_truth".format(i))
         writeNIFTI(imgsActual[i].astype(np.float32), outputFolder, "{}_actual".format(i))

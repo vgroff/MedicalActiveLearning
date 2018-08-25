@@ -88,7 +88,8 @@ class App extends Component {
 		      tempWindow:1, tempLevel:0.5, window:1, level: 0.5, maskIndex: 1, 
 		      brushSize:20, maskLabel:1, actionIndex:0, cnnIndex:0, newCNNAction:0, 
 		      loading:false, specialAction:null, CNNName: "", nEpochs:1, lr:0.00001,
-		      graphCutsText: "Graph Cuts Segmentation", maskColourIndexes:null, CNNNames:[]}
+		      graphCutsText: "Graph Cuts Segmentation", maskColourIndexes:null, CNNNames:[],
+		      mask1:0, mask2:0, diceScore:"", callState:""}
 	this.images = []
 	this.maskColours = ["#FF0000", "#FFFF00"]
 	this.colours = ["#FF0000", "#0000FF", "#00FF00", "#00FFFF"]
@@ -283,6 +284,7 @@ class App extends Component {
     }
 
     graphCuts() {
+	this.setState({callState: "Calling server..."})
 	if (this.state.specialAction === null) {
 	    this.colourBias = -2
 	    this.addNewMask()
@@ -311,6 +313,7 @@ class App extends Component {
 		var currImg = this.images[this.state.imageIndex]
 		this.addNewMask()
 		currImg.copyMask(mask, currImg.imagesX[0].masks.length - 1)
+		this.setState({callState: ""})
 		this.forceUpdate()
 	    }.bind(this)).catch(function(err) {console.log(err)});
 	}
@@ -324,6 +327,7 @@ class App extends Component {
     }
 
     cnnSeg() {
+	this.setState({callState: "Calling server..."})
 	if (this.state.specialAction === null) {
 	    var currImg = this.images[this.state.imageIndex]
 	    var imgArr = currImg.getImgArr()
@@ -348,12 +352,14 @@ class App extends Component {
 		var currImg = this.images[this.state.imageIndex]
 		this.addNewMask()
 		currImg.copyMask(mask, currImg.imagesX[0].masks.length - 1)
+		this.setState({callState: ""})
 		this.forceUpdate()
 	    }.bind(this)).catch(function(err) {console.log(err)});
 	}
     }
 
     cnnGraphSeg(BIFSeg) {
+	this.setState({callState: "Calling server..."})
 	var currImg = this.images[this.state.imageIndex]
 	var first = false
 	if (this.state.specialAction === null) {
@@ -382,6 +388,7 @@ class App extends Component {
 	    currImg.copyMask(mask, currImg.imagesX[0].masks.length - 1)
 	    this.setState({activeMask: this.specialMask})
 	    this.images[this.state.imageIndex].setActiveMask(this.specialMask)
+	    this.setState({callState: ""})
 	    this.forceUpdate()
 	}.bind(this)).catch(function(err) {console.log(err)});
     }
@@ -431,6 +438,12 @@ class App extends Component {
 	else if (parseFloat(lr)) {
 	    this.setState({lr:parseFloat(lr)})
 	}
+    }
+
+    calculateDice() {
+	var dice = this.images[this.state.imageIndex].calculateDice(this.state.mask1,
+								    this.state.mask2)
+	this.setState({diceScore:dice})
     }
 
     addToDatabase() {
@@ -494,7 +507,7 @@ class App extends Component {
 	
 	return (
 	    <div style={{"textAlign":"center"}}>
-		<div style={outerStyle}>
+	    <div style={outerStyle}>
 
 	    <div style={columnLeftStyle}>
 	    
@@ -528,6 +541,11 @@ class App extends Component {
 	    <input style={inputStyle2} placeholder={"AI Name"}  value={this.state.CNNName} onChange={(e) => {this.setCNNName(e.target.value)}}></input>
 	    <button onClick={this.addNewCNN.bind(this)}>Add New AI</button>
 	    </div>
+
+	    {this.state.callState !== "" ?
+	    <div style={borderStyle}>
+	    <p>{this.state.callState}</p>
+	    </div> : null}
 	    
 	    </div>
 	    
@@ -669,10 +687,18 @@ class App extends Component {
 	    </div>
 	    </div>
 	    </div>
-	    
 
+	    <div style={{"display":this.hideIfTrue(this.state.imageIndex === -1, "block")}}>
+	    <div style={borderStyle}>
+	    <DropDown label={"Mask 1"} options={range(0,this.state.maskVisibility.length)} labelStyle={elementStyle} defaultVal={0} onChange={(e) => this.setState({mask1:e})} />
+	    <DropDown label={"Mask 2"} options={range(0,this.state.maskVisibility.length)} labelStyle={elementStyle} defaultVal={0} onChange={(e) => this.setState({mask2:e})} />
+	    <p>{this.state.diceScore}</p>
+	    <button onClick={this.calculateDice.bind(this)} >Calculate Dice</button>
+	    </div>
 	    </div> 
 	    
+	    </div>
+
 	    </div>
 
 
