@@ -186,7 +186,7 @@ def train():
                                                 factor=0.5,
                                                 min_lr=1e-5)
     imageSets = [[90, 30, 4, False],[0, 30, 1, False],[60, 30, 5, False],[90, 30, 2, False],[30, 30, 1, False]]
-    imageSets = [[0,120,1,True]]#[[60, 30, 4*1, True], [90, 30, 4*1, True], [0, 120, 1, True]]#, [90, 30, 10, False], [0, 120, 1, True]]
+    imageSets = [[0,90,1,True]]#[[60, 30, 4*1, True], [90, 30, 4*1, True], [0, 120, 1, True]]#, [90, 30, 10, False], [0, 120, 1, True]]
     #imageSets = [[0, 30, 4, True], [30, 60, 4, True]]
     #imageSets = [[60, 30, 4, True], [90, 30, 4, True]]
     #valStart = 10
