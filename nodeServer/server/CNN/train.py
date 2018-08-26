@@ -24,6 +24,8 @@ from functools import partial
 from keras.backend.common import epsilon
 from scipy.ndimage import rotate
 
+from predict import writeNIFTI
+
 def prepImageManager(numVal, numbers, orientations, folders, size):
     mngr = None
     for i, folder in enumerate(folders):
@@ -59,12 +61,12 @@ def generateImages(imgs, labels, imageSets):
                             newImg = np.flip(newImg, axis=i)
                             newCatLabels = np.flip(newCatLabels, axis=i)
                     maxAngle = 15
-                    axes = [[0,1],[0,2],[1,2]]
+                    axes = [[1,2],[1,3],[2,3]]
                     random.shuffle(axes)
                     for axis in axes:
                         angle = random.random() * maxAngle * 2 - maxAngle 
                         newImg = rotate(newImg, angle, axes=axis, reshape=False, output=None, order=1, mode='constant', cval=0.0)
-                        newCatLabels = rotate(newCatLabels, angle, axes=[axis[0]+1,axis[1]+1], reshape=False, output=None, order=1, mode='constant', cval=0.0)
+                        newCatLabels = rotate(newCatLabels, angle, axes=axis, reshape=False, output=None, order=1, mode='constant', cval=0.0)
                     noise = np.random.normal(0, 0.08, newImg.shape)
                     newTrImgs.append(newImg+noise)
                     newLabels.append(newCatLabels)
@@ -226,7 +228,39 @@ def callOnlineTrain():
     lr = float(sys.argv[3])
     onlineTrain(name, epochs, lr)
     print("Done")
-    
+
+def checkImgs():
+    f = open("imgs.pkl", "rb")
+    mngr = pickle.load(f)
+    f.close()
+    imgs, labels, info = mngr.getTrainImages()
+    valImgs, valLabels, valInfo = mngr.getValImages()
+    outputFolder = "./imgCheck"
+    imageSets = [[0,90,1,True]]
+    gen = generateImages(imgs, labels, imageSets)
+    for i in range(10):
+        print(i)
+        img, label = next(gen)
+        shift = np.zeros(img.shape)
+        shift.fill(img.min())
+        img += shift
+        img *= 255
+        print(img[0][0].shape, label[0].shape)
+        newLabel = np.argmax(label[0], axis = 0)
+        writeNIFTI(img[0][0], outputFolder, "{}_img".format(i))
+        writeNIFTI(newLabel.astype(np.float32), outputFolder, "{}_lab".format(i))
+    for index, img in enumerate(valImgs):
+        i = index+10
+        print(i)
+        if (i%2 == 1):
+            continue
+        shift = np.zeros(img.shape)
+        shift.fill(img.min())
+        img += shift
+        img *= 255
+        writeNIFTI(img[0].astype(np.float32), outputFolder, "{}_img".format(i))
+        writeNIFTI(np.argmax(valLabels[index], axis=0).astype(np.float32), outputFolder, "{}_lab".format(i))
+        
 if __name__ == '__main__':
     random.seed(42)
     np.random.seed(42)
@@ -237,7 +271,8 @@ if __name__ == '__main__':
     try:
         callOnlineTrain()
     except(IndexError):
-        train()
+        #train()
+        checkImgs()
 
 # TO-DO:
 # - Multiple datasets at once

@@ -27,6 +27,9 @@ def main():
     mngr = pickle.load(f)
     f.close()
     valImgs, valLabels, valInfo = mngr.getValImages()
+    valStart = 0
+    valEnd = 15
+    valImgs, valLabels, valInfo = [valImgs[valStart:valEnd], valLabels[valStart:valEnd], valInfo[valStart:valEnd]]
 
     meanDice = 0
     meanDiceSq = 0

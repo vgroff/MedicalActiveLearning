@@ -47,7 +47,7 @@ def predict():
     imgsActual = [info[i]["imgOrig"] for i in range(len(info))]
 
     data = getImages(folder, trainPaths[16:18], 80, 0)
-    print(trainPaths[16:18])
+    
     mngr = ImageManager(data)
     imgs, labels, info = mngr.getTrainImages()
     imgsActual = [info[i]["imgOrig"] for i in range(len(imgs))]
