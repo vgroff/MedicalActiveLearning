@@ -26,6 +26,8 @@ from scipy.ndimage import rotate
 
 from predict import writeNIFTI
 
+import keras.callbacks.ModelCheckpoint as checkpoint
+
 def prepImageManager(numVal, numbers, orientations, folders, size):
     mngr = None
     for i, folder in enumerate(folders):
@@ -65,8 +67,8 @@ def generateImages(imgs, labels, imageSets):
                     random.shuffle(axes)
                     for axis in axes:
                         angle = random.random() * maxAngle * 2 - maxAngle 
-                        newImg = rotate(newImg, angle, axes=axis, reshape=False, output=None, order=1, mode='constant', cval=0.0)
-                        newCatLabels = rotate(newCatLabels, angle, axes=axis, reshape=False, output=None, order=1, mode='constant', cval=0.0)
+                        newImg = rotate(newImg, angle, axes=axis, reshape=False, output=None, order=1, mode='constant', cval=newImg.min())
+                        newCatLabels = rotate(newCatLabels, angle, axes=axis, reshape=False, output=None, order=1, mode='constant', cval=0)
                     noise = np.random.normal(0, 0.08, newImg.shape)
                     newTrImgs.append(newImg+noise)
                     newLabels.append(newCatLabels)
@@ -182,6 +184,7 @@ def train():
         sgd = SGD(lr=lr, momentum=0.99, decay=0.0, nesterov=False)
         model.compile(optimizer = sgd, loss = weighted_dice_coefficient_loss, metrics=[accuracy, weighted_dice_coefficient_loss])
     print("Training on {}, validating on {}".format(len(imgs), len(valImgs)))
+    cp = checkpoint("./savedWeights.h5", monitor='val_loss', verbose=1, save_best_only=True, save_weights_only=True, mode='auto', period=1)
     learning_rate_reduction = ReduceLROnPlateau(monitor='val_loss',
                                                 patience=8,
                                                 verbose=1,
@@ -197,7 +200,7 @@ def train():
     epochs = 25
     imgGen = generateImages(imgs, labels, imageSets)
     model.fit_generator(imgGen, verbose=1, #metrics=["accuracy"],
-                        steps_per_epoch=120, epochs=epochs,
+                        steps_per_epoch=90, epochs=epochs,
                         shuffle=False, validation_data=(np.array(valImgs), np.array(valLabels)),
                         callbacks=[learning_rate_reduction])
     saveModel(model)
