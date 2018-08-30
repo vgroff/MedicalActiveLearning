@@ -155,7 +155,7 @@ def accuracy(y_true, y_pred):
               
 def train():
     useOldImg   = True
-    useOldModel = True
+    useOldModel = False
     nClasses = 2
     length = 80
     if (useOldImg == False):
@@ -181,7 +181,9 @@ def train():
     print("Getting net...")
     lr = 8e-5#2.5e-5#1.2e-4#7.5e-5
     if (useOldModel == False):
-        model = getUNet2((1,length,length,length), nClasses, lr=lr, loss_function=weighted_dice_coefficient_loss, activation_name="softmax")
+        model = getUNet2((1,length,length,length), nClasses, lr=lr,
+                         n_base_filters=12, depth=4,
+                         loss_function=weighted_dice_coefficient_loss, activation_name="softmax")
         sgd = SGD(lr=lr, momentum=0.99, decay=0.0, nesterov=False)
         model.compile(optimizer = sgd, loss = weighted_dice_coefficient_loss, metrics=[accuracy])
     else:
@@ -197,11 +199,12 @@ def train():
                                                 factor=0.5,
                                                 min_lr=1e-5)
     imageSets = [[90, 30, 4, False],[0, 30, 1, False],[60, 30, 5, False],[90, 30, 2, False],[30, 30, 1, False]]
-    imageSets = [[60,30,9,True], [0,30,1,True], [30,30,1,True], [60,30, 1, True], [0, 90, 2,True]]#[[0,30,3,True], [30,30,3,True], [60,30,3,True]]#[[60, 30, 4*1, True], [90, 30, 4*1, True], [0, 120, 1, True]]#, [90, 30, 10, False], [0, 120, 1, True]]
+    #imageSets = [[60,30,9,True], [0,30,1,True], [30,30,1,True], [60,30, 1, True], [0, 90, 2,True]]#[[0,30,3,True], [30,30,3,True], [60,30,3,True]]#[[60, 30, 4*1, True], [90, 30, 4*1, True], [0, 120, 1, True]]#, [90, 30, 10, False], [0, 120, 1, True]]
+    imageSets = [[0,30,3,True]]
     #imageSets = [[0, 30, 4, True], [30, 60, 4, True]]
     #imageSets = [[60, 30, 4, True], [90, 30, 4, True]]
     valStart = 0
-    valEnd   = 15
+    valEnd   = 5
     valImgs, valLabels, valInfo = [valImgs[valStart:valEnd], valLabels[valStart:valEnd], valInfo[valStart:valEnd]]
     epochs = 8
     imgGen = generateImages(imgs, labels, imageSets)

@@ -58,7 +58,7 @@ def weighted_dice_coefficient_loss(y_true, y_pred):
     return -weighted_dice_coefficient(y_true, y_pred)
 
 
-def isensee2017_model(input_shape=(4, 128, 128, 128), n_base_filters=16, depth=5, dropout_rate=0.3,
+def isensee2017_model(input_shape=(4, 128, 128, 128), n_base_filters=12, depth=4, dropout_rate=0.3,
                       n_segmentation_levels=3, n_labels=4, optimizer=Adam, initial_learning_rate=5e-4,
                       loss_function=weighted_dice_coefficient_loss, activation_name="sigmoid"):
     """
@@ -143,8 +143,11 @@ def create_context_module(input_layer, n_level_filters, dropout_rate=0.3, data_f
     convolution2 = create_convolution_block(input_layer=dropout, n_filters=n_level_filters)
     return convolution2
 
-def getUNet2(shape, nClasses, lr=5e-4, loss_function=weighted_dice_coefficient_loss, activation_name="sigmoid"):
-    return isensee2017_model(input_shape=shape, n_labels=nClasses, initial_learning_rate=lr, loss_function=loss_function, activation_name="sigmoid")
+def getUNet2(shape, nClasses, lr=5e-4, n_base_filters=16, depth=5, n_segmentation_levels=3,loss_function=weighted_dice_coefficient_loss, activation_name="sigmoid"):
+    return isensee2017_model(input_shape=shape, n_labels=nClasses, n_base_filters=n_base_filters,
+                             n_segmentation_levels=n_segmentation_levels, depth=depth,
+                             initial_learning_rate=lr, loss_function=loss_function,
+                             activation_name="sigmoid")
 
 
 
