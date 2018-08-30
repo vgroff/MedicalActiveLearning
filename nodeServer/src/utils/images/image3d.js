@@ -280,7 +280,7 @@ export class Image3D {
 		    if (val2 === 1) {
 			total += 1
 			if (val1 === val2) {
-			    count += 1
+			    count += 2
 			}
 		    }
 		}

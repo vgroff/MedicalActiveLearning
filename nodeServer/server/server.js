@@ -61,9 +61,9 @@ app.post('/segment', function response(req, res) {
     // E.g : http://localhost:3000/name?firstname=Mike&lastname=Will
     // so, first name = Mike and last name = Will
     console.log("CNN Request Received. Spawing Python process...")
-
+    console.log("Name", req.body.CNNName)
     var process = spawn('python3',[__dirname+"/CNN/main.py",
-				   req.body.action]);//,
+				   req.body.action, req.body.CNNName]);//,
 				   //req.body.image,
 				   //req.body.scribbles] );
  

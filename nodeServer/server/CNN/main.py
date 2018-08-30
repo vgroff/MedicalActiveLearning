@@ -136,8 +136,8 @@ def updateGeodesics(maxPathLength, stdDev, minEdge, img, probs, segmentation, we
                         # Dont go to negative indices
                         continue
                     otherVal = segmentation[newRow, newCol, newDepth]
-                    if (probs[0, newRow, newCol, newDepth] >= 0) and index != otherVal:
-                        # If this is a normal (non-scrible) and it has the opposite marking
+                    if (probs[0, newRow, newCol, newDepth] >= 0):# and index != otherVal:
+                        # If this is a normal (non-scrible) and it has the opposite marking - does it need to have the opposite marking? Defeats the purpose maybe
                         i1 = img[i, j, k]
                         i2 = img[newRow, newCol, newDepth]
                         length = 1 - np.exp(-(i2 - i1)**2/(2*stdDev**2)) + minEdge
@@ -149,9 +149,10 @@ def updateGeodesics(maxPathLength, stdDev, minEdge, img, probs, segmentation, we
                         if (newPathLength < destPathLength or destPathLength < 0):
                             # If weve made a shorter path, save it and place in queue
                             q.put([newRow, newCol, newDepth])
-                            weighting[0, newRow, newCol, newDepth] = 0
-                            weighting[1, newRow, newCol, newDepth] = 0
                             pathLengths[newRow, newCol, newDepth] = newPathLength
+                            if index != otherVal:
+                                weighting[0, newRow, newCol, newDepth] = 0
+                                weighting[1, newRow, newCol, newDepth] = 0
                 except IndexError as e:
                     pass
                     #print(e)
@@ -161,7 +162,7 @@ def updateGeodesics(maxPathLength, stdDev, minEdge, img, probs, segmentation, we
 
         
     
-def buildWeightArr(img, segmentation, probs, distanceLim=0.3, stdDev=0.1, minProbDiff=0.2, scribbleWeight=6):
+def buildWeightArr(img, segmentation, probs, distanceLim=0.3, stdDev=0.1, minProb1=0.6, minProb2=0.6, scribbleWeight=15):
     weightArr = np.ones(probs.shape)
     scribbles = [[], []]
     for i, row in enumerate(probs[0]):
@@ -173,13 +174,13 @@ def buildWeightArr(img, segmentation, probs, distanceLim=0.3, stdDev=0.1, minPro
                 else:
                     probs1 = probs[0,i,j,k]
                     probs2 = probs[1,i,j,k]
-                    if (probs1 < 0.5 and probs2 < 0.5):
+                    if (probs2 > 0.5 and probs2 < minProb2):
                         weightArr[0,i,j,k] = 0
                         weightArr[1,i,j,k] = 0
-                    if (abs(probs1 - probs2) < minProbDiff):
+                    if (probs1 < 0.5 and probs1 < minProb1):
                         weightArr[0,i,j,k] = 0
                         weightArr[1,i,j,k] = 0
-    updateGeodesics(0.2, 0.1, 0.01, img, probs, segmentation, weightArr)
+    updateGeodesics(0.25, 0.1, 0.003, img, probs, segmentation, weightArr)
     return weightArr
                     
 
@@ -222,7 +223,7 @@ def graphCuts(segImg, probs, edgeCoeff, stdDev, gridCuts, maxVal=None):
     return seg
     
 
-def main(imgOrig, labelOrig, cnn=True, doGraphCuts=True, BIFSeg=True):
+def main(imgOrig, labelOrig, cnn=True, doGraphCuts=True, BIFSeg=True, cnnName=1):
 
     manipTime = 0
     graphTime = 0
@@ -247,7 +248,7 @@ def main(imgOrig, labelOrig, cnn=True, doGraphCuts=True, BIFSeg=True):
         manipTime += time() - t
 
         t = time()
-        model = loadModel(1)
+        model = loadModel(cnnName)
         result = model.predict(np.array([img]))
         predictTime += time() - t
         
@@ -298,15 +299,15 @@ def main(imgOrig, labelOrig, cnn=True, doGraphCuts=True, BIFSeg=True):
         segImg = img
 
     t = time()
-    edgeCoeff = 10
+    edgeCoeff = 8
     gridCuts = True
     if (gridCuts):
         segImg = arrayToLists(segImg)
-    seg = graphCuts(segImg, probs, edgeCoeff, stdDev, gridCuts)
+    seg = graphCuts(segImg, probs, edgeCoeff, stdDev, gridCuts, 10000)
     graphTime += time() - t
     
     if (BIFSeg == True):
-        for i in range(2):
+        for i in range(3):
             t = time()        
             seg = cubePadding(seg, cnnSize)[0]
             resizeFactor = cnnSize / size
@@ -318,7 +319,7 @@ def main(imgOrig, labelOrig, cnn=True, doGraphCuts=True, BIFSeg=True):
             manipTime += time() - t
             
             t = time()
-            quickTrain(model, stackedImg, weighting, seg, 5)
+            quickTrain(model, stackedImg, weighting, seg, 10)
             trainTime += time() - t
             
             t = time()
@@ -339,7 +340,7 @@ def main(imgOrig, labelOrig, cnn=True, doGraphCuts=True, BIFSeg=True):
                             probs[1,i,j,k] = -val
                             #print(probs.shape, labelOrig.shape, file=sys.stderr)
                             #print(probs)
-            stdDev = 0.1
+            #stdDev = 0.1
             manipTime = time() - t
             t = time()
             seg = graphCuts(segImg, probs, edgeCoeff, stdDev, gridCuts)                    
@@ -391,7 +392,7 @@ def parseArgs():
         writeNIFTI(label, folder, "lbl")
         print(" Done")
     else:    
-        seg = main(img, label, cnn, graphCuts, BIFSeg)
+        seg = main(img, label, cnn, graphCuts, BIFSeg, cnnName)
         seg = np.asarray(np.around(seg), dtype=int)
         np.set_printoptions(threshold=np.nan)
         print(np.array2string(seg, separator=", "))
@@ -409,15 +410,14 @@ if __name__ == '__main__':
 
 
 # TO-DO Now:
-# - Check if the lungs will work, train and fix frontend. Add rotations
+# - Train and fix frontend. Add rotations
 # - Rename and retrain on azure
-# - Make a dice score calculator on front-end + server status ting
 # - Alternate updates on segmentation BIFSeg
 # - Gonna need to add in t1/t0
-# - Have a way of showing that the server is busy OR that a call is being made?
 # - Test bifseg/hyper-params
 # - Produce loss graphs
 # - Refernces/to-do report
+# - Change sizing of canvas on front end
 
     
 # TO-DO:

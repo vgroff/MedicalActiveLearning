@@ -27,7 +27,7 @@ def writeNIFTI(arr, folder, name):
 
 
 def predict():
-    model = loadModel(1)
+    model = loadModel("Left Atrium")
     
     folder = "/home/vincent/Documents/imperial/individual project/datasets/decathlon/Task04_Hippocampus"
     trainPaths = getDatasetInfo(folder)
@@ -40,23 +40,23 @@ def predict():
     f.close()
 
     imgs, labels, info = mngr.getValImages()
-    selection = [0,5,10,15]#[0,16,32,48]
+    selection = [0,1,2,3,4]#[0,16,32,48]
     print(len(imgs))
     imgs, labels, info = [ [imgs[i] for i in selection], [labels[i] for i in selection],
                            [info[i] for i in selection] ]
     imgsActual = [info[i]["imgOrig"] for i in range(len(info))]
 
-    data = getImages(folder, trainPaths[16:18], 80, 0)
-    print(trainPaths[16:18])
-    mngr = ImageManager(data)
-    imgs, labels, info = mngr.getTrainImages()
-    imgsActual = [info[i]["imgOrig"] for i in range(len(imgs))]
+    #data = getImages(folder, trainPaths[16:18], 80, 0)
+    
+    #mngr = ImageManager(data)
+    #imgs, labels, info = mngr.getTrainImages()
+    #imgsActual = [info[i]["imgOrig"] for i in range(len(imgs))]
     
     print("img/label shape", np.array(imgs).shape, np.array(labels[0]).shape, imgsActual[0].shape)
     result = model.predict(np.array(imgs))#, np.array(labels))
     print("result", result[0].shape)
     print(result.shape)
-    print(result[0][0][0][0][0], result[1][0][0][0][0])
+    print(result[0][0][0][0][0], result[0][1][0][0][0])
 
     ones = 0
     zeroes = 0
@@ -91,6 +91,7 @@ def predict():
                         total += 1
                         if (val == val2):
                             count += 2
+        print(info[i]["path"])
         print("dice score: ", count/total)               
         print("dice coefficient:", tf.Session().run(weighted_dice_coefficient_loss(np.array(labels[i], dtype="float64"), np.array(result[i], dtype="float64"))))
         writeNIFTI(newLabel.astype(np.float32), outputFolder, "{}_pred".format(i))

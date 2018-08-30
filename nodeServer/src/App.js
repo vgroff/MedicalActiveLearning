@@ -5,7 +5,10 @@ import {convertNifti, getImageData} from "./utils/images/nifti.js"
 import {DropDown, RadioList} from "./utils/gui/baseComponents.js"
 import {range} from "./utils/misc.js"
 
-async function fetchSeg(imgArr, labelArr, action) {
+async function fetchSeg(imgArr, labelArr, action, CNNName) {
+    if (CNNName === undefined) {
+	CNNName = 1
+    }
     console.log("Making server request...")
     var res = await fetch("/segment", {
 	method: 'POST',
@@ -16,7 +19,7 @@ async function fetchSeg(imgArr, labelArr, action) {
 	},
 	body: JSON.stringify({"image": JSON.stringify(imgArr),
 			      "scribbles": JSON.stringify(labelArr),
-			      "action":action})
+			      "action":action, "CNNName": CNNName})
     })
     res = await res.text()
     return res
@@ -332,17 +335,9 @@ class App extends Component {
 	    var currImg = this.images[this.state.imageIndex]
 	    var imgArr = currImg.getImgArr()
 	    var labelArr = currImg.getMaskArr(this.state.activeMask)
+	    var cnn = this.state.CNNNames[this.state.cnnIndex]
 	    console.log("Making server request...")
-	    fetch("/segment", {
-		method: 'POST',
-		headers: {
-		    'Accept': 'application/json',
-		    'Content-Type': 'application/json'
-		},
-		body: JSON.stringify({"image": JSON.stringify(imgArr),
-				      "scribbles":JSON.stringify(labelArr),
-				      "action": "cnnSeg"})
-	    }).then(function(response) {
+	    fetchSeg(imgArr, labelArr, "cnnSeg", cnn).then(function(response) {
 		console.log("Response recieved")
 		return response.text()
 	    }.bind(this)).then(function(text) {
@@ -360,6 +355,7 @@ class App extends Component {
 
     cnnGraphSeg(BIFSeg) {
 	this.setState({callState: "Calling server..."})
+	var cnn = this.state.CNNNames[this.state.cnnIndex]
 	var currImg = this.images[this.state.imageIndex]
 	var first = false
 	if (this.state.specialAction === null) {
@@ -378,7 +374,7 @@ class App extends Component {
 	}
 	var imgArr = currImg.getImgArr()
 	var labelArr = currImg.getMaskArr(this.state.activeMask)
-	fetchSeg(imgArr, labelArr, action).then(function(text) {
+	fetchSeg(imgArr, labelArr, action, cnn).then(function(text) {
 	    console.log("text", text)
 	    var mask = JSON.parse(text)
 	    console.log("mask", mask)

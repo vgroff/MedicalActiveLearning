@@ -26,7 +26,7 @@ from scipy.ndimage import rotate
 
 from predict import writeNIFTI
 
-import keras.callbacks.ModelCheckpoint as checkpoint
+from keras.callbacks import ModelCheckpoint as checkpoint
 
 def prepImageManager(numVal, numbers, orientations, folders, size):
     mngr = None
@@ -62,13 +62,14 @@ def generateImages(imgs, labels, imageSets):
                         if (random.random() > 0.5):
                             newImg = np.flip(newImg, axis=i)
                             newCatLabels = np.flip(newCatLabels, axis=i)
-                    maxAngle = 15
+                    maxAngle = 1
                     axes = [[1,2],[1,3],[2,3]]
                     random.shuffle(axes)
-                    for axis in axes:
-                        angle = random.random() * maxAngle * 2 - maxAngle 
-                        newImg = rotate(newImg, angle, axes=axis, reshape=False, output=None, order=1, mode='constant', cval=newImg.min())
-                        newCatLabels = rotate(newCatLabels, angle, axes=axis, reshape=False, output=None, order=1, mode='constant', cval=0)
+                    #for axis in axes:
+                    #    angle = random.random() * maxAngle * 2 - maxAngle 
+                    #    newImg = rotate(newImg, angle, axes=axis, reshape=False, output=None, order=1, mode='constant', cval=newImg.min())
+                    #    newCatLabels = rotate(newCatLabels, angle, axes=axis, reshape=False, output=None, order=1, mode='constant', cval=0)
+                    #newCatLabels = np.around(newCatLabels)
                     noise = np.random.normal(0, 0.08, newImg.shape)
                     newTrImgs.append(newImg+noise)
                     newLabels.append(newCatLabels)
@@ -76,7 +77,12 @@ def generateImages(imgs, labels, imageSets):
                 trLabels = newLabels
             for i in range(imageSet[2]):
                 for j, img in enumerate(trImgs):
-                    yield np.array([img]), np.array([trLabels[j]])
+                    weight = 1
+                    if (ordering[j] >= 30 and ordering[j] < 60):
+                        weight = 1.0
+                    elif (ordering[j] >= 60 and ordering[j] < 90):
+                        weight = 1
+                    yield np.array([img]), np.array([trLabels[j]]), np.array([weight])
 
 def quickTrain(model, img, weighting, segmentation, epochs=1):
     labels = np.zeros(weighting.shape)
@@ -85,8 +91,8 @@ def quickTrain(model, img, weighting, segmentation, epochs=1):
         for j, col in enumerate(row):
             for k, val in enumerate(col):
                 labels[int(round(val)),i,j,k] = 1
-    lr = 1.2e-4#2.5e-5#1.2e-4#7.5e-5
-    sgd = SGD(lr=lr, momentum=0.95, decay=0.0, nesterov=False)
+    lr = 4e-4#2.5e-5#1.2e-4#7.5e-5
+    sgd = SGD(lr=lr, momentum=0.8, decay=0.0, nesterov=False)
     loss = partial(weightedDiceLoss, weighting)
     model.compile(optimizer = sgd, loss = loss)
     model.fit(np.array([img]), np.array([labels]), validation_split=0.0, batch_size=1, verbose=1, epochs=epochs)#, 
@@ -149,7 +155,7 @@ def accuracy(y_true, y_pred):
               
 def train():
     useOldImg   = True
-    useOldModel = False
+    useOldModel = True
     nClasses = 2
     length = 80
     if (useOldImg == False):
@@ -173,16 +179,16 @@ def train():
         imgs, labels, info = mngr.getTrainImages()
         valImgs, valLabels, valInfo = mngr.getValImages()
     print("Getting net...")
-    lr = 35e-5#2.5e-5#1.2e-4#7.5e-5
+    lr = 8e-5#2.5e-5#1.2e-4#7.5e-5
     if (useOldModel == False):
-        model = getUNet2((1,length,length,length), nClasses, lr=lr, loss_function=weighted_dice_coefficient_loss, activation_name="sigmoid")
+        model = getUNet2((1,length,length,length), nClasses, lr=lr, loss_function=weighted_dice_coefficient_loss, activation_name="softmax")
         sgd = SGD(lr=lr, momentum=0.99, decay=0.0, nesterov=False)
         model.compile(optimizer = sgd, loss = weighted_dice_coefficient_loss, metrics=[accuracy])
     else:
         model = loadModel(1)
         adam = Adam(lr=lr, epsilon=1e-3, amsgrad=True)
-        sgd = SGD(lr=lr, momentum=0.99, decay=0.0, nesterov=False)
-        model.compile(optimizer = sgd, loss = weighted_dice_coefficient_loss, metrics=[accuracy, weighted_dice_coefficient_loss])
+        sgd = SGD(lr=lr, momentum=0.95, decay=0.0, nesterov=False)
+        model.compile(optimizer = sgd, loss = weighted_dice_coefficient_loss, metrics=[accuracy])
     print("Training on {}, validating on {}".format(len(imgs), len(valImgs)))
     cp = checkpoint("./savedWeights.h5", monitor='val_loss', verbose=1, save_best_only=True, save_weights_only=True, mode='auto', period=1)
     learning_rate_reduction = ReduceLROnPlateau(monitor='val_loss',
@@ -191,18 +197,18 @@ def train():
                                                 factor=0.5,
                                                 min_lr=1e-5)
     imageSets = [[90, 30, 4, False],[0, 30, 1, False],[60, 30, 5, False],[90, 30, 2, False],[30, 30, 1, False]]
-    imageSets = [[0,90,1,True]]#[[60, 30, 4*1, True], [90, 30, 4*1, True], [0, 120, 1, True]]#, [90, 30, 10, False], [0, 120, 1, True]]
+    imageSets = [[60,30,9,True], [0,30,1,True], [30,30,1,True], [60,30, 1, True], [0, 90, 2,True]]#[[0,30,3,True], [30,30,3,True], [60,30,3,True]]#[[60, 30, 4*1, True], [90, 30, 4*1, True], [0, 120, 1, True]]#, [90, 30, 10, False], [0, 120, 1, True]]
     #imageSets = [[0, 30, 4, True], [30, 60, 4, True]]
     #imageSets = [[60, 30, 4, True], [90, 30, 4, True]]
-    #valStart = 10
-    #valEnd   = 20
-    #valImgs, valLabels, valInfo = [valImgs[valStart:valEnd], valLabels[valStart:valEnd], valInfo[valStart, valEnd]]
-    epochs = 25
+    valStart = 0
+    valEnd   = 15
+    valImgs, valLabels, valInfo = [valImgs[valStart:valEnd], valLabels[valStart:valEnd], valInfo[valStart:valEnd]]
+    epochs = 8
     imgGen = generateImages(imgs, labels, imageSets)
     model.fit_generator(imgGen, verbose=1, #metrics=["accuracy"],
                         steps_per_epoch=90, epochs=epochs,
                         shuffle=False, validation_data=(np.array(valImgs), np.array(valLabels)),
-                        callbacks=[learning_rate_reduction])
+                        callbacks=[cp])#, learning_rate_reduction])
     saveModel(model)
 
 
@@ -274,8 +280,8 @@ if __name__ == '__main__':
     try:
         callOnlineTrain()
     except(IndexError):
-        #train()
-        checkImgs()
+        train()
+        #checkImgs()
 
 # TO-DO:
 # - Multiple datasets at once

@@ -30,7 +30,7 @@ from main import main
 from keras import activations
 from keras.models import *
 from keras.layers import *
-
+from train import prepImageManager
 ##
 ## This file is for code scraps and for testing stuff
 ##
@@ -39,10 +39,17 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 tf.logging.set_verbosity(tf.logging.ERROR)
 os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 
-model = loadModel(1)
-model.layers[-1].activation = activations.softmax
-saveModel(model, 1)
 #model = loadModel(1)
+
+folderStub = "/home/vincent/Documents/imperial/individual project/datasets/decathlon/Task"
+folderNames = ["03_Liver", "09_Spleen"] 
+folders = [folderStub+name for name in folderNames]
+numbers      = [10, 10]
+orientations = [1,1]
+mngr = prepImageManager(10, numbers, orientations, folders, 80)
+f = open("imgs_unseen10.pkl", "wb")
+pickle.dump(mngr, f)
+f.close()
 
 
 # folder = "/home/vincent/Documents/imperial/individual project/datasets/decathlon/Task02_Heart"
