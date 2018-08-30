@@ -102,7 +102,7 @@ app.post('/segment', function response(req, res) {
 	errMsg = "Server Err: " + data.toString()
 	log += errMsg
 	console.log(errMsg)
-	fs.writeFile("./errLog.txt", JSON.stringify(log))
+	fs.writeFile("./errLog.txt", JSON.stringify(log), (error) => { console.log("Error!", error); })
 	//res.send("Server Error occurred")
     } )
     process.on("close", function() {	
@@ -148,7 +148,7 @@ app.post('/query', function response(req, res) {
 	errMsg = "Server Err: " + data.toString()
 	console.log(errMsg)
 	errLog += errMsg
-	fs.writeFile("./errLog.txt", JSON.stringify(errLog))
+	fs.writeFile("./errLog.txt", JSON.stringify(errLog), (error) => { console.log("Error!", error);})
 	//res.send("Server Error occurred")
     } )
 });
@@ -190,7 +190,7 @@ app.post('/train', function response(req, res) {
 	errMsg = "Server Err: " + data.toString()
 	console.log(errMsg)
 	errLog += errMsg
-	fs.writeFile("./errLog.txt", JSON.stringify(errLog))
+	fs.writeFile("./errLog.txt", JSON.stringify(errLog), (error) => { console.log("Error!", error); })
 	//res.send("Server Error occurred")
     } )
 });
@@ -230,7 +230,7 @@ app.post('/upload', function response(req, res) {
 	errMsg = "Server Err: " + data.toString()
 	console.log(errMsg)
 	errLog += errMsg
-	fs.writeFile("./errLog.txt", JSON.stringify(errLog))
+	fs.writeFile("./errLog.txt", JSON.stringify(errLog), (error) => { console.log("Error!", error); })
 	//res.send("Server Error occurred")
     } )
 
