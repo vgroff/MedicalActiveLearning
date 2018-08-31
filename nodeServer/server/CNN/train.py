@@ -227,11 +227,11 @@ def train():
             res = model.predict(np.array([img]))
             dice += diceScore(res[0], valLabels[i], False)
             acc  += diceScore(res[0], valLabels[i], True)
-            if acc > bestAcc:
-                bestAcc = acc
-                saveModel(model, "bestLeftAtrium")
         dice /= len(valImgs)
         acc /= len(valImgs)
+        if acc > bestAcc:
+            bestAcc = acc
+            saveModel(model, "bestLeftAtrium")
         print("Val Dice Coeff: {}, Val Dice: {}".format(dice, acc))
     saveModel(model)
 
