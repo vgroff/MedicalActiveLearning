@@ -20,6 +20,12 @@ function addJob(ongoingJobs, id) {
 
 const app = express();
 
+
+
+app.use(express.static(__dirname + '../dist'));
+app.use(webpackDevMiddleware(compiler));
+app.use(webpackHotMiddleware(compiler)); // And this line
+app.use(express.json({limit:"500mb"}));
 app.use(csp({
   directives: {
       defaultSrc: ["'self'"],
@@ -28,11 +34,6 @@ app.use(csp({
   },
     setAllHeaders: true
 }))
-
-app.use(express.static(__dirname + '../dist'));
-app.use(webpackDevMiddleware(compiler));
-app.use(webpackHotMiddleware(compiler)); // And this line
-app.use(express.json({limit:"500mb"}));
 
 // app.use(function(req, res, next) {
 //     res.setHeader("Content-Security-Policy", "default-src *")
