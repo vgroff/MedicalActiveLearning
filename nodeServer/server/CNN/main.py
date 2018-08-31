@@ -1,7 +1,7 @@
 import sys, json, os
 import numpy as np
 import tensorflow as tf
-from graphCuts import graphCut
+#from graphCuts import graphCut
 from imageUtils import cubePadding, resize3D, toCategorical
 from cnnUtils import loadModel
 #from scipy.ndimage import zoom
@@ -407,13 +407,14 @@ if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = '0'
     parseArgs()
 
-
+# IMMEDIATE:
+# - Model loading times - start the python program when the server is first started and load the models. Pass in all the arguments via stdin, close the stdin and when it's over, start a new one
+# - Produce all loss graphs
+# - Change canvas sizing
+    
 # TO-DO Now:
 # - Sort out those loading times
 # - Train and fix frontend. Add rotations
-# - Alternate updates on segmentation BIFSeg
-# - Gonna need to add in t1/t0
-# - Test bifseg/hyper-params
 # - Produce loss graphs
 # - Refernces/to-do report
 # - Change sizing of canvas on front end
