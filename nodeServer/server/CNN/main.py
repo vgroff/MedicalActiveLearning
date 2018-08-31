@@ -427,8 +427,14 @@ if __name__ == '__main__':
 
 # IMMEDIATE:
 # - Produce all loss graphs
-# - Change canvas sizing
+# - Produce dice scores on unknown stuff
+# - Produce hard results
+# - Try a model with None as size inputs?
+# - Write segmentation to NIFTI
+# - Fix Firefox bug
 # - Check timings with faster internet
+
+
     
 # TO-DO Now:
 # - Sort out those loading times

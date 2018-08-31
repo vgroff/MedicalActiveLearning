@@ -37,7 +37,7 @@ export class Image {
 	this.preRenderWindow = null
     }
 
-    drawImage(canvas, canvasHeight, level, window, maskVisibility, maskColours) {
+    drawImage(canvas, canvasSize, level, window, maskVisibility, maskColours) {
 	//console.log("draw", level, window)
 	// Get the dimensions
 	var height = this.data.length
@@ -45,15 +45,26 @@ export class Image {
 	var pixHeight = this.pixHeight
 	var pixWidth = this.pixWidth
 	
-	// Height of the canvas is always 400
-	var size   = canvasHeight
-	var actualSize = height*pixHeight
-	
-	// Size the canvas correctly
-	var scale = size/actualSize
-	this.scale = scale
-	canvas.height = size
-	canvas.width  = width * pixWidth * scale
+	var size   = canvasSize
+	if (height > width) {
+	    // Calculate unscaled height
+	    var actualSize = height*pixHeight
+	    
+	    // Size the canvas correctly
+	    var scale = size/actualSize
+	    this.scale = scale
+	    canvas.height = size
+	    canvas.width  = width * pixWidth * scale
+	}
+	else {
+	    // Calc unscaled  width
+	    var actualSize = width*pixWidth
+	    // Size canvas
+	    var scale = size/actualSize
+	    this.scale = scale
+	    canvas.width  = size
+	    canvas.height = height*pixHeight*scale
+	}
 
 	// Clear the canvas
 	var ctx = canvas.getContext("2d")
@@ -64,7 +75,7 @@ export class Image {
 	    ctx.drawImage(this.preRender, 0, 0)
 	}
 	else {
-	    this.drawImageOnly(canvas, canvasHeight, level, window, maskVisibility, maskColours)
+	    this.drawImageOnly(canvas, canvasSize, level, window, maskVisibility, maskColours)
 	}
 	//console.log("drawing mask")
 	// Draw the image onto the canvas
@@ -120,23 +131,33 @@ export class Image {
 	ctx.stroke()
     }
 
-    drawImageOnly(canvas, canvasHeight, level, window) {
+    drawImageOnly(canvas, canvasSize, level, window) {
 	// Get the dimensions
 	var height = this.data.length
 	var width  = this.data[0].length
 	var pixHeight = this.pixHeight
 	var pixWidth = this.pixWidth
-	
-	// Height of the canvas is always 400
-	var size   = canvasHeight
-	var actualSize = height*pixHeight
-	
-	// Size the canvas correctly
-	var scale = size/actualSize
-	this.scale = scale
-	canvas.height = size
-	canvas.width  = width * pixWidth * scale
 
+	var size   = canvasSize
+	if (height > width) {
+	    // Calculate unscaled height
+	    var actualSize = height*pixHeight
+	    
+	    // Size the canvas correctly
+	    var scale = size/actualSize
+	    this.scale = scale
+	    canvas.height = size
+	    canvas.width  = width * pixWidth * scale
+	}
+	else {
+	    // Calc unscaled  width
+	    var actualSize = width*pixWidth
+	    // Size canvas
+	    var scale = size/actualSize
+	    this.scale = scale
+	    canvas.width  = size
+	    canvas.height = height*pixHeight*scale
+	}
 	// Clear the canvas
 	var ctx = canvas.getContext("2d")
 	ctx.clearRect(0, 0, width*scale, height*scale);
@@ -170,9 +191,9 @@ export class Image {
 	}
     }
 
-    preRenderImage(canvasHeight, level, window) {
+    preRenderImage(canvasSize, level, window) {
 	var canvas = document.createElement("canvas")
-	this.drawImageOnly(canvas, canvasHeight, level, window)
+	this.drawImageOnly(canvas, canvasSize, level, window)
 	this.preRender = canvas
 	this.preRenderLevel = level
 	this.preRenderWindow = window

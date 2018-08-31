@@ -337,10 +337,7 @@ class App extends Component {
 	    var labelArr = currImg.getMaskArr(this.state.activeMask)
 	    var cnn = this.state.CNNNames[this.state.cnnIndex]
 	    console.log("Making server request...")
-	    fetchSeg(imgArr, labelArr, "cnnSeg", cnn).then(function(response) {
-		console.log("Response recieved")
-		return response.text()
-	    }.bind(this)).then(function(text) {
+	    fetchSeg(imgArr, labelArr, "cnnSeg", cnn).then(function(text) {
 		console.log("text", text)
 		var mask = JSON.parse(text)
 		console.log("mask", mask)
@@ -565,16 +562,7 @@ class App extends Component {
 
 	    <div style={{display:this.hideIfTrue(this.state.imageIndex === -1, "block")}}>
 
-	    {this.images.length <= 1 ? null :
-	     <div style={borderStyle}>
-		<p>Images:</p>
-		<RadioList options={this.state.imageNames} exclusionary={true}
-		checked={this.state.imageIndex} onChange={this.changeImage.bind(this)}
-		divStyleOuter={divStyle}
-		radioStyle={elementStyle} labelStyle={elementStyle}
-		divStyleInner={{"display":"inline-block", "width":"70%", "textAlign":"left"}}
-		/>
-		</div>}
+
 	    
 
 	    {this.state.imageIndex === -1 ? null :
@@ -760,3 +748,16 @@ export default App
 // What datasets?
 // Differently sized pixels?
 // How do I use GPU server?
+
+
+/* this.images.length <= 1 ? null :
+ *  <div style={borderStyle}>
+ *     <p>Images:</p>
+ *     <RadioList options={this.state.imageNames} exclusionary={true}
+ *     checked={this.state.imageIndex} onChange={this.changeImage.bind(this)}
+ *     divStyleOuter={divStyle}
+ *     radioStyle={elementStyle} labelStyle={elementStyle}
+ *     divStyleInner={{"display":"inline-block", "width":"70%", "textAlign":"left"}}
+ *     />
+ *     </div>*/
+
