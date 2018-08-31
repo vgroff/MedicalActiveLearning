@@ -17,7 +17,6 @@ std::vector< std::vector< std::vector < double > > > gridCut3D(std::vector< std:
 	int width = image[0][0].size();
 	Grid3D grid = new GridGraph_3D_26C<double, double, float>(depth, height, width);
 	int xyDir[4][2]  = { {0,1}, {1,1}, {1,0}, {1,-1} } ;
-
 	std::vector<std::vector<std::vector <double> > > counts;
 	for (int z = 0; z < depth; z++) {
 		std::vector<std::vector <double> > img;
@@ -30,7 +29,6 @@ std::vector< std::vector< std::vector < double > > > gridCut3D(std::vector< std:
 		}
 		counts.push_back(img);
 	}
-
 	for (int z = 0; z < depth; z++) {
 		for (int y=0;y<height;y++) {
 			for (int x=0;x<width;x++) {
@@ -67,9 +65,7 @@ std::vector< std::vector< std::vector < double > > > gridCut3D(std::vector< std:
 			}
 		}
 	}
-
 	grid->compute_maxflow();
-
 	std::vector<std::vector<std::vector <double> > > segmentation;
 	for (int z = 0; z < depth; z++) {
 		std::vector<std::vector <double> > img;

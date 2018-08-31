@@ -119,14 +119,19 @@ def cropToSeg(labels, image, imageOrig, margin,  minMargin=1, minSize=0, minPadd
     imageOrig = imageOrig[rowMarginBounds[0]:rowMarginBounds[1]+1,
                           colMarginBounds[0]:colMarginBounds[1]+1,
                           depthBounds[0]:depthMarginBounds[1]+1]
-    if (max(image.shape) > minSize):
-        # If the image is already larger than the minimum size,
-        # pad largest edge with randomized min padding
-        minSize = int(round((minPadding[1] - minPadding[0]) * random.random() + minPadding[0] + minSize))
+
     if process=="cubePadding":
+        if (max(image.shape) > minSize):
+                # If the image is already larger than the minimum size,
+                # pad largest edge with randomized min padding
+                minSize = int(round((minPadding[1] - minPadding[0]) * random.random() + minPadding[0] + minSize))
         image, padding = cubePadding(image, minSize)
         labels = cubePadding(labels, minSize)[0]
         imageOrig = cubePadding(imageOrig, minSize)[0]
+    elif process=="softPadding":
+        image, padding = softPadding(image)
+        labels = softPadding(labels)[0]
+        imageOrig = softPadding(imageOrig)[0]
     else:
         padding = []
     return labels, image, imageOrig, [rowMarginBounds, colMarginBounds, depthMarginBounds], padding
@@ -143,6 +148,28 @@ def cubePadding(image, minCubeLength):
     image = tf.Session().run(image)
     return image, padding
 
+def softPadding(image, vals=[32, 64, 80, 96, 112, 128,
+                             155, 160, 176, 192, 224, 256, 288,
+                             352, 384, 448, 512]):
+    newShape = [0,0,0]
+    for index, shape in enumerate(image.shape):
+        if (shape < vals[0]):
+            newShape[index] = vals[0]
+            continue
+        for i, val in enumerate(vals):
+            if (shape >= val and shape <= vals[i+1]):
+                if shape == val:
+                    newShape[index] = val
+                else:
+                    newShape[index] = vals[i+1]
+                continue
+    padding = [[(newShape[0] - image.shape[0])//2, (newShape[0] - image.shape[0] + 1)//2],
+               [(newShape[1] - image.shape[1])//2, (newShape[1]- image.shape[1] + 1)//2],
+               [(newShape[2] - image.shape[2])//2, (newShape[2] - image.shape[2] + 1)//2]]
+    image = tf.pad(image, padding, "CONSTANT")
+    image = tf.Session().run(image)
+    return image, padding
+    
 def unpad(image, bounds):
     rowMarginBounds = bounds[0]
     colMarginBounds = bounds[1]

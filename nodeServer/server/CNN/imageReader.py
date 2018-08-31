@@ -101,7 +101,7 @@ def readFunc(dataset, mode, params, crop=True):
     return
 
 
-def getImages(folder, dataset, size, valFraction, nOrientations=1, augment=True, margins=[2,9], minMargins=[1,2]):
+def getImages(folder, dataset, size, valFraction, nOrientations=1, pad="cubePadding", augment=True, margins=[2,9], minMargins=[1,2]):
     shape      = [size]*3
     trImgs     = []
     trLabels   = []
@@ -137,22 +137,19 @@ def getImages(folder, dataset, size, valFraction, nOrientations=1, augment=True,
             labelPath = dataPoint["label"]
             label_sitk = sitk.ReadImage(os.path.join(folder, labelPath))
             label = sitk.GetArrayFromImage(label_sitk).astype(np.int8)
-            for i, row in enumerate(label):
-                for j, col in enumerate(row):
-                    for k, val in enumerate(col):
-                        if (val > 1):
-                            label[i,j,k] = 1
+            label[label > 1] = 1
             label, img, imgOrig, bounds, padding = cropToSeg(label, img, imgOrig,
                                                              margins[1], margins[0],
-                                                             size, minMargins, randomized=True)
+                                                             size, minMargins, randomized=True,
+                                                             process="softPadding")
 
-            print("Original size", img.shape[0])
-
-            resizeFactor = 1
-            if (int(img.shape[0]) != size):
-                resizeFactor = size / int(img.shape[0])
-                img = zoom(img, resizeFactor, order=1, anti_aliasing=True, multichannel=False)
-                imgOrig = zoom(imgOrig, resizeFactor, order=1, anti_aliasing=True, multichannel=False)
+            print("Original shape", img.shape)
+            if (size != None):
+                resizeFactor = 1
+                if (int(img.shape[0]) != size):
+                    resizeFactor = size / int(img.shape[0])
+                    img = zoom(img, resizeFactor, order=1, anti_aliasing=True, multichannel=False)
+                    imgOrig = zoom(imgOrig, resizeFactor, order=1, anti_aliasing=True, multichannel=False)
             img = whitening(img)
             #noise = np.random.normal(0, 0.1, img.shape)
             #img += noise
@@ -164,15 +161,16 @@ def getImages(folder, dataset, size, valFraction, nOrientations=1, augment=True,
                 for j, col in enumerate(row):
                     for k, depth in enumerate(col):
                         catLabels[i, j, k, int(round(depth))] = 1
-            catLabels = zoom(catLabels, [resizeFactor]*3, order=1, anti_aliasing=True,  multichannel=True)
-            for i, row in enumerate(catLabels):
-                for j, col in enumerate(row):
-                    for k, depth in enumerate(col):
-                        val = 0
-                        if (depth[0] < depth[1]):
-                            val = 1
-                        catLabels[i, j, k, val] = 1
-                        catLabels[i, j, k, (val+1)%2] = 0
+            if (size != None):
+                catLabels = zoom(catLabels, [resizeFactor]*3, order=1, anti_aliasing=True,  multichannel=True)
+                for i, row in enumerate(catLabels):
+                    for j, col in enumerate(row):
+                        for k, depth in enumerate(col):
+                            val = 0
+                            if (depth[0] < depth[1]):
+                                val = 1
+                            catLabels[i, j, k, val] = 1
+                            catLabels[i, j, k, (val+1)%2] = 0
 
             # img = np.stack([img], axis=-1).astype(np.float32)
             # img = resize3D(img, False, *shape)

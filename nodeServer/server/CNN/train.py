@@ -38,7 +38,8 @@ def prepImageManager(numVal, numbers, orientations, folders, size):
         orientation = orientations[i]
         if (number < len(dataset)):
             dataset = dataset[:number]
-        data = getImages(folder, dataset, size, numVal/len(dataset), orientation, False, [0, 10], [1,2])
+        data = getImages(folder, dataset, None, numVal/len(dataset), orientation,
+                         "softPadding", False, [0, 10], [1,2])
         if (mngr):
             mngr.addData(data)
         else:
@@ -155,7 +156,7 @@ def accuracy(y_true, y_pred):
               
 def train():
     useOldImg   = True
-    useOldModel = False
+    useOldModel = True
     nClasses = 2
     length = 80
     if (useOldImg == False):
@@ -181,8 +182,8 @@ def train():
     print("Getting net...")
     lr = 8e-5#2.5e-5#1.2e-4#7.5e-5
     if (useOldModel == False):
-        model = getUNet2((1,length,length,length), nClasses, lr=lr,
-                         n_base_filters=12, depth=4,
+        model = getUNet2((1,None,None,None), nClasses, lr=lr,
+                         n_base_filters=16, depth=5,
                          loss_function=weighted_dice_coefficient_loss, activation_name="softmax")
         sgd = SGD(lr=lr, momentum=0.99, decay=0.0, nesterov=False)
         model.compile(optimizer = sgd, loss = weighted_dice_coefficient_loss, metrics=[accuracy])
@@ -200,11 +201,11 @@ def train():
                                                 min_lr=1e-5)
     imageSets = [[90, 30, 4, False],[0, 30, 1, False],[60, 30, 5, False],[90, 30, 2, False],[30, 30, 1, False]]
     #imageSets = [[60,30,9,True], [0,30,1,True], [30,30,1,True], [60,30, 1, True], [0, 90, 2,True]]#[[0,30,3,True], [30,30,3,True], [60,30,3,True]]#[[60, 30, 4*1, True], [90, 30, 4*1, True], [0, 120, 1, True]]#, [90, 30, 10, False], [0, 120, 1, True]]
-    imageSets = [[0,30,3,True]]
+    imageSets = [[0,90,1,True]]
     #imageSets = [[0, 30, 4, True], [30, 60, 4, True]]
     #imageSets = [[60, 30, 4, True], [90, 30, 4, True]]
     valStart = 0
-    valEnd   = 5
+    valEnd   = 15
     valImgs, valLabels, valInfo = [valImgs[valStart:valEnd], valLabels[valStart:valEnd], valInfo[valStart:valEnd]]
     epochs = 8
     imgGen = generateImages(imgs, labels, imageSets)

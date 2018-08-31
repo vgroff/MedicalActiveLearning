@@ -426,12 +426,10 @@ if __name__ == '__main__':
     parseArgs()
 
 # IMMEDIATE:
-# - GRaph cuts output is inverted
-# - Check how well the new CNNs work.. problems with irregular sizing. Need to make all edges a power of a some number
+# - Retrain both on new img set
 # - Produce all loss graphs
 # - Produce dice scores on unknown stuff
 # - Produce hard results
-# - Try a model with None as size inputs?
 # - Write segmentation to NIFTI
 # - Check timings with faster internet
 
