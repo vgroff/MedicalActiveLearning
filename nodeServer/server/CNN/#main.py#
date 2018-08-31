@@ -426,9 +426,12 @@ if __name__ == '__main__':
     parseArgs()
 
 # IMMEDIATE:
-# - Produce all loss graphs
 # - Change canvas sizing
 # - Check timings with faster internet
+# - Produce all loss graphs
+# - Produce dice scores on unknown stuff
+# - Produce hard results
+
     
 # TO-DO Now:
 # - Sort out those loading times
