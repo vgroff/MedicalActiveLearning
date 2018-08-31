@@ -1,4 +1,4 @@
-import sys, json, os
+import sys, json, os, inspect
 import numpy as np
 import tensorflow as tf
 #from graphCuts import graphCut
@@ -213,7 +213,7 @@ def graphCuts(segImg, probs, edgeCoeff, stdDev, gridCuts, maxVal=None):
     return seg
     
 
-def main(imgOrig, labelOrig, cnn=True, doGraphCuts=True, BIFSeg=True, cnnName=1):
+def main(imgOrig, labelOrig, model, cnn=True, doGraphCuts=True, BIFSeg=True):
 
     totalTime = time()
     manipTime = 0
@@ -239,9 +239,6 @@ def main(imgOrig, labelOrig, cnn=True, doGraphCuts=True, BIFSeg=True, cnnName=1)
         img = np.stack([img], axis=0).astype(np.float32)
         manipTime += time() - t
 
-        t = time()
-        model = loadModel(cnnName)
-        loadTime += time() - t
         t = time()
         result = model.predict(np.array([img]))
         predictTime += time() - t
@@ -349,21 +346,33 @@ def main(imgOrig, labelOrig, cnn=True, doGraphCuts=True, BIFSeg=True, cnnName=1)
     return seg
 
 def parseArgs():
+    path = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
+    f = open(path+"/nets.pkl", "rb")
+    netsdb = pickle.load(f)
+    f.close()
+
+    models = {}
+    for name in netsdb.getNames():
+        models[name] = loadModel(name)
+    print("Models loaded", file=sys.stderr)
     
-    action = sys.argv[1]
-    cnnName = None
-    try:
-        cnnName = sys.argv[2]
-    except:
-        pass
+    # action = sys.argv[1]
+    # cnnName = None
+    # try:
+    #     cnnName = sys.argv[2]
+    # except:
+    #     pass
     
     lines = sys.stdin.readlines()
-    img = json.loads(lines[0][:-1])
-    label = json.loads(lines[1])
+    action = lines[0][:-1]
+    cnnName = lines[1][:-1]
+    img = json.loads(lines[2][:-1])
+    label = json.loads(lines[3])
 
     #f = open("nets.pkl", "rb")
     #db = pickle.load(f)
     #f.close()
+    model = None
     graphCuts = True
     BIFSeg = False
     if action == "cnnSeg":
@@ -381,6 +390,9 @@ def parseArgs():
     elif action == "query":
         pass
 
+    if cnn == True:
+        model = models[cnnName]
+    print("MOD", model, file=sys.stderr)
     if action == "print":
         img   = listsToArray(img)
         label = listsToArray(label)
@@ -391,7 +403,7 @@ def parseArgs():
         writeNIFTI(label, folder, "lbl")
         print(" Done")
     else:    
-        seg = main(img, label, cnn, graphCuts, BIFSeg, cnnName)
+        seg = main(img, label, model, cnn, graphCuts, BIFSeg)
         seg = np.asarray(np.around(seg), dtype=int)
         np.set_printoptions(threshold=np.nan)
         print(np.array2string(seg, separator=", "))
