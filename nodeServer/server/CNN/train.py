@@ -154,6 +154,11 @@ def catCrossEntropy(target, output):
 def accuracy(y_true, y_pred):
     return K.mean(K.equal(K.argmax(y_true, axis=1),K.argmax(y_pred, axis=1)))
 
+def diceScore(y_pred, y_true, hard=False):
+    if hard == True:
+        y_true = np.argmax(y_true, axis=0)
+        y_pred = np.argmax(y_pred, axis=0)
+    return 2 * np.sum(y_true*y_pred) / (np.sum(y_true) + np.sum(y_pred))
 
 def train():
     useOldImg   = True
@@ -162,10 +167,10 @@ def train():
     length = 80
     if (useOldImg == False):
         folderStub = "/home/vincent/Documents/imperial/individual project/datasets/decathlon/Task"
-        folderNames = ["02_Heart", "05_Prostate", "04_Hippocampus", "07_Pancreas"] 
+        folderNames = ["02_Heart", "05_Prostate", "04_Hippocampus"] 
         folders = [folderStub+name for name in folderNames]
-        numbers      = [20, 20, 35, 35]
-        orientations = [2, 2, 1, 1]
+        numbers      = [20, 20, 35]
+        orientations = [2, 2, 1]
         numVal = 5
         mngr = prepImageManager(numVal, numbers, orientations, folders, length)
         imgs, labels, info = mngr.getTrainImages()
@@ -181,7 +186,7 @@ def train():
         imgs, labels, info = mngr.getTrainImages()
         valImgs, valLabels, valInfo = mngr.getValImages()
     print("Getting net...")
-    lr = 12e-5#2.5e-5#1.2e-4#7.5e-5
+    lr = 8e-5#2.5e-5#1.2e-4#7.5e-5
     if (useOldModel == False):
         model = getUNet2((1,None,None,None), nClasses, lr=lr,
                          n_base_filters=16, depth=5,
@@ -202,29 +207,28 @@ def train():
                                                 min_lr=1e-5)
     imageSets = [[90, 30, 4, False],[0, 30, 1, False],[60, 30, 5, False],[90, 30, 2, False],[30, 30, 1, False]]
     #imageSets = [[60,30,9,True], [0,30,1,True], [30,30,1,True], [60,30, 1, True], [0, 90, 2,True]]#[[0,30,3,True], [30,30,3,True], [60,30,3,True]]#[[60, 30, 4*1, True], [90, 30, 4*1, True], [0, 120, 1, True]]#, [90, 30, 10, False], [0, 120, 1, True]]
-    imageSets = [[0,90,1,True]]
+    imageSets = [[0,30,1,True]]
     #imageSets = [[0, 30, 4, True], [30, 60, 4, True]]
     #imageSets = [[60, 30, 4, True], [90, 30, 4, True]]
     valStart = 0
-    valEnd   = 15
+    valEnd   = 5
     valImgs, valLabels, valInfo = [valImgs[valStart:valEnd], valLabels[valStart:valEnd], valInfo[valStart:valEnd]]
-    epochs = 8
-    print(len(valImgs), valImgs[0].shape)
+    epochs = 20
     #a = np.array(valImgs, dtype=object)
     imgGen = generateImages(imgs, labels, imageSets)
     for i in range(epochs):
         model.fit_generator(imgGen, verbose=1, #metrics=["accuracy"],
-                            steps_per_epoch=90, epochs=epochs,
-                            shuffle=False, callbacks=[cp])#, learning_rate_reduction])
+                            steps_per_epoch=90, epochs=1,
+                            shuffle=False)#, callbacks=[cp])#, learning_rate_reduction])
         acc = 0
         dice = 0
-        for i, img in valImgs:
-            res = model.predict(np.array([valImgs]))
-            dice += weighted_dice_coefficient_loss(res, valLabels[i])
-            acc  += accuracy(res, valLabels[i])
+        for i, img in enumerate(valImgs):
+            res = model.predict(np.array([img]))
+            dice += diceScore(res[0], valLabels[i], False)
+            acc  += diceScore(res[0], valLabels[i], True)
         dice /= len(valImgs)
         acc /= len(valImgs)
-        print("Val Dice: {}, Val Acc: {}".format(dice, acc))
+        print("Val Dice Coeff: {}, Val Dice: {}".format(dice, acc))
     saveModel(model)
 
 

@@ -149,7 +149,7 @@ def cubePadding(image, minCubeLength):
     return image, padding
 
 def softPadding(image, vals=[32, 64, 80, 96, 112, 128,
-                             155, 160, 176, 192, 224, 256, 288,
+                             144, 160, 176, 192, 224, 256, 288,
                              352, 384, 448, 512]):
     newShape = [0,0,0]
     for index, shape in enumerate(image.shape):
