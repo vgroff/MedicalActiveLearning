@@ -28,9 +28,9 @@ app.use(webpackHotMiddleware(compiler)); // And this line
 app.use(express.json({limit:"500mb"}));
 app.use(csp({
   directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-      styleSrc: ["'self'","'unsafe-inline'"]
+      defaultSrc: ["'self'", "*"],
+      scriptSrc: ["'self'", "*", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "*", "'unsafe-inline'"]
   },
     setAllHeaders: true
 }))
