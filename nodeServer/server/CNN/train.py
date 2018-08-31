@@ -153,7 +153,8 @@ def catCrossEntropy(target, output):
 
 def accuracy(y_true, y_pred):
     return K.mean(K.equal(K.argmax(y_true, axis=1),K.argmax(y_pred, axis=1)))
-              
+
+
 def train():
     useOldImg   = True
     useOldModel = True
@@ -180,7 +181,7 @@ def train():
         imgs, labels, info = mngr.getTrainImages()
         valImgs, valLabels, valInfo = mngr.getValImages()
     print("Getting net...")
-    lr = 8e-5#2.5e-5#1.2e-4#7.5e-5
+    lr = 12e-5#2.5e-5#1.2e-4#7.5e-5
     if (useOldModel == False):
         model = getUNet2((1,None,None,None), nClasses, lr=lr,
                          n_base_filters=16, depth=5,
@@ -208,11 +209,22 @@ def train():
     valEnd   = 15
     valImgs, valLabels, valInfo = [valImgs[valStart:valEnd], valLabels[valStart:valEnd], valInfo[valStart:valEnd]]
     epochs = 8
+    print(len(valImgs), valImgs[0].shape)
+    #a = np.array(valImgs, dtype=object)
     imgGen = generateImages(imgs, labels, imageSets)
-    model.fit_generator(imgGen, verbose=1, #metrics=["accuracy"],
-                        steps_per_epoch=90, epochs=epochs,
-                        shuffle=False, validation_data=(np.array(valImgs), np.array(valLabels)),
-                        callbacks=[cp])#, learning_rate_reduction])
+    for i in range(epochs):
+        model.fit_generator(imgGen, verbose=1, #metrics=["accuracy"],
+                            steps_per_epoch=90, epochs=epochs,
+                            shuffle=False, callbacks=[cp])#, learning_rate_reduction])
+        acc = 0
+        dice = 0
+        for i, img in valImgs:
+            res = model.predict(np.array([valImgs]))
+            dice += weighted_dice_coefficient_loss(res, valLabels[i])
+            acc  += accuracy(res, valLabels[i])
+        dice /= len(valImgs)
+        acc /= len(valImgs)
+        print("Val Dice: {}, Val Acc: {}".format(dice, acc))
     saveModel(model)
 
 
