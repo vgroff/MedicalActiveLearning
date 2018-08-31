@@ -38,7 +38,9 @@ app.use(express.json({limit:"500mb"}));
 //     return next()
 // })
 
-
+var spawn = require("child_process").spawn;
+var segProcess = spawn('python3',[__dirname+"/CNN/main.py"])
+segProcess.stderr.on('data', function(data) { console.log(data.toString())})
 
 app.get('/', function response(req, res) {
     res.sendFile(path.join(__dirname, '../index.html'));
@@ -51,7 +53,6 @@ app.post('/segment', function response(req, res) {
     // Use child_process.spawn method from 
     // child_process module and assign it
     // to variable spawn
-    var spawn = require("child_process").spawn;
      
     // Parameters passed in spawn -
     // 1. type_of_script
@@ -62,19 +63,15 @@ app.post('/segment', function response(req, res) {
     // so, first name = Mike and last name = Will
     console.log("CNN Request Received. Spawing Python process...")
     console.log("Name", req.body.CNNName)
-    var process = spawn('python3',[__dirname+"/CNN/main.py",
-				   req.body.action, req.body.CNNName]);//,
-				   //req.body.image,
-				   //req.body.scribbles] );
- 
+
     // Takes stdout data from script which executed
     // with arguments and send this data to res object
     var resp = ""
     var log = ""
     var print = ""
-    process.stdout.on('data', async function(data) {
+    segProcess.stdout.on('data', async function(data) {
 	var str = data.toString()
-	console.log(str)
+	//console.log(str)
 	resp += str
 	log  += str
 	var l = str.length
@@ -88,30 +85,28 @@ app.post('/segment', function response(req, res) {
 		}
 	    }
 	    console.log(start)
-	    //console.log("Sending: " + resp.slice(0, resp.length-5))
 	    res.send(resp.slice(start, resp.length-5))
-	    //fs.writeFile("./respSend.txt", JSON.stringify(a))
-	    //fs.writeFile("./log.txt", log)
-	    //fs.writeFile("./print.txt", print)
-	    //fs.writeFile("./response.txt", resp.slice(start, resp.length-5))
 	    console.log("Done sending")
 	}
 	//data.toString());
     } )
-    process.stderr.on('data', function(data) {
+    segProcess.stderr.on('data', function(data) {
 	errMsg = "Server Err: " + data.toString()
 	log += errMsg
 	console.log(errMsg)
 	fs.writeFile("./errLog.txt", JSON.stringify(log), (error) => { console.log("Error!", error); })
 	//res.send("Server Error occurred")
     } )
-    process.on("close", function() {	
+    segProcess.on("close", function() {
+	segProcess = spawn('python3',[__dirname+"/CNN/main.py"])
     })
     
     //data = JSON.parse(req.body.image)
-    process.stdin.write(req.body.image + "\n");
-    process.stdin.write(req.body.scribbles);
-    process.stdin.end();
+    segProcess.stdin.write(req.body.action + "\n");
+    segProcess.stdin.write(req.body.CNNName + "\n");
+    segProcess.stdin.write(req.body.image + "\n");
+    segProcess.stdin.write(req.body.scribbles);
+    segProcess.stdin.end();
     
 });
 
