@@ -34,7 +34,7 @@ app.use(csp({
       reportUri: '/report-violation'
   },
     loose:true,
-    reportOnly: false,
+    reportOnly: true,
     setAllHeaders: true
 }))
 
