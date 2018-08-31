@@ -21,6 +21,12 @@ def calcDice(labels1, labels2):
     return count/total
 
 
+def diceScore(y_pred, y_true, hard=False):
+    if hard == True:
+        y_true = np.argmax(y_true, axis=0)
+        y_pred = np.argmax(y_pred, axis=0)
+    return 2 * np.sum(y_true*y_pred) / (np.sum(y_true) + np.sum(y_pred))
+
 def main():
     model = loadModel(1)
     f = open("imgs.pkl", "rb")
@@ -39,7 +45,7 @@ def main():
         result = model.predict(np.array([img]))[0]
         preds.append(result)
         dice = calcDice(np.argmax(result, axis=0), np.argmax(valLabels[i], axis=0))
-        print("Dice {}: {}".format(i, dice))
+        print("Dice {}: {}".format(i, dice), diceScore(result, valLabels[i], True))
         diceOrigs.append(dice)
         meanDice += dice
         meanDiceSq += dice**2

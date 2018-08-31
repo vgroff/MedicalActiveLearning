@@ -216,6 +216,7 @@ def train():
     epochs = 20
     #a = np.array(valImgs, dtype=object)
     imgGen = generateImages(imgs, labels, imageSets)
+    bestAcc = 0
     for i in range(epochs):
         model.fit_generator(imgGen, verbose=1, #metrics=["accuracy"],
                             steps_per_epoch=90, epochs=1,
@@ -226,6 +227,9 @@ def train():
             res = model.predict(np.array([img]))
             dice += diceScore(res[0], valLabels[i], False)
             acc  += diceScore(res[0], valLabels[i], True)
+            if acc > bestAcc:
+                bestAcc = acc
+                saveModel(model, "bestLeftAtrium")
         dice /= len(valImgs)
         acc /= len(valImgs)
         print("Val Dice Coeff: {}, Val Dice: {}".format(dice, acc))
