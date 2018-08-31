@@ -30,8 +30,10 @@ app.use(csp({
   directives: {
       defaultSrc: ["'self'", "*"],
       scriptSrc: ["'self'", "*", "'unsafe-inline'", "'unsafe-eval'"],
-      styleSrc: ["'self'", "*", "'unsafe-inline'"]
+      styleSrc: ["'self'", "*", "'unsafe-inline'"],
+      reportUri: '/report-violation'
   },
+    loose:true,
     setAllHeaders: true
 }))
 
