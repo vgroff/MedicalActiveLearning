@@ -379,7 +379,7 @@ def parseArgs():
     #db = pickle.load(f)
     #f.close()
     model = None
-    graphCuts = True
+python3     graphCuts = True
     BIFSeg = False
     if action == "cnnSeg":
         cnn = True
@@ -428,29 +428,18 @@ if __name__ == '__main__':
 # IMMEDIATE:
 # - Retrain both on new img set
 # - Produce all loss graphs
-# - Produce dice scores on unknown stuff
+# - Produce dice scores on unknown stuff & hyperparams
 # - Produce hard results
-# - Write segmentation to NIFTI
 # - Check timings with faster internet
-
-
-    
-# TO-DO Now:
-# - Sort out those loading times
-# - Train and fix frontend. Add rotations
-# - Produce loss graphs
-# - Refernces/to-do report
-# - Change sizing of canvas on front end
 # - Comment and clean up code
-
+# - Report
+# - Video thingy
     
 # TO-DO:
 # - Write weight array as image so it can be looked at
-# - Look into microsoft azure  
 # - Need to reduce the time taken both on front and back end.
 # - Try BIFSeg confidence value for all non-labelled pixels with weighting=abs(probs1 - probs2)
 # - Have a second value of lambda for graphcuts for pixels that are differently labelled geodesically near a scribble?
-# - Start grid searching hyper parameters
 
 # TO-DO:
 # - Set scribble probs to infinity or 0 instead in graphcuts? already setting to 0, guessing the value is the same as infinity? Could still try setting it as inf or 1e10 or something

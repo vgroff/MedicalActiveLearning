@@ -216,23 +216,25 @@ def train():
     epochs = 20
     #a = np.array(valImgs, dtype=object)
     imgGen = generateImages(imgs, labels, imageSets)
+    valImgGen = generateImages(valImgs, valLabels, [[0,5,1,True]])
     bestAcc = 0
     for i in range(epochs):
         model.fit_generator(imgGen, verbose=1, #metrics=["accuracy"],
                             steps_per_epoch=90, epochs=1,
+                            validation_data = valImgGen, validation_steps = 5, 
                             shuffle=False)#, callbacks=[cp])#, learning_rate_reduction])
-        acc = 0
-        dice = 0
-        for i, img in enumerate(valImgs):
-            res = model.predict(np.array([img]))
-            dice += diceScore(res[0], valLabels[i], False)
-            acc  += diceScore(res[0], valLabels[i], True)
-        dice /= len(valImgs)
-        acc /= len(valImgs)
-        if acc > bestAcc:
-            bestAcc = acc
-            saveModel(model, "bestLeftAtrium")
-        print("Val Dice Coeff: {}, Val Dice: {}".format(dice, acc))
+    #     acc = 0
+    #     dice = 0
+    #     for i, img in enumerate(valImgs):
+    #         res = model.predict(np.array([img]))
+    #         dice += diceScore(res[0], valLabels[i], False)
+    #         acc  += diceScore(res[0], valLabels[i], True)
+    #     dice /= len(valImgs)
+    #     acc /= len(valImgs)
+    #     if acc > bestAcc:
+    #         bestAcc = acc
+    #         saveModel(model, "bestLeftAtrium")
+    #     print("Val Dice Coeff: {}, Val Dice: {}".format(dice, acc))
     saveModel(model)
 
 

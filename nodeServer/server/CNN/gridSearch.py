@@ -28,13 +28,13 @@ def diceScore(y_pred, y_true, hard=False):
     return 2 * np.sum(y_true*y_pred) / (np.sum(y_true) + np.sum(y_pred))
 
 def main():
-    model = loadModel(1)
+    model = loadModel("bestLeftAtrium")
     f = open("imgs.pkl", "rb")
     mngr = pickle.load(f)
     f.close()
     valImgs, valLabels, valInfo = mngr.getValImages()
     valStart = 0
-    valEnd = 15
+    valEnd = 5
     valImgs, valLabels, valInfo = [valImgs[valStart:valEnd], valLabels[valStart:valEnd], valInfo[valStart:valEnd]]
 
     meanDice = 0
