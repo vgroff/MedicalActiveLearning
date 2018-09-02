@@ -12,7 +12,7 @@ from keras import backend as K
 
 from cnnUtils import saveModel, loadModel
 from imageUtils import ImageManager, getDatasetInfo, pathImgMngr
-from model import getUNet, getUNet2, getPCNet
+from model import getUNet2
 
 from imageReader import getImages
 
@@ -160,7 +160,7 @@ def diceScore(y_pred, y_true, hard=False):
 
 def train():
     useOldImg   = True
-    useOldModel = True
+    useOldModel = False
     nClasses = 2
     length = 80
     if (useOldImg == False):
@@ -182,19 +182,19 @@ def train():
     else:
         # Get images from previous image set
         print("Getting images...")
-        f = open("imgs.pkl", "rb")
+        f = open("imgs_spleen10.pkl", "rb")
         mngr = pickle.load(f)
         f.close()
         imgs, labels, info = mngr.getTrainImages()
         valImgs, valLabels, valInfo = mngr.getValImages()
     print("Getting net...")
-    lr = 8e-5#2.5e-5#1.2e-4#7.5e-5
+    lr = 35e-5#2.5e-5#1.2e-4#7.5e-5
     if (useOldModel == False):
         # Build Unet model
         model = getUNet2((1,None,None,None), nClasses, lr=lr,
                          n_base_filters=16, depth=5,
                          loss_function=weighted_dice_coefficient_loss, activation_name="softmax")
-        sgd = SGD(lr=lr, momentum=0.99, decay=0.0, nesterov=False)
+        sgd = SGD(lr=lr, momentum=0.95, decay=0.0, nesterov=False)
         model.compile(optimizer = sgd, loss = weighted_dice_coefficient_loss, metrics=[accuracy])
     else:
         # Load model from file
@@ -213,13 +213,20 @@ def train():
     # Select training and validation images
     imageSets = [[0,30,1,True]]
     valStart = 0
-    valEnd   = 5
+    valEnd   = 10
     valImgs, valLabels, valInfo = [valImgs[valStart:valEnd], valLabels[valStart:valEnd], valInfo[valStart:valEnd]]
     epochs = 20
+
+    imageSets = [[0,4,1,True]]
+    imgs = valImgs[0:4]
+    labels = valLabels[0:4]
+    valImgs = valImgs[4:10]
+    valLabels = valLabels[4:10]
+    
     # Build training and validation images
     imgGen = generateImages(imgs, labels, imageSets)
     valImgGen = generateImages(valImgs, valLabels, [[0,5,1,True]])
-    bestAcc = 0
+    bestAcc = 0    
     # Train on image generator
     model.fit_generator(imgGen, verbose=1, #metrics=["accuracy"],
                         steps_per_epoch=90, epochs=epochs,

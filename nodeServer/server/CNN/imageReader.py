@@ -136,20 +136,26 @@ def getImages(folder, dataset, size, valFraction, nOrientations=1, pad="cubePadd
             imgOrig /= maxVal
             labelPath = dataPoint["label"]
             label_sitk = sitk.ReadImage(os.path.join(folder, labelPath))
-            label = sitk.GetArrayFromImage(label_sitk).astype(np.int8)
+            label = sitk.GetArrayFromImage(label_sitk).astype(np.float32)
             label[label > 1] = 1
+            label = zoom(label, 0.5, order=1, anti_aliasing=True, multichannel=False)
+            label = np.rint(label)
+            img = zoom(img, 0.5, order=1, anti_aliasing=True, multichannel=False)
+            imgOrig = zoom(imgOrig, 0.5, order=1, anti_aliasing=True, multichannel=False)
             label, img, imgOrig, bounds, padding = cropToSeg(label, img, imgOrig,
                                                              margins[1], margins[0],
                                                              size, minMargins, randomized=True,
                                                              process="softPadding")
 
-            print("Original shape", img.shape)
+            print("Original shape", img.shape, padding)
             if (size != None):
                 resizeFactor = 1
                 if (int(img.shape[0]) != size):
                     resizeFactor = size / int(img.shape[0])
                     img = zoom(img, resizeFactor, order=1, anti_aliasing=True, multichannel=False)
                     imgOrig = zoom(imgOrig, resizeFactor, order=1, anti_aliasing=True, multichannel=False)
+
+                    
             img = whitening(img)
             #noise = np.random.normal(0, 0.1, img.shape)
             #img += noise

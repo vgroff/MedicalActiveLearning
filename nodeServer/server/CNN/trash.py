@@ -42,12 +42,12 @@ os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 #model = loadModel(1)
 
 folderStub = "/home/vincent/Documents/imperial/individual project/datasets/decathlon/Task"
-folderNames = ["03_Liver", "09_Spleen"] 
+folderNames = ["09_Spleen"]#, "09_Spleen"] 
 folders = [folderStub+name for name in folderNames]
-numbers      = [10, 10]
-orientations = [1,1]
+numbers      = [10]#, 10]
+orientations = [1]#,1]
 mngr = prepImageManager(10, numbers, orientations, folders, 80)
-f = open("imgs_unseen10.pkl", "wb")
+f = open("imgs_spleen10.pkl", "wb")
 pickle.dump(mngr, f)
 f.close()
 

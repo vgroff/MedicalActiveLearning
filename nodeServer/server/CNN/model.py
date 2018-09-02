@@ -61,45 +61,34 @@ def weighted_dice_coefficient_loss(y_true, y_pred):
 def isensee2017_model(input_shape=(4, 128, 128, 128), n_base_filters=12, depth=4, dropout_rate=0.3,
                       n_segmentation_levels=3, n_labels=4, optimizer=Adam, initial_learning_rate=5e-4,
                       loss_function=weighted_dice_coefficient_loss, activation_name="sigmoid"):
-    """
-    This function builds a model proposed by Isensee et al. for the BRATS 2017 competition:
-    https://www.cbica.upenn.edu/sbia/Spyridon.Bakas/MICCAI_BraTS/MICCAI_BraTS_2017_proceedings_shortPapers.pdf
-    This network is highly similar to the model proposed by Kayalibay et al. "CNN-based Segmentation of Medical
-    Imaging Data", 2017: https://arxiv.org/pdf/1701.03056.pdf
-    :param input_shape:
-    :param n_base_filters:
-    :param depth:
-    :param dropout_rate:
-    :param n_segmentation_levels:
-    :param n_labels:
-    :param optimizer:
-    :param initial_learning_rate:
-    :param loss_function:
-    :param activation_name:
-    :return:
-    """
+
     inputs = Input(input_shape)
 
     current_layer = inputs
     level_output_layers = list()
     level_filters = list()
     for level_number in range(depth):
+        # Build context layers, progressively extracting larger features
         n_level_filters = (2**level_number) * n_base_filters
         level_filters.append(n_level_filters)
 
         if current_layer is inputs:
             in_conv = create_convolution_block(current_layer, n_level_filters)
         else:
+            # Reduce the size of the previous layer with strides
             in_conv = create_convolution_block(current_layer, n_level_filters, strides=(2, 2, 2))
 
         context_output_layer = create_context_module(in_conv, n_level_filters, dropout_rate=dropout_rate)
-
+        # Residual block: add the first and last convolutional layer outputs
         summation_layer = Add()([in_conv, context_output_layer])
         level_output_layers.append(summation_layer)
         current_layer = summation_layer
 
     segmentation_layers = list()
+    # The second side of the U, upsampling back
     for level_number in range(depth - 2, -1, -1):
+        # Layers upsample and concatenate with corresponding context layer
+        # then goes through a localisation layer
         up_sampling = create_up_sampling_module(current_layer, level_filters[level_number])
         concatenation_layer = concatenate([level_output_layers[level_number], up_sampling], axis=1)
         localization_output = create_localization_module(concatenation_layer, level_filters[level_number])
@@ -151,142 +140,4 @@ def getUNet2(shape, nClasses, lr=5e-4, n_base_filters=16, depth=5, n_segmentatio
 
 
 
-
-## OLD ATTEMPTS
-
-
-def getUNet(input_size):
-    inputs = Input(input_size)
-
-    activation = 'linear' 
-
-    conv1 = Conv3D(32, 3, activation = activation, padding = 'same',
-                   kernel_initializer = 'he_normal')(inputs)
-    act = LeakyReLU(alpha=0.1)(conv1)
-    conv1 = Conv3D(64, 3, activation = activation, padding = 'same',
-                   kernel_initializer = 'he_normal')(act)
-    act = LeakyReLU(alpha=0.1)(conv1)
-    pool1 = MaxPooling3D(pool_size=(2, 2, 2))(act)
-
-    conv2 = Conv3D(64, 3, activation = activation, padding = 'same',
-                   kernel_initializer = 'he_normal')(pool1)
-    act = LeakyReLU(alpha=0.1)(conv2)
-    conv2 = Conv3D(128, 3, activation = activation, padding = 'same',
-                   kernel_initializer = 'he_normal')(act)
-    act = LeakyReLU(alpha=0.1)(conv2)
-    pool2 = MaxPooling3D(pool_size=(2, 2, 2))(act)
-
-    conv3 = Conv3D(128, 3, activation = activation, padding = 'same',
-                   kernel_initializer = 'he_normal')(pool2)
-    act = LeakyReLU(alpha=0.1)(conv3)
-    conv3 = Conv3D(256, 3, activation = activation, padding = 'same',
-                   kernel_initializer = 'he_normal')(act)
-    act = LeakyReLU(alpha=0.1)(conv3)
-    pool3 = MaxPooling3D(pool_size=(2, 2, 2))(act)
-
-    conv4 = Conv3D(256, 3, activation = activation, padding = 'same',
-                   kernel_initializer = 'he_normal')(pool3)
-    act = LeakyReLU(alpha=0.1)(conv4)
-    conv4 = Conv3D(256, 3, activation = activation, padding = 'same',
-                   kernel_initializer = 'he_normal')(act)
-    act = LeakyReLU(alpha=0.1)(conv4)
-    drop4 = Dropout(0.5)(act)
-    pool4 = MaxPooling3D(pool_size=(2, 2, 2))(drop4)
-
-    conv5 = Conv3D(256, 3, activation = activation, padding = 'same',
-                   kernel_initializer = 'he_normal')(pool4)
-    act = LeakyReLU(alpha=0.1)(conv5)
-    conv5 = Conv3D(256, 3, activation = activation, padding = 'same',
-                   kernel_initializer = 'he_normal')(act)
-    act = LeakyReLU(alpha=0.1)(conv5)
-    drop5 = Dropout(0.5)(act)
-
-    up6 = Conv3D(128, 2, activation = activation, padding = 'same',
-                 kernel_initializer = 'he_normal')(UpSampling3D(size = (2,2,2))(drop5))
-    act = LeakyReLU(alpha=0.1)(up6)
-    merge6 = merge([drop4,act], mode = 'concat', concat_axis = 4)
-    conv6 = Conv3D(128, 3, activation = activation, padding = 'same',
-                   kernel_initializer = 'he_normal')(merge6)
-    act = LeakyReLU(alpha=0.1)(conv6)
-    conv6 = Conv3D(128, 3, activation = activation, padding = 'same',
-                   kernel_initializer = 'he_normal')(act)
-    act = LeakyReLU(alpha=0.1)(conv6)
-    
-    up7 = Conv3D(128, 2, activation = activation, padding = 'same',
-                 kernel_initializer = 'he_normal')(UpSampling3D(size = (2,2,2))(act))
-    act = LeakyReLU(alpha=0.1)(up7)
-    merge7 = merge([conv3,act], mode = 'concat', concat_axis = 4)
-    conv7 = Conv3D(128, 3, activation = activation, padding = 'same',
-                   kernel_initializer = 'he_normal')(merge7)
-    act = LeakyReLU(alpha=0.1)(conv7)
-    conv7 = Conv3D(128, 3, activation = activation, padding = 'same',
-                   kernel_initializer = 'he_normal')(act)
-    act = LeakyReLU(alpha=0.1)(conv7)
-
-    up8 = Conv3D(64, 2, activation = activation, padding = 'same',
-                 kernel_initializer = 'he_normal')(UpSampling3D(size = (2,2,2))(act))
-    act = LeakyReLU(alpha=0.1)(up8)
-    merge8 = merge([conv2,act], mode = 'concat', concat_axis = 4)
-    conv8 = Conv3D(64, 3, activation = activation, padding = 'same',
-                   kernel_initializer = 'he_normal')(merge8)
-    act = LeakyReLU(alpha=0.1)(conv8)
-    conv8 = Conv3D(64, 3, activation = activation, padding = 'same',
-                   kernel_initializer = 'he_normal')(act)
-    act = LeakyReLU(alpha=0.1)(conv8)
-
-    up9 = Conv3D(64, 2, activation = activation, padding = 'same',
-                 kernel_initializer = 'he_normal')(UpSampling3D(size = (2,2,2))(act))
-    act = LeakyReLU(alpha=0.1)(up9)
-    merge9 = merge([conv1,act], mode = 'concat', concat_axis = 4)
-    conv9 = Conv3D(32, 3, activation = activation, padding = 'same',
-                   kernel_initializer = 'he_normal')(merge9)
-    act = LeakyReLU(alpha=0.1)(conv9)
-    conv9 = Conv3D(32, 3, activation = activation, padding = 'same',
-                   kernel_initializer = 'he_normal')(act)
-    act = LeakyReLU(alpha=0.1)(conv9)
-    conv9 = Conv3D(2, 3, activation = activation, padding = 'same',
-                   kernel_initializer = 'he_normal')(act)
-    act = LeakyReLU(alpha=0.1)(conv9)
-    conv10 = Conv3D(1, 1, activation = 'sigmoid')(act)
-
-    model = Model(input = inputs, output = conv10)
-
-    adam = Adam(lr = 5e-4)
-    sgd = optimizers.SGD(lr=0.001, decay=1.2e-2, momentum=0.9, nesterov=True)
-    model.compile(optimizer = sgd, loss = 'binary_crossentropy', metrics = ['accuracy'])
-    return model
-
-
-def getPCNet(input_size):
-    inputs = Input(input_size)
-
-    conv1 = Conv3D(64, 3, activation = 'relu', padding = 'same',
-                   kernel_initializer = 'he_normal')(inputs)
-    conv1 = Conv3D(64, 3, activation = 'relu', padding = 'same',
-                   kernel_initializer = 'he_normal')(conv1)
-
-    conv2 = Conv3D(64, 3, dilation_rate=2, activation = 'relu', padding = 'same',
-                   kernel_initializer = 'he_normal')(conv1)
-    conv2 = Conv3D(64, 3, dilation_rate=2, activation = 'relu', padding = 'same',
-                   kernel_initializer = 'he_normal')(conv2)
-
-    conv3 = Conv3D(64, 3, dilation_rate=3, activation = 'relu', padding = 'same',
-                   kernel_initializer = 'he_normal')(conv2)
-    conv3 = Conv3D(64, 3, dilation_rate=3, activation = 'relu', padding = 'same',
-                   kernel_initializer = 'he_normal')(conv3)
-
-    conv4 = Conv3D(64, 3, dilation_rate=4, activation = 'relu', padding = 'same',
-                   kernel_initializer = 'he_normal')(conv3)
-    conv4 = Conv3D(64, 3, dilation_rate=4, activation = 'relu', padding = 'same',
-                   kernel_initializer = 'he_normal')(conv4)
-
-    merge1 = merge([conv1,conv2,conv3,conv4], mode = 'concat', concat_axis = 4)
-    conv10 = Conv3D(1, 1, activation = 'sigmoid')(merge1)
-
-    model = Model(input = inputs, output = conv10)
-
-    adam = Adam(lr = 1e-4)
-    sgd = SGD(lr=0.001, decay=1.2e-2, momentum=0.9, nesterov=True)
-    model.compile(optimizer = adam, loss = 'binary_crossentropy', metrics = ['accuracy'])
-    return model
 

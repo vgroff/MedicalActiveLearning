@@ -410,10 +410,10 @@ if __name__ == '__main__':
 # IMMEDIATE ORDERED:
 # - Have a second weight for mislabelled scriblles and correctly labelled scribbles
 # - Try Pythran or straight C code
-# - Plot general loss graph
+# - Plot general loss graph+transfer learning graphs
 # - Move LA from local to server
 # - Get some dice scores
-# - Try transfer learning
+# - Code bundle
 
 # IMMEDIATE:
 # - Cut down on front end printing
