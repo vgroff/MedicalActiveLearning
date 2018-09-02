@@ -66,11 +66,6 @@ def generateImages(imgs, labels, imageSets):
                     maxAngle = 1
                     axes = [[1,2],[1,3],[2,3]]
                     random.shuffle(axes)
-                    #for axis in axes:
-                    #    angle = random.random() * maxAngle * 2 - maxAngle 
-                    #    newImg = rotate(newImg, angle, axes=axis, reshape=False, output=None, order=1, mode='constant', cval=newImg.min())
-                    #    newCatLabels = rotate(newCatLabels, angle, axes=axis, reshape=False, output=None, order=1, mode='constant', cval=0)
-                    #newCatLabels = np.around(newCatLabels)
                     noise = np.random.normal(0, 0.08, newImg.shape)
                     newTrImgs.append(newImg+noise)
                     newLabels.append(newCatLabels)
@@ -85,15 +80,18 @@ def generateImages(imgs, labels, imageSets):
                         weight = 1
                     yield np.array([img]), np.array([trLabels[j]]), np.array([weight])
 
+def genValImages(imgs, labels):
+    for i, img in enumerate(imgs):
+        yield np.array([img]), np.array([labels[i]])
+                    
 def quickTrain(model, img, weighting, segmentation, epochs=1):
     labels = np.zeros(weighting.shape)
     c = 0
-    for i, row in enumerate(segmentation):
-        for j, col in enumerate(row):
-            for k, val in enumerate(col):
-                labels[int(round(val)),i,j,k] = 1
-    lr = 4e-4#2.5e-5#1.2e-4#7.5e-5
-    sgd = SGD(lr=lr, momentum=0.8, decay=0.0, nesterov=False)
+    labels[0][segmentation == 0] = 1
+    labels[1][segmentation == 1] = 1
+    lr = 100e-4#2.5e-5#1.2e-4#7.5e-5
+    # 10e-4 and 30 works well
+    sgd = SGD(lr=lr, momentum=0, decay=0.0, nesterov=False)
     loss = partial(weightedDiceLoss, weighting)
     model.compile(optimizer = sgd, loss = loss)
     model.fit(np.array([img]), np.array([labels]), validation_split=0.0, batch_size=1, verbose=1, epochs=epochs)#, 
@@ -166,6 +164,7 @@ def train():
     nClasses = 2
     length = 80
     if (useOldImg == False):
+        # Build image set
         folderStub = "/home/vincent/Documents/imperial/individual project/datasets/decathlon/Task"
         folderNames = ["02_Heart", "05_Prostate", "04_Hippocampus"] 
         folders = [folderStub+name for name in folderNames]
@@ -173,12 +172,15 @@ def train():
         orientations = [2, 2, 1]
         numVal = 5
         mngr = prepImageManager(numVal, numbers, orientations, folders, length)
+        # Get the images
         imgs, labels, info = mngr.getTrainImages()
         valImgs, valLabels, valInfo = mngr.getValImages()
+        # Save image set
         f = open("imgs.pkl", "wb")
         pickle.dump(mngr, f)
         f.close()
     else:
+        # Get images from previous image set
         print("Getting images...")
         f = open("imgs.pkl", "rb")
         mngr = pickle.load(f)
@@ -188,12 +190,14 @@ def train():
     print("Getting net...")
     lr = 8e-5#2.5e-5#1.2e-4#7.5e-5
     if (useOldModel == False):
+        # Build Unet model
         model = getUNet2((1,None,None,None), nClasses, lr=lr,
                          n_base_filters=16, depth=5,
                          loss_function=weighted_dice_coefficient_loss, activation_name="softmax")
         sgd = SGD(lr=lr, momentum=0.99, decay=0.0, nesterov=False)
         model.compile(optimizer = sgd, loss = weighted_dice_coefficient_loss, metrics=[accuracy])
     else:
+        # Load model from file
         model = loadModel(1)
         adam = Adam(lr=lr, epsilon=1e-3, amsgrad=True)
         sgd = SGD(lr=lr, momentum=0.95, decay=0.0, nesterov=False)
@@ -206,35 +210,21 @@ def train():
                                                 factor=0.5,
                                                 min_lr=1e-5)
     imageSets = [[90, 30, 4, False],[0, 30, 1, False],[60, 30, 5, False],[90, 30, 2, False],[30, 30, 1, False]]
-    #imageSets = [[60,30,9,True], [0,30,1,True], [30,30,1,True], [60,30, 1, True], [0, 90, 2,True]]#[[0,30,3,True], [30,30,3,True], [60,30,3,True]]#[[60, 30, 4*1, True], [90, 30, 4*1, True], [0, 120, 1, True]]#, [90, 30, 10, False], [0, 120, 1, True]]
+    # Select training and validation images
     imageSets = [[0,30,1,True]]
-    #imageSets = [[0, 30, 4, True], [30, 60, 4, True]]
-    #imageSets = [[60, 30, 4, True], [90, 30, 4, True]]
     valStart = 0
     valEnd   = 5
     valImgs, valLabels, valInfo = [valImgs[valStart:valEnd], valLabels[valStart:valEnd], valInfo[valStart:valEnd]]
     epochs = 20
-    #a = np.array(valImgs, dtype=object)
+    # Build training and validation images
     imgGen = generateImages(imgs, labels, imageSets)
     valImgGen = generateImages(valImgs, valLabels, [[0,5,1,True]])
     bestAcc = 0
-    for i in range(epochs):
-        model.fit_generator(imgGen, verbose=1, #metrics=["accuracy"],
-                            steps_per_epoch=90, epochs=1,
-                            validation_data = valImgGen, validation_steps = 5, 
-                            shuffle=False)#, callbacks=[cp])#, learning_rate_reduction])
-    #     acc = 0
-    #     dice = 0
-    #     for i, img in enumerate(valImgs):
-    #         res = model.predict(np.array([img]))
-    #         dice += diceScore(res[0], valLabels[i], False)
-    #         acc  += diceScore(res[0], valLabels[i], True)
-    #     dice /= len(valImgs)
-    #     acc /= len(valImgs)
-    #     if acc > bestAcc:
-    #         bestAcc = acc
-    #         saveModel(model, "bestLeftAtrium")
-    #     print("Val Dice Coeff: {}, Val Dice: {}".format(dice, acc))
+    # Train on image generator
+    model.fit_generator(imgGen, verbose=1, #metrics=["accuracy"],
+                        steps_per_epoch=90, epochs=epochs,
+                        validation_data = valImgGen, validation_steps = 5, 
+                        shuffle=False)#, callbacks=[cp])#, learning_rate_reduction])
     saveModel(model)
 
 

@@ -96,12 +96,7 @@ def buildGaussProbs(img, label):
     return arr, stdDev
 
 def updateGeodesics(maxPathLength, stdDev, minEdge, img, probs, segmentation, weighting):
-    # Go in each direction, calculate edge path and keep a running total
-    # Need to make this into breadth first search. Go in each direction for
-    # every scribble, if found a new path then add it to the queue - need to make
-    # sure it isnt already in the queue, but still need to update the pathLength
-    #
-    # Shouldnt have the two paths fucking with each other. Have 2 queus? 
+    # BFS with geodesic distances up to a certain distance
     qs = [queue.Queue(), queue.Queue()]
     nums = [0, 0]
     for i, row in enumerate(probs[0]):
@@ -112,12 +107,14 @@ def updateGeodesics(maxPathLength, stdDev, minEdge, img, probs, segmentation, we
                     qs[index].put([i,j,k])
                     nums[index] += 1
     directions = [ [1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1] ]
+    c = 0
     for index in [0,1]:
-        pathLengths = np.full(img.shape, fill_value=-1)
-        computedPathLengths = np.full(img.shape, fill_value=-1)
+        pathLengths = np.full(img.shape, fill_value=-1.0)
+        computedPathLengths = np.full(img.shape, fill_value=-1.0)
         q = qs[index]
         while not q.empty():
             coords = q.get()
+
             row, col, depth = coords
             currPathLength = pathLengths[row, col, depth]
             # The if statement below is mean to skip over things in the queue that we have already computed
@@ -127,6 +124,8 @@ def updateGeodesics(maxPathLength, stdDev, minEdge, img, probs, segmentation, we
                 continue
             else:
                 # Save path length
+                if (currPathLength < 0):
+                    currPathLength = 0
                 computedPathLengths[row,col,depth] = currPathLength
             for direction in directions:
                 # Go in every direction
@@ -140,7 +139,7 @@ def updateGeodesics(maxPathLength, stdDev, minEdge, img, probs, segmentation, we
                     otherVal = segmentation[newRow, newCol, newDepth]
                     if (probs[0, newRow, newCol, newDepth] >= 0):# and index != otherVal:
                         # If this is a normal (non-scrible) and it has the opposite marking - does it need to have the opposite marking? Defeats the purpose maybe
-                        i1 = img[i, j, k]
+                        i1 = img[row, col, depth]
                         i2 = img[newRow, newCol, newDepth]
                         length = 1 - np.exp(-(i2 - i1)**2/(2*stdDev**2)) + minEdge
                         newPathLength = currPathLength + length
@@ -148,7 +147,9 @@ def updateGeodesics(maxPathLength, stdDev, minEdge, img, probs, segmentation, we
                             # If weve gone over the maximum path length, abandon
                             continue
                         destPathLength = pathLengths[newRow, newCol, newDepth]
-                        if (newPathLength < destPathLength or destPathLength < 0):
+                        if (newPathLength < destPathLength*0.8
+                            or newPathLength < destPathLength - 0.05
+                            or destPathLength < 0):
                             # If weve made a shorter path, save it and place in queue
                             q.put([newRow, newCol, newDepth])
                             pathLengths[newRow, newCol, newDepth] = newPathLength
@@ -160,29 +161,34 @@ def updateGeodesics(maxPathLength, stdDev, minEdge, img, probs, segmentation, we
                     #print(e)
                     #print("{},{},{} out of bounds for array shape {}".format(newRow,newCol,newDepth, pathLengths.shape))
             nums[index] -=1
-        #print(pathLengths)
 
         
     
-def buildWeightArr(img, segmentation, probs, distanceLim=0.3, stdDev=0.1, minProb1=0.6, minProb2=0.6, scribbleWeight=15):
+def buildWeightArr(img, segmentation, probs, distanceLim=0.3, stdDev=0.1, minProb1=0.6, minProb2=0.6, scribbleWeight=40):
     weightArr = np.ones(probs.shape)
     scribbles = [[], []]
-    for i, row in enumerate(probs[0]):
-        for j, col in enumerate(row):
-            for k, val in enumerate(col):
-                if val < 0:
-                    weightArr[0,i,j,k] = scribbleWeight
-                    weightArr[1,i,j,k] = scribbleWeight
-                else:
-                    probs1 = probs[0,i,j,k]
-                    probs2 = probs[1,i,j,k]
-                    if (probs2 > 0.5 and probs2 < minProb2):
-                        weightArr[0,i,j,k] = 0
-                        weightArr[1,i,j,k] = 0
-                    if (probs1 < 0.5 and probs1 < minProb1):
-                        weightArr[0,i,j,k] = 0
-                        weightArr[1,i,j,k] = 0
-    updateGeodesics(0.25, 0.1, 0.003, img, probs, segmentation, weightArr)
+    mask = probs[0] < 0
+    weightArr[0][mask] = scribbleWeight
+    weightArr[1][mask] = scribbleWeight
+    mask = ( (probs[0] > 0.5) & (probs[0] < minProb1)) | ((probs[1] > 0.5) & (probs[1] < minProb2))
+    weightArr[0][mask] = 0
+    weightArr[1][mask] = 0
+    # for i, row in enumerate(probs[0]):
+    #     for j, col in enumerate(row):
+    #         for k, val in enumerate(col):
+    #             if val < 0:
+    #                 weightArr[0,i,j,k] = scribbleWeight
+    #                 weightArr[1,i,j,k] = scribbleWeight
+    #             else:
+    #                 probs1 = probs[0,i,j,k]
+    #                 probs2 = probs[1,i,j,k]
+    #                 if (probs2 > 0.5 and probs2 < minProb2):
+    #                     weightArr[0,i,j,k] = 0
+    #                     weightArr[1,i,j,k] = 0
+    #                 if (probs1 > 0.5 and probs1 < minProb1):
+    #                     weightArr[0,i,j,k] = 0
+    #                     weightArr[1,i,j,k] = 0
+    updateGeodesics(0.25, 0.12, 0, img, probs, segmentation, weightArr)
     return weightArr
                     
 
@@ -224,18 +230,15 @@ def main(imgOrig, labelOrig, model, cnn=True, doGraphCuts=True, BIFSeg=True):
     t = time()
     imgOrig   = listsToArray(imgOrig)
     labelOrig = listsToArray(labelOrig)
-    print(imgOrig.shape, file=sys.stderr)
 
     
     if (cnn == True):
         cnnSize = 80
         shape = [cnnSize]*3
         img, padding = softPadding(imgOrig)
-        print("SHAPE", img.shape, file=sys.stderr)
         label, padding = softPadding(labelOrig)
         size = img.shape[0]
         resizeFactor = cnnSize / size
-        #img = zoom(img, resizeFactor, order=1, anti_aliasing=True, multichannel=False)
         img = whitening(img)
         img = np.stack([img], axis=0).astype(np.float32)
         manipTime += time() - t
@@ -245,62 +248,36 @@ def main(imgOrig, labelOrig, model, cnn=True, doGraphCuts=True, BIFSeg=True):
         predictTime += time() - t
         
         if doGraphCuts == False:
-            print(result.shape, file=sys.stderr)
-            print("NUM OBJECT PIX:", np.count_nonzero(result == 1), file=sys.stderr)
-            #result = np.moveaxis(result, 3, 0)
             result = zoom(result[0], [1] + [1/resizeFactor]*3, order=1, multichannel=False )
             result = np.argmax(result, axis=0)
-            print("NUM OBJECT PIX:", np.count_nonzero(result == 1), file=sys.stderr)
-            #result = result[0]
-            print(result.shape, padding, file=sys.stderr)
+
             result = result[ padding[0][0] : int(result.shape[0]) - padding[0][1],
                              padding[1][0] : int(result.shape[1]) - padding[1][1],
                              padding[2][0] : int(result.shape[2]) - padding[2][1]]
-            print(result.shape, file=sys.stderr)
-            print("NUM OBJECT PIX:", np.count_nonzero(result == 1), file=sys.stderr)
             return result
         else:
             # Resize probs.
             t = time()
             resultOrig = result[0]
             result = result[0]
-            #print(result.shape, file=sys.stderr)
-            #result = zoom(result, [1] + [1/resizeFactor]*3, order=1, multichannel=False)
             probsPadded = result
             probsPadded[0][label == 1] = -1
-            #probsPadded[1][label == 1] = -1
             probsPadded[0][label == 2] = -2
-            #probsPadded[1][label == 2] = -2
             probs = probsPadded[ :,
                              padding[0][0] : int(result.shape[1]) - padding[0][1],
                              padding[1][0] : int(result.shape[2]) - padding[1][1],
                              padding[2][0] : int(result.shape[3]) - padding[2][1]]
-            #probs = result
 
-            # for i, row in enumerate(labelOrig):
-            #     for j, col in enumerate(row):
-            #         for k, val in enumerate(col):
-            #             if (val != 0):
-            #                 probs[0,i,j,k] = -val
-            #                 probs[1,i,j,k] = -val
-            # for i, row in enumerate(label):
-            #     for j, col in enumerate(row):
-            #         for k, val in enumerate(col):
-            #             if (val != 0):
-            #                 probsPadded[0,i,j,k] = -val
-            #                 probsPadded[1,i,j,k] = -val
-            #print(probs.shape, labelOrig.shape, file=sys.stderr)
             img = img[0]
-            stdDev = 0.1
+            stdDev = 0.2
             segImg = whitening(imgOrig)
             manipTime += time() - t
-            #print(probs, segImg)
     else:
         probs, stdDev = buildGaussProbs(img, label)
         segImg = img
 
     t = time()
-    edgeCoeff = 8
+    edgeCoeff = 10
     gridCuts = True
     if (gridCuts):
         segImg = arrayToLists(segImg)
@@ -309,41 +286,44 @@ def main(imgOrig, labelOrig, model, cnn=True, doGraphCuts=True, BIFSeg=True):
     graphTime += time() - t
     
     if (BIFSeg == True):
-        for i in range(3):
+        iterations = 3
+        for i in range(iterations):
             t = time()        
-            seg = cubePadding(seg, cnnSize)[0]
-            resizeFactor = cnnSize / size
-            seg = zoom(seg, resizeFactor, order=1, multichannel=False)
+            seg = softPadding(seg)[0]
+            #resizeFactor = cnnSize / size
+            #seg = zoom(seg, resizeFactor, order=1, multichannel=False)
+            weighting = buildWeightArr(img, seg, probs)
 
-            weighting = buildWeightArr(img, seg, probsPadded)
-
+            
             stackedImg = np.stack([img], axis=0)
             manipTime += time() - t
+
+            # To produce weight map if dsired
+            # weighting = weighting[0][
+            #                       padding[0][0] : int(weighting.shape[1]) - padding[0][1],
+            #                       padding[1][0] : int(weighting.shape[2]) - padding[1][1],
+            #                       padding[2][0] : int(weighting.shape[3]) - padding[2][1]]
+            # weighting[weighting > 1] = 1
+            # return weighting
             
             t = time()
-            quickTrain(model, stackedImg, weighting, seg, 10)
+            quickTrain(model, stackedImg, weighting, seg, 15)
             trainTime += time() - t
             
             t = time()
             result = model.predict(np.array([stackedImg]))
+            predictTime += time() - t
+            t = time()
             result = result[0]
-            result = zoom(result, [1] + [1/resizeFactor]*3, order=1, multichannel=False )
+            #result = zoom(result, [1] + [1/resizeFactor]*3, order=1, multichannel=False )
             result = result[ :,
                              padding[0][0] : int(result.shape[1]) - padding[0][1],
                              padding[1][0] : int(result.shape[2]) - padding[1][1],
                              padding[2][0] : int(result.shape[3]) - padding[2][1]]
             probs = result
-            #print(probs)
-            for i, row in enumerate(labelOrig):
-                for j, col in enumerate(row):
-                    for k, val in enumerate(col):
-                        if (val != 0):
-                            probs[0,i,j,k] = -val
-                            probs[1,i,j,k] = -val
-                            #print(probs.shape, labelOrig.shape, file=sys.stderr)
-                            #print(probs)
+            probs[0][labelOrig != 0] = -labelOrig[labelOrig != 0]
             #stdDev = 0.1
-            manipTime = time() - t
+            manipTime += time() - t
             t = time()
             seg = graphCuts(segImg, probs, edgeCoeff, stdDev, gridCuts)                    
             graphTime += time() - t
@@ -425,34 +405,28 @@ if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = '0'
     parseArgs()
 
-# IMMEDIATE:
-# - GRaph cuts output is inverted
-# - Check how well the new CNNs work.. problems with irregular sizing. Need to make all edges a power of a some number
-# - Produce all loss graphs
-# - Produce dice scores on unknown stuff
-# - Produce hard results
-# - Try a model with None as size inputs?
-# - Write segmentation to NIFTI
-# - Check timings with faster internet
-
-
     
-# TO-DO Now:
-# - Sort out those loading times
-# - Train and fix frontend. Add rotations
-# - Produce loss graphs
-# - Refernces/to-do report
-# - Change sizing of canvas on front end
-# - Comment and clean up code
+    
+# IMMEDIATE ORDERED:
+# - Have a second weight for mislabelled scriblles and correctly labelled scribbles
+# - Try Pythran or straight C code
+# - Plot general loss graph
+# - Move LA from local to server
+# - Get some dice scores
+# - Try transfer learning
 
+# IMMEDIATE:
+# - Cut down on front end printing
+# - Comment and clean up code
+# - Report
+# - Video thingy
+# - check EVERYTHING work
     
 # TO-DO:
 # - Write weight array as image so it can be looked at
-# - Look into microsoft azure  
 # - Need to reduce the time taken both on front and back end.
 # - Try BIFSeg confidence value for all non-labelled pixels with weighting=abs(probs1 - probs2)
 # - Have a second value of lambda for graphcuts for pixels that are differently labelled geodesically near a scribble?
-# - Start grid searching hyper parameters
 
 # TO-DO:
 # - Set scribble probs to infinity or 0 instead in graphcuts? already setting to 0, guessing the value is the same as infinity? Could still try setting it as inf or 1e10 or something

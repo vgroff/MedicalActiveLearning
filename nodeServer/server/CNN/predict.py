@@ -27,36 +27,36 @@ def writeNIFTI(arr, folder, name):
 
 
 def predict():
-    model = loadModel("Left Atrium")
+    model = loadModel("General")
     
     folder = "/home/vincent/Documents/imperial/individual project/datasets/decathlon/Task04_Hippocampus"
     trainPaths = getDatasetInfo(folder)
 
-    outputFolder = "./predictions"
+    outputFolder = "./unseenPredictions"
     # 
     print("Getting images")
-    f = open("imgs.pkl", "rb")
+    f = open("imgs_unseen.pkl", "rb")
     mngr = pickle.load(f)
     f.close()
 
     imgs, labels, info = mngr.getValImages()
-    selection = [0,1,2,3,4]#[0,16,32,48]
-    print(len(imgs))
-    imgs, labels, info = [ [imgs[i] for i in selection], [labels[i] for i in selection],
-                           [info[i] for i in selection] ]
-    imgsActual = [info[i]["imgOrig"] for i in range(len(info))]
+    #selection = [0,1,2,3,4]#[0,16,32,48]
+    #print(len(imgs))
+    #imgs, labels, info = [ [imgs[i] for i in selection], [labels[i] for i in selection],
+    #                       [info[i] for i in selection] ]
+    #imgsActual = [info[i]["imgOrig"] for i in range(len(info))]
 
     #data = getImages(folder, trainPaths[16:18], 80, 0)
     
     #mngr = ImageManager(data)
     #imgs, labels, info = mngr.getTrainImages()
-    #imgsActual = [info[i]["imgOrig"] for i in range(len(imgs))]
+    imgsActual = [info[i]["imgOrig"] for i in range(len(imgs))]
     
-    print("img/label shape", np.array(imgs).shape, np.array(labels[0]).shape, imgsActual[0].shape)
-    result = model.predict(np.array(imgs))#, np.array(labels))
-    print("result", result[0].shape)
-    print(result.shape)
-    print(result[0][0][0][0][0], result[0][1][0][0][0])
+    result = []
+    for img in imgs:
+        result.append(model.predict(np.array([img])))#, np.array(labels))
+    #print(result.shape)
+    #print(result[0][0][0][0][0], result[0][1][0][0][0])
 
     ones = 0
     zeroes = 0
@@ -69,36 +69,12 @@ def predict():
         newLabel = np.argmax(label, axis=0)
         print(newLabel.shape)
         newLabel2 = np.argmax(labels[i], axis=0)
-        for row in newLabel:
-            for col in row:
-                for depth in col:
-                    #print(depth)
-                    counts[depth] += 1
-        for row in newLabel2:
-            for col in row:
-                for depth in col:
-                    #print(depth)
-                    counts3[depth] += 1
-        total = 0
-        count = 0
-        for index, row in enumerate(newLabel):
-            for j, col in enumerate(row):
-                for k, val in enumerate(col):
-                    val2 = newLabel2[index,j,k]
-                    if val == 1:
-                        total += 1
-                    if val2 == 1:
-                        total += 1
-                        if (val == val2):
-                            count += 2
         print(info[i]["path"])
-        print("dice score: ", count/total)               
         print("dice coefficient:", tf.Session().run(weighted_dice_coefficient_loss(np.array(labels[i], dtype="float64"), np.array(result[i], dtype="float64"))))
         writeNIFTI(newLabel.astype(np.float32), outputFolder, "{}_pred".format(i))
         writeNIFTI(newLabel2.astype(np.float32), outputFolder, "{}_truth".format(i))
         writeNIFTI(imgsActual[i].astype(np.float32), outputFolder, "{}_actual".format(i))
         #writeNIFTI(imgs[i][0], outputFolder, "{}_processed".format(i))
-    print(counts, counts3)
         
 if __name__ == '__main__':
     np.random.seed(42)

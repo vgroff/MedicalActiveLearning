@@ -87,9 +87,20 @@ app.post('/segment', function response(req, res) {
 		    break
 		}
 	    }
-	    console.log(start)
 	    res.send(resp.slice(start, resp.length-5))
 	    console.log("Done sending")
+	}
+	else {
+	    var print = true
+	    for (var i = 0; i < resp.length; i++) {
+		if (resp.slice(i,i+3) === "[[[") {
+		    print = false
+		    break
+		}
+	    }
+	    if (print == true) {
+		console.log(str)
+	    }
 	}
 	//data.toString());
     } )
@@ -169,7 +180,6 @@ app.post('/train', function response(req, res) {
 	resp += str
 	log  += str
 	var l = str.length
-	console.log("str", str)
 	if (str.slice(l-5, l-1) === "Done") {
 	    resp = resp.slice(0, resp.length-5)
 	    // res.setHeader('Content-disposition', 'attachment; filename=trainingLog.txt');
@@ -179,6 +189,9 @@ app.post('/train', function response(req, res) {
 	    //fs.writeFile("./errLog.txt", JSON.stringify(errLog))
 	    console.log("Sent: ", resp)
 	    console.log("Done sending")
+	}
+	else {
+	    console.log(str)
 	}
 	//data.toString());
     } )
