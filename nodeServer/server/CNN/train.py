@@ -28,6 +28,17 @@ from predict import writeNIFTI
 
 from keras.callbacks import ModelCheckpoint as checkpoint
 
+
+def _to_tensor(x, dtype):
+    """Convert the input `x` to a tensor of type `dtype`.
+    # Arguments
+        x: An object to be converted (numpy array, list, tensors).
+        dtype: The destination type.
+    # Returns
+        A tensor.
+    """
+    return tf.convert_to_tensor(x, dtype=dtype)
+
 def prepImageManager(numVal, numbers, orientations, folders, size):
     mngr = None
     for i, folder in enumerate(folders):
@@ -49,7 +60,7 @@ def prepImageManager(numVal, numbers, orientations, folders, size):
 
 def generateImages(imgs, labels, imageSets):
     while True:
-        for imageSet in imageSets:
+       for imageSet in imageSets:
             trImgs = imgs[imageSet[0]:imageSet[0]+imageSet[1]]
             trLabels = labels[imageSet[0]:imageSet[0]+imageSet[1]]
             if (imageSet[3] == True):
@@ -83,29 +94,6 @@ def generateImages(imgs, labels, imageSets):
 def genValImages(imgs, labels):
     for i, img in enumerate(imgs):
         yield np.array([img]), np.array([labels[i]])
-                    
-def quickTrain(model, img, weighting, segmentation, epochs=1):
-    labels = np.zeros(weighting.shape)
-    c = 0
-    labels[0][segmentation == 0] = 1
-    labels[1][segmentation == 1] = 1
-    lr = 100e-4#2.5e-5#1.2e-4#7.5e-5
-    # 10e-4 and 30 works well
-    sgd = SGD(lr=lr, momentum=0, decay=0.0, nesterov=False)
-    loss = partial(weightedDiceLoss, weighting)
-    model.compile(optimizer = sgd, loss = loss)
-    model.fit(np.array([img]), np.array([labels]), validation_split=0.0, batch_size=1, verbose=1, epochs=epochs)#, 
-              #callbacks=[learning_rate_reduction])
-
-def _to_tensor(x, dtype):
-    """Convert the input `x` to a tensor of type `dtype`.
-    # Arguments
-        x: An object to be converted (numpy array, list, tensors).
-        dtype: The destination type.
-    # Returns
-        A tensor.
-    """
-    return tf.convert_to_tensor(x, dtype=dtype)
 
 def cat_crossentropy(target, output, from_logits=False, axis=-1):
     """Categorical crossentropy between an output tensor and a target tensor.
@@ -149,6 +137,24 @@ logits=output)
 def catCrossEntropy(target, output):
     return cat_crossentropy(target, output, from_logits=False, axis=1)
 
+
+                    
+def quickTrain(model, img, weighting, segmentation, epochs=1, lr=5e-4):
+    labels = np.zeros(weighting.shape)
+    c = 0
+    labels[0][segmentation == 0] = 1
+    labels[1][segmentation == 1] = 1
+    lr = 10e-4#2.5e-5#1.2e-4#7.5e-5
+    # 10e-4 and 30 works well
+    sgd = SGD(lr=lr, momentum=0, decay=0.0, nesterov=False)
+    loss = weightedDiceLoss(_to_tensor(weighting, tf.float32))
+    model.compile(optimizer = sgd, loss = catCrossEntropy)#loss)
+    model.fit(np.array([img]), np.array([weighting*labels]), validation_split=0.0, batch_size=1, verbose=1, epochs=epochs)#, 
+              #callbacks=[learning_rate_reduction])
+
+
+
+
 def accuracy(y_true, y_pred):
     return K.mean(K.equal(K.argmax(y_true, axis=1),K.argmax(y_pred, axis=1)))
 
@@ -160,7 +166,7 @@ def diceScore(y_pred, y_true, hard=False):
 
 def train():
     useOldImg   = True
-    useOldModel = False
+    useOldModel = True
     nClasses = 2
     length = 80
     if (useOldImg == False):
@@ -188,7 +194,7 @@ def train():
         imgs, labels, info = mngr.getTrainImages()
         valImgs, valLabels, valInfo = mngr.getValImages()
     print("Getting net...")
-    lr = 35e-5#2.5e-5#1.2e-4#7.5e-5
+    lr = 20e-5#2.5e-5#1.2e-4#7.5e-5
     if (useOldModel == False):
         # Build Unet model
         model = getUNet2((1,None,None,None), nClasses, lr=lr,
@@ -215,7 +221,7 @@ def train():
     valStart = 0
     valEnd   = 10
     valImgs, valLabels, valInfo = [valImgs[valStart:valEnd], valLabels[valStart:valEnd], valInfo[valStart:valEnd]]
-    epochs = 20
+    epochs = 200
 
     imageSets = [[0,4,1,True]]
     imgs = valImgs[0:4]
@@ -229,7 +235,7 @@ def train():
     bestAcc = 0    
     # Train on image generator
     model.fit_generator(imgGen, verbose=1, #metrics=["accuracy"],
-                        steps_per_epoch=90, epochs=epochs,
+                        steps_per_epoch=4, epochs=epochs,
                         validation_data = valImgGen, validation_steps = 5, 
                         shuffle=False)#, callbacks=[cp])#, learning_rate_reduction])
     saveModel(model)
@@ -248,7 +254,7 @@ def onlineTrain(name, epochs, lr):
     print("Getting model...")
     model = loadModel(name)
     sgd = SGD(lr=lr, momentum=0.99, decay=0.0, nesterov=False)
-    model.compile(optimizer = sgd, loss = "binary_crossentropy", metrics=["accuracy", weighted_dice_coefficient_loss])
+    model.compile(optimizer = sgd, loss = weighted_dice_coefficient_loss , metrics=["accuracy", weighted_dice_coefficient_loss])
     print("Training images...")
     model.fit(np.array(imgs), np.array(labels), batch_size=1, validation_data=[np.array(valImgs), np.array(valLabels)], shuffle=True, epochs=epochs, verbose=2)
     saveModel(model, name)

@@ -29,13 +29,13 @@ def diceScore(y_pred, y_true, hard=False):
 
 def main():
     model = loadModel("General")
-    f = open("imgs_unseen.pkl", "rb")
+    f = open("General_img.pkl", "rb")
     mngr = pickle.load(f)
     f.close()
     valImgs, valLabels, valInfo = mngr.getValImages()
     valStart = 0
-    valEnd = 15
-    valImgs, valLabels, valInfo = [valImgs[valStart:valEnd], valLabels[valStart:valEnd], valInfo[valStart:valEnd]]
+    valEnd = 5
+    #valImgs, valLabels, valInfo = [valImgs[valStart:valEnd], valLabels[valStart:valEnd], valInfo[valStart:valEnd]]
 
     meanDice = 0
     meanDiceSq = 0

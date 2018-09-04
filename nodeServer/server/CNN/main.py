@@ -21,6 +21,8 @@ import SimpleITK as sitk
 
 from model import weighted_dice_coefficient_loss, weightedDiceLoss
 
+import geodesics
+
 #from skimage.transform import rescale as zoom
 
 
@@ -95,7 +97,7 @@ def buildGaussProbs(img, label):
     #print(means,stdDevs)
     return arr, stdDev
 
-def updateGeodesics(maxPathLength, stdDev, minEdge, img, probs, segmentation, weighting):
+def updateGeodesics(maxPathLength, stdDev, minEdge, minEdge2, img, probs, segmentation, weighting):
     # BFS with geodesic distances up to a certain distance
     qs = [queue.Queue(), queue.Queue()]
     nums = [0, 0]
@@ -141,7 +143,10 @@ def updateGeodesics(maxPathLength, stdDev, minEdge, img, probs, segmentation, we
                         # If this is a normal (non-scrible) and it has the opposite marking - does it need to have the opposite marking? Defeats the purpose maybe
                         i1 = img[row, col, depth]
                         i2 = img[newRow, newCol, newDepth]
-                        length = 1 - np.exp(-(i2 - i1)**2/(2*stdDev**2)) + minEdge
+                        l = minEdge
+                        if (index == otherVal):
+                            l = minEdge2
+                        length = 1 - np.exp(-(i2 - i1)**2/(2*stdDev**2)) + l
                         newPathLength = currPathLength + length
                         if (newPathLength > maxPathLength):
                             # If weve gone over the maximum path length, abandon
@@ -164,31 +169,22 @@ def updateGeodesics(maxPathLength, stdDev, minEdge, img, probs, segmentation, we
 
         
     
-def buildWeightArr(img, segmentation, probs, distanceLim=0.3, stdDev=0.1, minProb1=0.6, minProb2=0.6, scribbleWeight=40):
+def buildWeightArr(img, segmentation, probs, rawProbs, distanceLim=0.3, stdDev=0.2, minDist1=0.25/200, minDist2=0.01, minProb1=0.6, minProb2=0.6, scribbleWeight1=20, scribbleWeight2=20):
     weightArr = np.ones(probs.shape)
     scribbles = [[], []]
-    mask = probs[0] < 0
-    weightArr[0][mask] = scribbleWeight
-    weightArr[1][mask] = scribbleWeight
+
+    mask = ((probs[0] == -1) & (rawProbs[1] > minProb2)) | ((probs[0] == -2) & (rawProbs[0] > minProb1))
+    weightArr[0][mask] = scribbleWeight1
+    weightArr[1][mask] = scribbleWeight1
+    mask = ( (probs[0] == -1) & (rawProbs[1] < minProb2)) | ((probs[0] == -2) & (rawProbs[0] < minProb1))
+    weightArr[0][mask] = scribbleWeight2
+    weightArr[1][mask] = scribbleWeight2
+
     mask = ( (probs[0] > 0.5) & (probs[0] < minProb1)) | ((probs[1] > 0.5) & (probs[1] < minProb2))
     weightArr[0][mask] = 0
     weightArr[1][mask] = 0
-    # for i, row in enumerate(probs[0]):
-    #     for j, col in enumerate(row):
-    #         for k, val in enumerate(col):
-    #             if val < 0:
-    #                 weightArr[0,i,j,k] = scribbleWeight
-    #                 weightArr[1,i,j,k] = scribbleWeight
-    #             else:
-    #                 probs1 = probs[0,i,j,k]
-    #                 probs2 = probs[1,i,j,k]
-    #                 if (probs2 > 0.5 and probs2 < minProb2):
-    #                     weightArr[0,i,j,k] = 0
-    #                     weightArr[1,i,j,k] = 0
-    #                 if (probs1 > 0.5 and probs1 < minProb1):
-    #                     weightArr[0,i,j,k] = 0
-    #                     weightArr[1,i,j,k] = 0
-    updateGeodesics(0.25, 0.12, 0, img, probs, segmentation, weightArr)
+    
+    updateGeodesics(distanceLim, stdDev, minDist1, minDist2, img, probs, segmentation, weightArr)
     return weightArr
                     
 
@@ -237,6 +233,7 @@ def main(imgOrig, labelOrig, model, cnn=True, doGraphCuts=True, BIFSeg=True):
         shape = [cnnSize]*3
         img, padding = softPadding(imgOrig)
         label, padding = softPadding(labelOrig)
+        
         size = img.shape[0]
         resizeFactor = cnnSize / size
         img = whitening(img)
@@ -260,6 +257,7 @@ def main(imgOrig, labelOrig, model, cnn=True, doGraphCuts=True, BIFSeg=True):
             t = time()
             resultOrig = result[0]
             result = result[0]
+            rawProbs = np.copy(result)
             probsPadded = result
             probsPadded[0][label == 1] = -1
             probsPadded[0][label == 2] = -2
@@ -286,28 +284,44 @@ def main(imgOrig, labelOrig, model, cnn=True, doGraphCuts=True, BIFSeg=True):
     graphTime += time() - t
     
     if (BIFSeg == True):
-        iterations = 3
+        iterations = 4
+        nEpochs = [20,25,15,10] #3 15
+        w0 = 10
+        w1 = 20
+        a  = 8
+        lr = 50e-4
+        # entropy: 100e-4, 10, 100
+        # 40, 500, 50e-4, 5, 2iter for 15 got 0.88
+        # 
+        # 1e-4, 100, 4000 worked well
         for i in range(iterations):
-            t = time()        
+            epochs = nEpochs[i]
+            t = time()
             seg = softPadding(seg)[0]
             #resizeFactor = cnnSize / size
             #seg = zoom(seg, resizeFactor, order=1, multichannel=False)
-            weighting = buildWeightArr(img, seg, probs)
+            weighting = buildWeightArr(img, seg, probsPadded,  rawProbs,
+                                       distanceLim=0.35, stdDev=0.15,
+                                       minDist1=0.25/200, minDist2=0.01, minProb1=0.6,
+                                       minProb2=0.6, scribbleWeight1=w0, scribbleWeight2=w1*a**i)
 
-            
+            print("scribbles", np.count_nonzero(weighting < w0*0.99),  np.count_nonzero(np.isclose(weighting,w0)), np.count_nonzero(weighting > w0))
+            print("scribbles", np.count_nonzero(weighting < w0*0.99),  np.count_nonzero(np.isclose(weighting,w0)), np.count_nonzero(weighting > w0), file=sys.stderr)
+            if epochs == 0:
+                break
             stackedImg = np.stack([img], axis=0)
             manipTime += time() - t
 
             # To produce weight map if dsired
             # weighting = weighting[0][
-            #                       padding[0][0] : int(weighting.shape[1]) - padding[0][1],
-            #                       padding[1][0] : int(weighting.shape[2]) - padding[1][1],
-            #                       padding[2][0] : int(weighting.shape[3]) - padding[2][1]]
+            #                        padding[0][0] : int(weighting.shape[1]) - padding[0][1],
+            #                        padding[1][0] : int(weighting.shape[2]) - padding[1][1],
+            #                        padding[2][0] : int(weighting.shape[3]) - padding[2][1]]
             # weighting[weighting > 1] = 1
             # return weighting
             
             t = time()
-            quickTrain(model, stackedImg, weighting, seg, 15)
+            quickTrain(model, stackedImg, weighting, seg, epochs, lr)
             trainTime += time() - t
             
             t = time()
@@ -315,13 +329,14 @@ def main(imgOrig, labelOrig, model, cnn=True, doGraphCuts=True, BIFSeg=True):
             predictTime += time() - t
             t = time()
             result = result[0]
-            #result = zoom(result, [1] + [1/resizeFactor]*3, order=1, multichannel=False )
-            result = result[ :,
+            rawProbs = np.copy(result)
+            probsPadded = result
+            probsPadded[0][label == 1] = -1
+            probsPadded[0][label == 2] = -2
+            probs = probsPadded[ :,
                              padding[0][0] : int(result.shape[1]) - padding[0][1],
                              padding[1][0] : int(result.shape[2]) - padding[1][1],
                              padding[2][0] : int(result.shape[3]) - padding[2][1]]
-            probs = result
-            probs[0][labelOrig != 0] = -labelOrig[labelOrig != 0]
             #stdDev = 0.1
             manipTime += time() - t
             t = time()
@@ -405,19 +420,88 @@ if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = '0'
     parseArgs()
 
+                    
+# img = np.array([
+#     np.array([np.array([0.80,0.85,0.90,0.80]),
+#               np.array([0.90,0.80,0.90,0.85]),
+#               np.array([0.75,0.85,0.76,0.85]),
+#               np.array([0.85,0.85,0.80,0.80])]),
+    
+#     np.array([np.array([0.85,0.80,0.25,0.20]),
+#               np.array([0.90,0.75,0.20,0.20]),
+#               np.array([0.85,0.90,0.65,0.65]),
+#               np.array([0.85,0.80,0.60,0.65])]),
+    
+#     np.array([np.array([0.45,0.35,0.20,0.23]),
+#               np.array([0.30,0.32,0.42,0.45]),
+#               np.array([0.20,0.35,0.55,0.55]),
+#               np.array([0.15,0.31,0.60,0.65])]),
+    
+#     np.array([np.array([0.10,0.10,0.20,0.17]),
+#               np.array([0.15,0.15,0.25,0.12]),
+#               np.array([0.05,0.10,0.55,0.65]),
+#               np.array([0.10,0.05,0.56,0.60])])
+
+# ])
+
+# seg =  np.array([
+#     np.array([np.array([0,0,0,0]),
+#               np.array([0,0,0,0]),
+#               np.array([0,0,0,0]),
+#               np.array([0,0,0,0])]),
+#     np.array([np.array([0,0,0,0]),
+#               np.array([0,0,0,0]),
+#               np.array([0,0,0,0]),
+#               np.array([0,0,0,0])]),
+#     np.array([np.array([0,0,0,0]),
+#               np.array([0,0,0,0]),
+#               np.array([0,0,0,0]),
+#               np.array([0,0,0,0])]),
+#     np.array([np.array([0,0,0,0]),
+#               np.array([0,0,0,0]),
+#               np.array([0,0,0,0]),
+#               np.array([0,0,0,0])]),
+# ])
+
+
+# probs =  np.array([np.array([
+#     np.array([np.array([0,0,0,0]),
+#               np.array([0,0,0,0]),
+#               np.array([0,0,0,0]),
+#               np.array([0,0,0,0])]),
+#     np.array([np.array([0,0,0,0]),
+#               np.array([0,0,0,0]),
+#               np.array([0,0,0,0]),
+#               np.array([0,0,0,0])]),
+#     np.array([np.array([0,0,0,0]),
+#               np.array([0,0,0,0]),
+#               np.array([0,0,0,0]),
+#               np.array([0,0,0,0])]),
+#     np.array([np.array([0,0,0,0]),
+#               np.array([0,0,0,0]),
+#               np.array([0,0,0,0]),
+#               np.array([-1,0,0,0])]),
+# ])])
+
+# weight = np.zeros([2,4,4,4])
+# weight[:] = 1
+
+# updateGeodesics(0.25, 0.15, 0.0001, 0.005, img, probs, seg, weight)
+# print(weight)
     
     
 # IMMEDIATE ORDERED:
 # - Have a second weight for mislabelled scriblles and correctly labelled scribbles
 # - Try Pythran or straight C code
-# - Plot general loss graph+transfer learning graphs
-# - Move LA from local to server
-# - Get some dice scores
+# - Get some Dice scores"
+# - Move LA from local to server and generally prep server
+# - Finish off website
 # - Code bundle
+
 
 # IMMEDIATE:
 # - Cut down on front end printing
-# - Comment and clean up code
+# - Comment and clean up code and get rid of this stuf (dev comments) and clean up import statements
 # - Report
 # - Video thingy
 # - check EVERYTHING work

@@ -2,55 +2,72 @@
 
 
 
-from cnnUtils import loadModel
-from imageUtils import getDatasetInfo
+# from cnnUtils import loadModel
+# from imageUtils import getDatasetInfo
 
 import pickle
 
-from predict import writeNIFTI
+# from predict import writeNIFTI
 
-from imageReader import getImages
+# from imageReader import getImages
 
-from cnnUtils import loadModel, saveModel
+# from cnnUtils import loadModel, saveModel
 from imageUtils import ImageManager, getDatasetInfo
-from train import getImages
-from predict import writeNIFTI
-from imageReader import readFunc
-import SimpleITK as sitk
-from imageUtils import cropToSeg
+# from train import getImages
+# from predict import writeNIFTI
+# from imageReader import readFunc
+# import SimpleITK as sitk
+# from imageUtils import cropToSeg
 
-from model import weighted_dice_coefficient_loss
+# from model import weighted_dice_coefficient_loss
 
-import os
-import tensorflow as tf
-import numpy as np
+# import os
+# import tensorflow as tf
+# import numpy as np
 
-from main import main
+# from main import main
 
-from keras import activations
-from keras.models import *
-from keras.layers import *
-from train import prepImageManager
-##
-## This file is for code scraps and for testing stuff
-##
+# from keras import activations
+# from keras.models import *
+# from keras.layers import *
+# from train import prepImageManager
+# ##
+# ## This file is for code scraps and for testing stuff
+# ##
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-tf.logging.set_verbosity(tf.logging.ERROR)
-os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+# tf.logging.set_verbosity(tf.logging.ERROR)
+# os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 
 #model = loadModel(1)
 
-folderStub = "/home/vincent/Documents/imperial/individual project/datasets/decathlon/Task"
-folderNames = ["09_Spleen"]#, "09_Spleen"] 
-folders = [folderStub+name for name in folderNames]
-numbers      = [10]#, 10]
-orientations = [1]#,1]
-mngr = prepImageManager(10, numbers, orientations, folders, 80)
-f = open("imgs_spleen10.pkl", "wb")
+# folderStub = "/home/vincent/Documents/imperial/individual project/datasets/decathlon/Task"
+# folderNames = ["09_Spleen"]#, "09_Spleen"] 
+# folders = [folderStub+name for name in folderNames]
+# numbers      = [10]#, 10]
+# orientations = [1]#,1]
+# mngr = prepImageManager(10, numbers, orientations, folders, 80)
+
+f = open("imgs.pkl", "rb")
+mngr = pickle.load(f)
+f.close()
+
+f = open("General_img.pkl", "wb")
 pickle.dump(mngr, f)
 f.close()
 
+imgs, labels, info = mngr.getTrainImages()
+valImgs, valLabels, valInfo = mngr.getValImages()
+trStart = 0
+trEnd = 15
+valStart = 0
+valEnd   = 5
+imgs, labels, info =  [imgs[trStart:trEnd], labels[trStart:trEnd], info[trStart:trEnd]]
+valImgs, valLabels, valInfo =  [valImgs[valStart:valEnd], valLabels[valStart:valEnd], valInfo[valStart:valEnd]]
+mngr = ImageManager([[imgs,labels,info],[valImgs,valLabels,valInfo]])
+f = open("Heart_img.pkl", "wb")
+pickle.dump(mngr, f)
+f.close()
 
 # folder = "/home/vincent/Documents/imperial/individual project/datasets/decathlon/Task02_Heart"
 # outputFolder = "trash"
