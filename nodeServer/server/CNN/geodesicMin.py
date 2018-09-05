@@ -82,8 +82,7 @@ def updateGeodesicsOpt(maxPathLength, stdDev, minEdge, img, probs, segmentation,
                                 z = 0
                             else:
                                 destPathLength = pathLengths[newRow, newCol, newDepth]
-                                if (newPathLength < destPathLength*0.8
-                                    or newPathLength < destPathLength - 0.05
+                                if (newPathLength < destPathLength
                                     or destPathLength < 0):
                                     # If weve made a shorter path, save it and place in queue
                                     qEnd[index] = addToQueue(q, qEnd[index], maxSize, newRow, newCol, newDepth)
