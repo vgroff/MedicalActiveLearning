@@ -2,30 +2,29 @@
 
 
 
-# from cnnUtils import loadModel
-# from imageUtils import getDatasetInfo
+from cnnUtils import loadModel
+# # from imageUtils import getDatasetInfo
 
-import pickle
+# import pickle
 
-# from predict import writeNIFTI
+# # from predict import writeNIFTI
 
-# from imageReader import getImages
+# # from imageReader import getImages
 
-# from cnnUtils import loadModel, saveModel
-from imageUtils import ImageManager, getDatasetInfo
-# from train import getImages
-# from predict import writeNIFTI
-# from imageReader import readFunc
-# import SimpleITK as sitk
-# from imageUtils import cropToSeg
+# from imageUtils import ImageManager, getDatasetInfo
+# # from train import getImages
+# # from predict import writeNIFTI
+# # from imageReader import readFunc
+# # import SimpleITK as sitk
+# # from imageUtils import cropToSeg
 
-# from model import weighted_dice_coefficient_loss
+# # from model import weighted_dice_coefficient_loss
 
-# import os
-# import tensorflow as tf
-# import numpy as np
+# # import os
+# # import tensorflow as tf
+# # import numpy as np
 
-# from main import main
+# # from main import main
 
 # from keras import activations
 # from keras.models import *
@@ -48,26 +47,30 @@ from imageUtils import ImageManager, getDatasetInfo
 # orientations = [1]#,1]
 # mngr = prepImageManager(10, numbers, orientations, folders, 80)
 
-f = open("imgs.pkl", "rb")
-mngr = pickle.load(f)
-f.close()
+# f = open("imgs.pkl", "rb")
+# mngr = pickle.load(f)
+# f.close()
 
-f = open("General_img.pkl", "wb")
-pickle.dump(mngr, f)
-f.close()
+# f = open("General_img.pkl", "wb")
+# pickle.dump(mngr, f)
+# f.close()
 
-imgs, labels, info = mngr.getTrainImages()
-valImgs, valLabels, valInfo = mngr.getValImages()
-trStart = 0
-trEnd = 15
-valStart = 0
-valEnd   = 5
-imgs, labels, info =  [imgs[trStart:trEnd], labels[trStart:trEnd], info[trStart:trEnd]]
-valImgs, valLabels, valInfo =  [valImgs[valStart:valEnd], valLabels[valStart:valEnd], valInfo[valStart:valEnd]]
-mngr = ImageManager([[imgs,labels,info],[valImgs,valLabels,valInfo]])
-f = open("Heart_img.pkl", "wb")
-pickle.dump(mngr, f)
-f.close()
+# imgs, labels, info = mngr.getTrainImages()
+# valImgs, valLabels, valInfo = mngr.getValImages()
+# trStart = 0
+# trEnd = 15
+# valStart = 0
+# valEnd   = 5
+# imgs, labels, info =  [imgs[trStart:trEnd], labels[trStart:trEnd], info[trStart:trEnd]]
+# valImgs, valLabels, valInfo =  [valImgs[valStart:valEnd], valLabels[valStart:valEnd], valInfo[valStart:valEnd]]
+# mngr = ImageManager([[imgs,labels,info],[valImgs,valLabels,valInfo]])
+# f = open("Heart_img.pkl", "wb")
+# pickle.dump(mngr, f)
+# f.close()
+
+from cnnUtils import loadModel, saveModel
+model = loadModel(1)
+print(model.summary())
 
 # folder = "/home/vincent/Documents/imperial/individual project/datasets/decathlon/Task02_Heart"
 # outputFolder = "trash"

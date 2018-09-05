@@ -9,7 +9,7 @@ def addToQueue(q, end, size, x, y, z):
 def removeFromQueue(q, start, size):
     return q[start], (start + 1) % size
 
-#pythran export updateGeodesicsOpt(float, float, float, float[][][], float[][][][], float[][][], float[][][][])
+#pythran export updateGeodesicsOpt(float, float, float, float[][][], float[][][][], int[][][], float[][][][])
 def updateGeodesicsOpt(maxPathLength, stdDev, minEdge, img, probs, segmentation, weighting):
     qStart = np.array([0,0])
     qEnd   = np.array([0,0])
@@ -28,8 +28,8 @@ def updateGeodesicsOpt(maxPathLength, stdDev, minEdge, img, probs, segmentation,
         pathLengths = np.zeros(img.shape, dtype=np.float32)#fill(img.shape, fill_value=-1.0)
         computedPathLengths = np.zeros(img.shape, dtype=np.float32)#np.fill(img.shape, fill_value=-1.0)
 
-        pathLengths = -1.0
-        computedPathLengths = -1.0
+        pathLengths[:] = -1.0
+        computedPathLengths[:] = -1.0
         
         # for i, row in enumerate(img):
         #     for j, col in enumerate(row):
@@ -46,6 +46,7 @@ def updateGeodesicsOpt(maxPathLength, stdDev, minEdge, img, probs, segmentation,
             col = int(col)
             depth = int(depth)
             currPathLength = pathLengths[row, col, depth]
+            computedPathLength = computedPathLengths[row,col,depth]
             # The if statement below is mean to skip over things in the queue that we have already computed
             diff = abs(float(currPathLength - computedPathLength))
             b = computedPathLengths[row, col, depth] >= 0
@@ -75,7 +76,6 @@ def updateGeodesicsOpt(maxPathLength, stdDev, minEdge, img, probs, segmentation,
                             i1 = img[row, col, depth]
                             i2 = img[newRow, newCol, newDepth]
                             length = 1 - np.exp(-(i2 - i1)**2/(2*stdDev**2)) + minEdge
-                            length = 0.1
                             newPathLength = currPathLength + length
                             if (newPathLength > maxPathLength):
                                 # If weve gone over the maximum path length, abandon

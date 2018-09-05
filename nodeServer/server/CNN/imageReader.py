@@ -11,96 +11,7 @@ from dltk.io.preprocessing import whitening
 
 from imageUtils import resize3D, cropToSeg
 
-def readFunc(dataset, mode, params, crop=True):
-    folder = params["folder"]
-    for ID, dataPoint in enumerate(dataset):
-        #print("Image {}/{}".format(ID+1, len(dataset)))
-        # Read image
-        imgPath = dataPoint["image"]
-        img_sitk = sitk.ReadImage(os.path.join(folder, imgPath))
-        img = sitk.GetArrayFromImage(img_sitk).astype(np.float32)
-        imgOrig = sitk.GetArrayFromImage(img_sitk).astype(np.float32)
-        if (crop == True):
-            # Only read label if training
-            labelPath = dataPoint["label"]
-            label_sitk = sitk.ReadImage(os.path.join(folder, labelPath))
-            label = sitk.GetArrayFromImage(label_sitk).astype(np.float32)
-            label, img, imgOrig, bounds, padding = cropToSeg(label, img, imgOrig, 9, 1, params["size"][0], randomized=True)
-        else:
-            #img = whitening(img)
-            img = np.stack([img], axis=-1).astype(np.float32)
-
-            # Pad images to the correct size
-            size = params["depth"]
-            diff = size - img.shape[0]
-            if diff > 0:
-                pad = math.floor(diff/2)
-                paddings = tf.constant([[pad, pad], [0, 0], [0, 0], [0, 0]])
-                img = tf.pad(img, paddings, "CONSTANT")
-                if (diff % 2 == 1):
-                    paddings = tf.constant([[1, 0], [0, 0], [0, 0], [0, 0]])
-                    img = tf.pad(img, paddings, "CONSTANT")
-                    img = tf.Session().run(img)
-                img = resize3D(img, False, *params["size"])
-                img = tf.Session().run(img)
-
-        if (params["whiten"] == True):
-            img = whitening(img)
-            
-        if mode == tf.estimator.ModeKeys.PREDICT:
-            yield {'features': {'x': img},
-                   'labels': None,
-                   'sitk': img_sitk,
-                   'subject_id': ID+1}
-        else:
-            if (crop == True):
-                pass
-            else:
-                # Only read label if training
-                labelPath = dataPoint["label"]
-                label_sitk = sitk.ReadImage(os.path.join(folder, labelPath))
-                label = sitk.GetArrayFromImage(label_sitk).astype(np.float32)
-                #label = np.stack([label], axis=-1).astype(np.float32)
-                diff = size - label.shape[0]
-                if diff > 0:
-                    pad = math.floor(diff/2)
-                    paddings = tf.constant([[pad, pad], [0, 0], [0, 0]])
-                    label = tf.pad(label, paddings, "CONSTANT")
-                    if (diff % 2 == 1):
-                        paddings = tf.constant([[1, 0], [0, 0], [0, 0]])
-                        label = tf.pad(label, paddings, "CONSTANT")
-                    label = tf.Session().run(label)
-                #print(label.shape)
-            catLabels = np.zeros(list(label.shape)+[2])
-            #print(catLabels.shape)
-            for i, row in enumerate(label):
-                for j, col in enumerate(row):
-                    for k, depth in enumerate(col):
-                        #if (int(round(depth)) != 0):
-                        #    print(int(round(depth)))
-                        catLabels[i, j, k, int(round(depth))] = 1
-                            
-            #label = resize3D(label, False, *params["size"])
-            #label = tf.Session().run(label)
-            catLabels = resize3D(catLabels, False, *params["size"])
-            catLabels = tf.Session().run(catLabels)
-            if (crop == True):
-                img = np.stack([img], axis=-1).astype(np.float32)
-                img = resize3D(img, False, *params["size"])
-                img = tf.Session().run(img)
-                imgOrig = np.stack([imgOrig], axis=-1).astype(np.float32)
-                imgOrig = resize3D(imgOrig, False, *params["size"])
-                imgOrig = tf.Session().run(imgOrig)
-            yield {'features': {'x': img},
-                   'labels': {'y': catLabels},
-                   'original': imgOrig,
-                   'imgPath': imgPath,
-                   'sitk': img_sitk,
-                   'subject_id': ID+1}
-    print("leaving reader")
-    return
-
-
+# Reads images from folder of given dataset for training/validation
 def getImages(folder, dataset, size, valFraction, nOrientations=1, pad="cubePadding", augment=True, margins=[2,9], minMargins=[1,2]):
     shape      = [size]*3
     trImgs     = []
@@ -113,6 +24,7 @@ def getImages(folder, dataset, size, valFraction, nOrientations=1, pad="cubePadd
     print("Training on {}, validating on {}".format(valSplit, len(dataset) - valSplit))
     
     for ID, dataPoint in enumerate(dataset):
+        # Orientations for augmentation
         if (augment == True and ID < valSplit):
             orientations = random.sample(range(0, 6), nOrientations)
         elif (augment == False and ID < valSplit):
@@ -123,8 +35,10 @@ def getImages(folder, dataset, size, valFraction, nOrientations=1, pad="cubePadd
         for orientationIndex, orientation in enumerate(orientations):
             print("Image {} orientation {}".format(ID, orientation))#, end="\r")
             info = {}
+            # Get path and store it
             imgPath = dataPoint["image"]
             info["path"] = imgPath
+            # Read in image and normalise it 0-1
             img_sitk = sitk.ReadImage(os.path.join(folder, imgPath))
             img = sitk.GetArrayFromImage(img_sitk).astype(np.float32)
             imgOrig = sitk.GetArrayFromImage(img_sitk).astype(np.float32)
@@ -134,14 +48,13 @@ def getImages(folder, dataset, size, valFraction, nOrientations=1, pad="cubePadd
             maxVal = img.max()
             img /= maxVal
             imgOrig /= maxVal
+            # Read in label and make all labels > 1 = 1
             labelPath = dataPoint["label"]
             label_sitk = sitk.ReadImage(os.path.join(folder, labelPath))
             label = sitk.GetArrayFromImage(label_sitk).astype(np.float32)
             label[label > 1] = 1
-            label = zoom(label, 0.5, order=1, anti_aliasing=True, multichannel=False)
             label = np.rint(label)
-            img = zoom(img, 0.5, order=1, anti_aliasing=True, multichannel=False)
-            imgOrig = zoom(imgOrig, 0.5, order=1, anti_aliasing=True, multichannel=False)
+            # Crop a bounding box around area of interest
             label, img, imgOrig, bounds, padding = cropToSeg(label, img, imgOrig,
                                                              margins[1], margins[0],
                                                              size, minMargins, randomized=True,
@@ -155,13 +68,13 @@ def getImages(folder, dataset, size, valFraction, nOrientations=1, pad="cubePadd
                     img = zoom(img, resizeFactor, order=1, anti_aliasing=True, multichannel=False)
                     imgOrig = zoom(imgOrig, resizeFactor, order=1, anti_aliasing=True, multichannel=False)
 
-                    
+            # Normalise to mean = 0 std dev = 1
             img = whitening(img)
             #noise = np.random.normal(0, 0.1, img.shape)
             #img += noise
             img = np.stack([img], axis=-1)
             
-            
+            # Turn labels to categorical
             catLabels = np.zeros(list(label.shape)+[2])
             for i, row in enumerate(label):
                 for j, col in enumerate(row):
@@ -178,13 +91,8 @@ def getImages(folder, dataset, size, valFraction, nOrientations=1, pad="cubePadd
                             catLabels[i, j, k, val] = 1
                             catLabels[i, j, k, (val+1)%2] = 0
 
-            # img = np.stack([img], axis=-1).astype(np.float32)
-            # img = resize3D(img, False, *shape)
-            # img = tf.Session().run(img)
-            # imgOrig = np.stack([imgOrig], axis=-1).astype(np.float32)
-            # imgOrig = resize3D(imgOrig, False, *shape)
-            # imgOrig = tf.Session().run(imgOrig)
-        
+
+            # Move axis because need channels first
             if (augment == False and ID < valSplit):
                 img = np.moveaxis(img, 3, 0)
                 catLabels = np.moveaxis(catLabels, 3, 0)
@@ -196,7 +104,6 @@ def getImages(folder, dataset, size, valFraction, nOrientations=1, pad="cubePadd
                 img = np.moveaxis(img, 3, 0)
                 catLabels = np.moveaxis(catLabels, 3, 0)
                 info["imgOrig"] = imgOrig
-                #print(img.shape, catLabels.shape)
                 valImgs.append(img)
                 valLabels.append(catLabels)
                 valImgInfo.append(info)

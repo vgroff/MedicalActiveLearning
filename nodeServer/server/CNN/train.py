@@ -139,15 +139,22 @@ def catCrossEntropy(target, output):
 
 
                     
-def quickTrain(model, img, weighting, segmentation, epochs=1, lr=5e-4):
+def quickTrain(model, img, weighting, segmentation, epochs=1, lr=5e-4, trainable=[30,29,26,22]):
     labels = np.zeros(weighting.shape)
     c = 0
     labels[0][segmentation == 0] = 1
     labels[1][segmentation == 1] = 1
-    lr = 10e-4#2.5e-5#1.2e-4#7.5e-5
+    #lr = 10e-4#2.5e-5#1.2e-4#7.5e-5
     # 10e-4 and 30 works well
     sgd = SGD(lr=lr, momentum=0, decay=0.0, nesterov=False)
+    adam = Adam(lr=lr, amsgrad=False)
     loss = weightedDiceLoss(_to_tensor(weighting, tf.float32))
+    for i in range(1,31):
+        layer = model.get_layer("conv3d_{}".format(i))
+        layer.trainable = False
+    for n in trainable:
+        layer = model.get_layer("conv3d_{}".format(n))
+        layer.trainable = True
     model.compile(optimizer = sgd, loss = catCrossEntropy)#loss)
     model.fit(np.array([img]), np.array([weighting*labels]), validation_split=0.0, batch_size=1, verbose=1, epochs=epochs)#, 
               #callbacks=[learning_rate_reduction])
@@ -267,37 +274,7 @@ def callOnlineTrain():
     onlineTrain(name, epochs, lr)
     print("Done")
 
-def checkImgs():
-    f = open("imgs.pkl", "rb")
-    mngr = pickle.load(f)
-    f.close()
-    imgs, labels, info = mngr.getTrainImages()
-    valImgs, valLabels, valInfo = mngr.getValImages()
-    outputFolder = "./imgCheck"
-    imageSets = [[0,90,1,True]]
-    gen = generateImages(imgs, labels, imageSets)
-    for i in range(10):
-        print(i)
-        img, label = next(gen)
-        shift = np.zeros(img.shape)
-        shift.fill(img.min())
-        img += shift
-        img *= 255
-        print(img[0][0].shape, label[0].shape)
-        newLabel = np.argmax(label[0], axis = 0)
-        writeNIFTI(img[0][0], outputFolder, "{}_img".format(i))
-        writeNIFTI(newLabel.astype(np.float32), outputFolder, "{}_lab".format(i))
-    for index, img in enumerate(valImgs):
-        i = index+10
-        print(i)
-        if (i%2 == 1):
-            continue
-        shift = np.zeros(img.shape)
-        shift.fill(img.min())
-        img += shift
-        img *= 255
-        writeNIFTI(img[0].astype(np.float32), outputFolder, "{}_img".format(i))
-        writeNIFTI(np.argmax(valLabels[index], axis=0).astype(np.float32), outputFolder, "{}_lab".format(i))
+
         
 if __name__ == '__main__':
     random.seed(42)

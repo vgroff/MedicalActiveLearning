@@ -1,10 +1,8 @@
 import sys, json, os, inspect
 import numpy as np
 import tensorflow as tf
-#from graphCuts import graphCut
 from imageUtils import cubePadding, softPadding, resize3D, toCategorical
 from cnnUtils import loadModel
-#from scipy.ndimage import zoom
 from skimage.transform import rescale as zoom
 import queue
 from time import process_time as time
@@ -21,7 +19,7 @@ import SimpleITK as sitk
 
 from model import weighted_dice_coefficient_loss, weightedDiceLoss
 
-import geodesics
+import geodesicMin
 
 #from skimage.transform import rescale as zoom
 
@@ -173,6 +171,10 @@ def buildWeightArr(img, segmentation, probs, rawProbs, distanceLim=0.3, stdDev=0
     weightArr = np.ones(probs.shape)
     scribbles = [[], []]
 
+    mask = ( (rawProbs[0] > 0.5) & (rawProbs[0] < minProb1)) | ((rawProbs[1] > 0.5) & (rawProbs[1] < minProb2))
+    weightArr[0][mask] = 0
+    weightArr[1][mask] = 0
+
     mask = ((probs[0] == -1) & (rawProbs[1] > minProb2)) | ((probs[0] == -2) & (rawProbs[0] > minProb1))
     weightArr[0][mask] = scribbleWeight1
     weightArr[1][mask] = scribbleWeight1
@@ -180,11 +182,9 @@ def buildWeightArr(img, segmentation, probs, rawProbs, distanceLim=0.3, stdDev=0
     weightArr[0][mask] = scribbleWeight2
     weightArr[1][mask] = scribbleWeight2
 
-    mask = ( (probs[0] > 0.5) & (probs[0] < minProb1)) | ((probs[1] > 0.5) & (probs[1] < minProb2))
-    weightArr[0][mask] = 0
-    weightArr[1][mask] = 0
-    
-    updateGeodesics(distanceLim, stdDev, minDist1, minDist2, img, probs, segmentation, weightArr)
+    geodesicMin.updateGeodesicsOpt(distanceLim, stdDev, minDist1, img.astype(np.float64),
+                                   probs.astype(np.float64), segmentation.astype(int),
+                                   weightArr)
     return weightArr
                     
 
@@ -222,6 +222,7 @@ def main(imgOrig, labelOrig, model, cnn=True, doGraphCuts=True, BIFSeg=True):
     predictTime = 0
     trainTime = 0
     loadTime  = 0
+    weightTime = 0
 
     t = time()
     imgOrig   = listsToArray(imgOrig)
@@ -285,28 +286,65 @@ def main(imgOrig, labelOrig, model, cnn=True, doGraphCuts=True, BIFSeg=True):
     
     if (BIFSeg == True):
         iterations = 4
-        nEpochs = [20,25,15,10] #3 15
-        w0 = 10
-        w1 = 20
-        a  = 8
-        lr = 50e-4
+        nEpochs = [25,20,20,0] #3 15
+        # w0 = 10
+        # w1 = 20
+        # a  = 2
+        # lr = 100e-4
+        # trainables = [ [30,29,26,22,28,25,21,27,23,19],
+        #                [30,29,26,22,28,25,21,27,23,19],
+        #                [30,29,26,22,28,25,21,27,23,19]
+        # ]
+        trainables = [[i for i in range(10,31)] for j in range(3)]
+        #w0  = 10
+        #w1s = [200, 400, 800, 100]
+
+        # Did well with 10-31 layers and 1 or 2 iterations only
+        w0 = 50#20
+        w1s = [2000,2000,1000,100]
+        lr = 20e-4
+        
+        a  = 1
+        # Did well with 20-31 layers and 2 iterations only
+        w0 = 200#20
+        w1s = [400,800,1000,100]
+        lr = 20e-4
+
+        # Did well with 20-31 layers and 2 iterations only
+        w0 = 200#20
+        w1s = [200,200,200,200]
+        lr = 100e-4
+
+
+        #w0 = 20
+        #w1s = [50,50,50,100]
+        #lr = 50e-4
+
+        # layers 10-31, 20e-4, 100, 1000
+        # 50e-4, 50, (100, 400, 300), 
         # entropy: 100e-4, 10, 100
         # 40, 500, 50e-4, 5, 2iter for 15 got 0.88
         # 
         # 1e-4, 100, 4000 worked well
         for i in range(iterations):
             epochs = nEpochs[i]
+            w1 = w1s[i]
             t = time()
             seg = softPadding(seg)[0]
             #resizeFactor = cnnSize / size
             #seg = zoom(seg, resizeFactor, order=1, multichannel=False)
+            t1 = time()
             weighting = buildWeightArr(img, seg, probsPadded,  rawProbs,
-                                       distanceLim=0.35, stdDev=0.15,
+                                       distanceLim=0.3, stdDev=0.2,
                                        minDist1=0.25/200, minDist2=0.01, minProb1=0.6,
-                                       minProb2=0.6, scribbleWeight1=w0, scribbleWeight2=w1*a**i)
-
+                                       minProb2=0.6, scribbleWeight1=w0, scribbleWeight2=w1 )#*a**i)
+            weightTime += time() - t1
+            
+            print("scribb", )
             print("scribbles", np.count_nonzero(weighting < w0*0.99),  np.count_nonzero(np.isclose(weighting,w0)), np.count_nonzero(weighting > w0))
             print("scribbles", np.count_nonzero(weighting < w0*0.99),  np.count_nonzero(np.isclose(weighting,w0)), np.count_nonzero(weighting > w0), file=sys.stderr)
+            print("perc", np.count_nonzero(rawProbs[0] > 0.5)/np.count_nonzero(rawProbs[0] < 0.5), file=sys.stderr)
+            print("perc", np.count_nonzero(rawProbs[0] > 0.5)/np.count_nonzero(rawProbs[0] < 0.5))
             if epochs == 0:
                 break
             stackedImg = np.stack([img], axis=0)
@@ -314,14 +352,14 @@ def main(imgOrig, labelOrig, model, cnn=True, doGraphCuts=True, BIFSeg=True):
 
             # To produce weight map if dsired
             # weighting = weighting[0][
-            #                        padding[0][0] : int(weighting.shape[1]) - padding[0][1],
-            #                        padding[1][0] : int(weighting.shape[2]) - padding[1][1],
-            #                        padding[2][0] : int(weighting.shape[3]) - padding[2][1]]
+            #                         padding[0][0] : int(weighting.shape[1]) - padding[0][1],
+            #                         padding[1][0] : int(weighting.shape[2]) - padding[1][1],
+            #                         padding[2][0] : int(weighting.shape[3]) - padding[2][1]]
             # weighting[weighting > 1] = 1
             # return weighting
             
             t = time()
-            quickTrain(model, stackedImg, weighting, seg, epochs, lr)
+            quickTrain(model, stackedImg, weighting, seg, epochs, lr, trainable=trainables[i])
             trainTime += time() - t
             
             t = time()
@@ -342,8 +380,9 @@ def main(imgOrig, labelOrig, model, cnn=True, doGraphCuts=True, BIFSeg=True):
             t = time()
             seg = graphCuts(segImg, probs, edgeCoeff, stdDev, gridCuts)                    
             graphTime += time() - t
-    print("Total time:{}, Manip time: {}, Graph Time: {}, Load Time:{}, Pred Time: {}, Train time: {}".format(
-        time()-totalTime, manipTime, graphTime, loadTime, predictTime, trainTime), file=sys.stderr)
+    print("Total time:{}, Manip time: {}, WeightTime:{}, Graph Time: {}, Load Time:{}, Pred Time: {}, Train time: {}".format(
+        time()-totalTime, manipTime, weightTime, graphTime,
+        loadTime, predictTime, trainTime), file=sys.stderr)
     return seg
 
 def parseArgs():
@@ -420,150 +459,4 @@ if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = '0'
     parseArgs()
 
-                    
-# img = np.array([
-#     np.array([np.array([0.80,0.85,0.90,0.80]),
-#               np.array([0.90,0.80,0.90,0.85]),
-#               np.array([0.75,0.85,0.76,0.85]),
-#               np.array([0.85,0.85,0.80,0.80])]),
-    
-#     np.array([np.array([0.85,0.80,0.25,0.20]),
-#               np.array([0.90,0.75,0.20,0.20]),
-#               np.array([0.85,0.90,0.65,0.65]),
-#               np.array([0.85,0.80,0.60,0.65])]),
-    
-#     np.array([np.array([0.45,0.35,0.20,0.23]),
-#               np.array([0.30,0.32,0.42,0.45]),
-#               np.array([0.20,0.35,0.55,0.55]),
-#               np.array([0.15,0.31,0.60,0.65])]),
-    
-#     np.array([np.array([0.10,0.10,0.20,0.17]),
-#               np.array([0.15,0.15,0.25,0.12]),
-#               np.array([0.05,0.10,0.55,0.65]),
-#               np.array([0.10,0.05,0.56,0.60])])
 
-# ])
-
-# seg =  np.array([
-#     np.array([np.array([0,0,0,0]),
-#               np.array([0,0,0,0]),
-#               np.array([0,0,0,0]),
-#               np.array([0,0,0,0])]),
-#     np.array([np.array([0,0,0,0]),
-#               np.array([0,0,0,0]),
-#               np.array([0,0,0,0]),
-#               np.array([0,0,0,0])]),
-#     np.array([np.array([0,0,0,0]),
-#               np.array([0,0,0,0]),
-#               np.array([0,0,0,0]),
-#               np.array([0,0,0,0])]),
-#     np.array([np.array([0,0,0,0]),
-#               np.array([0,0,0,0]),
-#               np.array([0,0,0,0]),
-#               np.array([0,0,0,0])]),
-# ])
-
-
-# probs =  np.array([np.array([
-#     np.array([np.array([0,0,0,0]),
-#               np.array([0,0,0,0]),
-#               np.array([0,0,0,0]),
-#               np.array([0,0,0,0])]),
-#     np.array([np.array([0,0,0,0]),
-#               np.array([0,0,0,0]),
-#               np.array([0,0,0,0]),
-#               np.array([0,0,0,0])]),
-#     np.array([np.array([0,0,0,0]),
-#               np.array([0,0,0,0]),
-#               np.array([0,0,0,0]),
-#               np.array([0,0,0,0])]),
-#     np.array([np.array([0,0,0,0]),
-#               np.array([0,0,0,0]),
-#               np.array([0,0,0,0]),
-#               np.array([-1,0,0,0])]),
-# ])])
-
-# weight = np.zeros([2,4,4,4])
-# weight[:] = 1
-
-# updateGeodesics(0.25, 0.15, 0.0001, 0.005, img, probs, seg, weight)
-# print(weight)
-    
-    
-# IMMEDIATE ORDERED:
-# - Have a second weight for mislabelled scriblles and correctly labelled scribbles
-# - Try Pythran or straight C code
-# - Get some Dice scores"
-# - Move LA from local to server and generally prep server
-# - Finish off website
-# - Code bundle
-
-
-# IMMEDIATE:
-# - Cut down on front end printing
-# - Comment and clean up code and get rid of this stuf (dev comments) and clean up import statements
-# - Report
-# - Video thingy
-# - check EVERYTHING work
-    
-# TO-DO:
-# - Write weight array as image so it can be looked at
-# - Need to reduce the time taken both on front and back end.
-# - Try BIFSeg confidence value for all non-labelled pixels with weighting=abs(probs1 - probs2)
-# - Have a second value of lambda for graphcuts for pixels that are differently labelled geodesically near a scribble?
-
-# TO-DO:
-# - Set scribble probs to infinity or 0 instead in graphcuts? already setting to 0, guessing the value is the same as infinity? Could still try setting it as inf or 1e10 or something
-# - Have a second value of lambda for graphcuts for pixels that are differently labelled geodesically near a scribble? Or just regularly nearby?
-
-
-# BIG PICTURE:
-# - Offer "types" of CNNs, each with a specialization in an organ/tumour/imaging type. Offer ability to build new ones or to add images to existing ones.
-# - Consider fine-tuning later layers only
-# - Consider a geodesic mode on the front end, where the brush size is influenced by (2D) geodesic distances? Could have a slider to control the relative importance of the physical and geodesic distance, as well as a second variable to control the strength of the paths (sigma in the boundary eq.) and a "maxRadius" option too?
-# - Change the front-end scrolling behaviour so that it jumps images if need be
-
-
-
-
-    # img = np.array([
-    #     np.array([np.array([0.80,0.85,0.90,0.80]),
-    #               np.array([0.90,0.80,0.90,0.85]),
-    #               np.array([0.75,0.85,0.76,0.85]),
-    #               np.array([0.85,0.85,0.80,0.80])]),
-        
-    #     np.array([np.array([0.85,0.80,0.25,0.20]),
-    #               np.array([0.90,0.75,0.20,0.20]),
-    #               np.array([0.85,0.90,0.65,0.65]),
-    #               np.array([0.85,0.80,0.60,0.65])]),
-        
-    #     np.array([np.array([0.45,0.35,0.20,0.23]),
-    #               np.array([0.40,0.32,0.42,0.45]),
-    #               np.array([0.35,0.35,0.55,0.55]),
-    #               np.array([0.35,0.31,0.60,0.65])]),
-        
-    #     np.array([np.array([0.10,0.10,0.20,0.17]),
-    #               np.array([0.15,0.15,0.25,0.12]),
-    #               np.array([0.05,0.10,0.55,0.65]),
-    #               np.array([0.10,0.05,0.56,0.60])])
-
-    #     ])
-    # label =  np.array([
-    #     np.array([np.array([1,0,1,0]),
-    #               np.array([0,0,0,0]),
-    #               np.array([0,0,0,0]),
-    #               np.array([0,0,0,0])]),
-    #     np.array([np.array([0,0,0,0]),
-    #               np.array([0,0,0,0]),
-    #               np.array([0,0,1,0]),
-    #               np.array([0,0,0,0])]),
-    #     np.array([np.array([0,0,0,0]),
-    #               np.array([0,0,0,0]),
-    #               np.array([0,0,2,0]),
-    #               np.array([0,0,0,0])]),
-    #     np.array([np.array([0,0,0,0]),
-    #               np.array([0,0,0,0]),
-    #               np.array([0,0,2,0]),
-    #               np.array([0,0,0,0])]),
-    #     ])
-    # seg = main(img, label, True, True, False)

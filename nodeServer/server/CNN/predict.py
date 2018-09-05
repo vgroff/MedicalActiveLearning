@@ -8,7 +8,7 @@ from dltk.core import metrics as metrics
 
 from cnnUtils import loadModel
 from imageUtils import getDatasetInfo, ImageManager
-from imageReader import readFunc, getImages
+from imageReader import getImages
 
 import pickle
 
@@ -19,6 +19,7 @@ from model import weighted_dice_coefficient_loss
 from dltk.io.preprocessing import whitening
 
 
+# Write image array arr to nifti file at folder/name.nii.gz
 def writeNIFTI(arr, folder, name):
     new_sitk = sitk.GetImageFromArray(arr)
     #new_sitk.CopyInformation(original['sitk'])
@@ -27,13 +28,17 @@ def writeNIFTI(arr, folder, name):
 
 
 def predict():
+    # Load model
     model = loadModel("General")
-    
+
+    # Folder for reading images
     folder = "/home/vincent/Documents/imperial/individual project/datasets/decathlon/Task04_Hippocampus"
     trainPaths = getDatasetInfo(folder)
 
+    # Folder for writing outputs
     outputFolder = "./spleens"
-    # 
+    
+    # Get images
     print("Getting images")
     f = open("imgs_spleen10.pkl", "rb")
     mngr = pickle.load(f)
@@ -54,29 +59,26 @@ def predict():
     
     result = []
     for img in imgs:
-        result.append(model.predict(np.array([img])))#, np.array(labels))
-    #print(result.shape)
-    #print(result[0][0][0][0][0], result[0][1][0][0][0])
+        result.append(model.predict(np.array([img])))
 
-    ones = 0
-    zeroes = 0
-    counts  = [0,0]
-    counts2 = [0,0]
-    counts3 = [0,0]
+
+
     dice = 0
     for i, label in enumerate(result):
-        #newLabel = np.moveaxis(label, 0, 3)
-        print(label.shape)
+        # Convert to binary labels
         newLabel = np.argmax(label, axis=0)
-        print(newLabel.shape)
         newLabel2 = np.argmax(labels[i], axis=0)
         print(info[i]["path"])
+        
         print("dice coefficient:", tf.Session().run(weighted_dice_coefficient_loss(np.array(labels[i], dtype="float64"), np.array(result[i], dtype="float64"))))
+        
         dice += tf.Session().run(weighted_dice_coefficient_loss(np.array(labels[i], dtype="float64"), np.array(result[i], dtype="float64")))
+
+        # Write results to file
         writeNIFTI(newLabel.astype(np.float32), outputFolder, "{}_pred".format(i))
         writeNIFTI(newLabel2.astype(np.float32), outputFolder, "{}_truth".format(i))
         writeNIFTI(imgsActual[i].astype(np.float32), outputFolder, "{}_actual".format(i))
-        #writeNIFTI(imgs[i][0], outputFolder, "{}_processed".format(i))
+
     dice /= len(imgs)
     print("Dice av", dice)
                                                                 
