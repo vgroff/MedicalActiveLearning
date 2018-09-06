@@ -68,9 +68,37 @@ from cnnUtils import loadModel
 # pickle.dump(mngr, f)
 # f.close()
 
-from cnnUtils import loadModel, saveModel
-model = loadModel(1)
-print(model.summary())
+# from cnnUtils import loadModel, saveModel
+# model = loadModel(1)
+# print(model.summary())
+
+from imageUtils import getDatasetInfo
+from skimage.transform import rescale as zoom
+from predict import writeNIFTI
+import SimpleITK as sitk
+import os
+import numpy as np
+
+folder=  "/home/vincent/Documents/imperial/individual project/datasets/decathlon/Task09_Spleen"
+dataset = getDatasetInfo(folder )
+dataPoint = dataset[0]
+imgPath = dataPoint["image"]
+labelPath = dataPoint["label"]
+#info["path"] = imgPath
+# Read in image and normalise it 0-1
+img_sitk = sitk.ReadImage(os.path.join(folder, imgPath))
+img = sitk.GetArrayFromImage(img_sitk).astype(np.float32)
+label_sitk = sitk.ReadImage(os.path.join(folder, labelPath))
+label = sitk.GetArrayFromImage(label_sitk).astype(np.float32)
+maxVal = img.max()
+img /= maxVal
+img = zoom(img, 0.5, order=1, anti_aliasing=True, multichannel=False)
+img *= maxVal
+label[label > 1] = 1
+label = zoom(label, 0.5, order=1, anti_aliasing=True, multichannel=False)
+label = np.rint(label).astype(np.int8)
+writeNIFTI(img, "SpleensWhole", "img")
+writeNIFTI(label, "SpleensWhole", "label")
 
 # folder = "/home/vincent/Documents/imperial/individual project/datasets/decathlon/Task02_Heart"
 # outputFolder = "trash"

@@ -16,7 +16,7 @@ from model import getUNet2
 
 from imageReader import getImages
 
-from keras.optimizers import Adam, SGD
+from keras.optimizers import Adam, SGD, RMSprop, Adadelta, Adagrad
 from model import weighted_dice_coefficient_loss, weightedDiceLoss
 
 from functools import partial
@@ -138,8 +138,8 @@ def catCrossEntropy(target, output):
     return cat_crossentropy(target, output, from_logits=False, axis=1)
 
 
-                    
-def quickTrain(model, img, weighting, segmentation, epochs=1, lr=5e-4, trainable=[30,29,26,22]):
+# Fine tune a model to fit a segmentation with a weighting matrix                    
+def fineTune(model, img, weighting, segmentation, epochs=1, lr=5e-4, trainable=[30,29,26,22]):
     labels = np.zeros(weighting.shape)
     c = 0
     labels[0][segmentation == 0] = 1
@@ -148,6 +148,9 @@ def quickTrain(model, img, weighting, segmentation, epochs=1, lr=5e-4, trainable
     # 10e-4 and 30 works well
     sgd = SGD(lr=lr, momentum=0, decay=0.0, nesterov=False)
     adam = Adam(lr=lr, amsgrad=False)
+    rms = RMSprop(lr=lr)
+    adaDelta = Adadelta(lr=lr)
+    adam = Adam(lr=lr)
     loss = weightedDiceLoss(_to_tensor(weighting, tf.float32))
     for i in range(1,31):
         layer = model.get_layer("conv3d_{}".format(i))

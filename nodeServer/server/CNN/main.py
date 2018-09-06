@@ -8,7 +8,7 @@ import queue
 from time import process_time as time
 import pickle
 
-from train import quickTrain
+from train import fineTune
 from namesdb import NamesDatabase
 
 from dltk.io.preprocessing import whitening
@@ -276,7 +276,7 @@ def main(imgOrig, labelOrig, model, cnn=True, doGraphCuts=True, BIFSeg=True):
         segImg = img
 
     t = time()
-    edgeCoeff = 10
+    edgeCoeff = 8
     gridCuts = True
     if (gridCuts):
         segImg = arrayToLists(segImg)
@@ -285,8 +285,8 @@ def main(imgOrig, labelOrig, model, cnn=True, doGraphCuts=True, BIFSeg=True):
     graphTime += time() - t
     
     if (BIFSeg == True):
-        iterations = 4
-        nEpochs = [25,20,20,0] #3 15
+        iterations = 2
+        nEpochs = [20,10] #3 15
         # w0 = 10
         # w1 = 20
         # a  = 2
@@ -295,7 +295,8 @@ def main(imgOrig, labelOrig, model, cnn=True, doGraphCuts=True, BIFSeg=True):
         #                [30,29,26,22,28,25,21,27,23,19],
         #                [30,29,26,22,28,25,21,27,23,19]
         # ]
-        trainables = [[i for i in range(10,31)] for j in range(3)]
+        trainables = [[i for i in range(10,31)] for j in range(iterations)]
+        #trainables = [[30,26,22] for j in range(iterations)]
         #w0  = 10
         #w1s = [200, 400, 800, 100]
 
@@ -310,10 +311,52 @@ def main(imgOrig, labelOrig, model, cnn=True, doGraphCuts=True, BIFSeg=True):
         w1s = [400,800,1000,100]
         lr = 20e-4
 
-        # Did well with 20-31 layers and 2 iterations only
+        # Did well with 20-31 layers and 3 iterations 
         w0 = 200#20
         w1s = [200,200,200,200]
-        lr = 100e-4
+        lr = 50e-4
+
+        # Did well with 20-31 layers and 2 iterations only adadelta
+        w0 = 40#20
+        w1s = [100,100,200,200]
+        lr = 40e-4
+
+        # Did really well with 10-31 layers and 3 iterations 25,20,20
+        w0 = 50#20
+        w1s = [200,200,200,200]
+        lr = 30e-4
+
+        # Did really well with 10-31 layers and 3 iterations 25,20,20
+        w0 = 100#20
+        w1s = [200,200,200,200]
+        lr = 30e-4
+
+        # Did really well with 10-31 layers and 1 iterations 25,15!!
+        w0 = 200#20
+        w1s = [1000,10000,400,200]
+        lr = 20e-4
+
+        # Did really well with 10-31 layers and 1 iterations 25,15!! but aggressive
+        w0 = 200#20
+        w1s = [200,400,400,200]
+        lr = 20e-4
+
+        # Did really well with 10-31 layers and 1 iterations 25,15!! but aggressive
+        iterations = 2
+        nEpochs = [20,10]
+        w0 = 100#20
+        w1s = [100,200,400,200]
+        lr = 20e-4
+        trainables = [[i for i in range(11,31)] for j in range(iterations)]
+
+        
+        # Did really well with 10-31 layers and 1 iterations 25,15!! but aggressive
+        iterations = 3
+        nEpochs = [10,10,5]
+        w0 = 100#20
+        w1s = [100,200,300,200]
+        lr = 20e-4
+        trainables = [[i for i in range(10,31)] for j in range(iterations)]
 
 
         #w0 = 20
@@ -345,8 +388,7 @@ def main(imgOrig, labelOrig, model, cnn=True, doGraphCuts=True, BIFSeg=True):
             print("scribbles", np.count_nonzero(weighting < w0*0.99),  np.count_nonzero(np.isclose(weighting,w0)), np.count_nonzero(weighting > w0), file=sys.stderr)
             print("perc", np.count_nonzero(rawProbs[0] > 0.5)/np.count_nonzero(rawProbs[0] < 0.5), file=sys.stderr)
             print("perc", np.count_nonzero(rawProbs[0] > 0.5)/np.count_nonzero(rawProbs[0] < 0.5))
-            if epochs == 0:
-                break
+
             stackedImg = np.stack([img], axis=0)
             manipTime += time() - t
 
@@ -359,7 +401,7 @@ def main(imgOrig, labelOrig, model, cnn=True, doGraphCuts=True, BIFSeg=True):
             # return weighting
             
             t = time()
-            quickTrain(model, stackedImg, weighting, seg, epochs, lr, trainable=trainables[i])
+            fineTune(model, stackedImg, weighting, seg, epochs, lr, trainable=trainables[i])
             trainTime += time() - t
             
             t = time()
@@ -378,7 +420,8 @@ def main(imgOrig, labelOrig, model, cnn=True, doGraphCuts=True, BIFSeg=True):
             #stdDev = 0.1
             manipTime += time() - t
             t = time()
-            seg = graphCuts(segImg, probs, edgeCoeff, stdDev, gridCuts)                    
+            seg = graphCuts(segImg, probs, edgeCoeff, stdDev, gridCuts)
+            print("obj perc", np.count_nonzero(seg)/(seg.shape[0]*seg.shape[1]*seg.shape[2]))
             graphTime += time() - t
     print("Total time:{}, Manip time: {}, WeightTime:{}, Graph Time: {}, Load Time:{}, Pred Time: {}, Train time: {}".format(
         time()-totalTime, manipTime, weightTime, graphTime,
