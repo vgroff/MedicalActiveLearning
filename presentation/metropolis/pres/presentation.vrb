@@ -1,0 +1,10 @@
+\frametitle{BIFSeg}
+
+  \textbf{Framework:}
+  \begin{enumerate}
+  \item Produce a small number $n$ of segmentations with some generalized CNN
+  \item Add these to a dataset
+  \item Train a new CNN through transfer learning on said dataset
+  \item Use the new
+  \end{enumerate}
+

@@ -1,0 +1,21 @@
+Conditional Random Fields (CRFs) is a modeling method used in pattern recognition. They are useful in image segmentation for smoothening the segmentation boundaries by encouraging similar pixels (in space or in color/intensity) to be grouped together, introducing some local context into the process \cite{deepIGeoS}.
+
+For grayscale images, a CRF of the following form has been found to work well
+
+\begin{equation}
+E(\mathbf{X}) = \lambda R(\mathbf{X}) + B(\mathbf{X})
+\label{eq:costFunc}
+\end{equation}
+
+where $E(\mathbf{X})$ is the cost function on image $\mathbf{X}$, $R$ represents the unary regional penalty term, $B$ represents the binary boundary penalty term and $\lambda \geq 0$ fixes the relative strength of these two terms \cite{graphCuts}. The regional term penalty represents how poorly (since it is a penalty) a certain pixel (or voxel) fits into either the foreground or the background regions. The boundary term penalizes discontinuities between the object and the background pixels depending on a pre-determined function.
+
+A probability $[0,1]$ that a certain pixel is a part of the foreground can be mapped to a penalty term $[\infty, 0]$ using the negative log. The regional term is then the sum of the negative log values for each pixel. In 2-D, a commonly used boundary function between a pair of pixels at coordinates $(i,j)$ and $(k,l)$ of grayscale values $X_{i,j}, X_{k,l}$ is
+
+\begin{equation} B(X_{i,j}, X_{k,l}) = \begin{cases} 
+      \frac{1}{r_{i,j,k,l}} e^{\frac{-(X_{i,j}-X_{k,l})^2}{2\sigma^2}} & y_{i,j} \neq y_{k,l} \\
+      0 & \text{otherwise}
+   \end{cases}
+   \label{eq:boundTerm}
+\end{equation}
+
+where $y_{i,j}$ is the binary label of the pixel $(i,j)$ dictating whether it is part of the object or the background, $r_{i,j,k,l}$ is the euclidean distance between coordinate $(i,j)$ and $(k,l)$. The exponential term works to soften the penalty when there is a large difference in the grayscale values of the two pixels, thus the cost function prefers to place boundaries at these places. The boundary term for a single pixel is then the sum of this boundary function over each of its neighbours (8 in the 2D case, 26 for 3D), and the overall boundary term is the sum of the boundary terms for each pixel. Extending these equations to the 3D case is trivial.

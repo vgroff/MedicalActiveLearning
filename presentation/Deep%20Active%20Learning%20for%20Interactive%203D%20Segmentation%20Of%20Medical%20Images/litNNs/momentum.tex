@@ -1,0 +1,28 @@
+Momentum can help increase the rate at which the algorithm learns by skipping over local minima. Suppose that $\frac{\partial E_t}{\partial w_{i,j,k}}$ is the gradient of the cost function $E$ with respect to weight $w_{i,j,k}$ at iteration $t$ of gradient descent. Then we can denote a value $m_{i,j,k,t}$ at each iteration $t$ where
+
+\begin{equation}
+m_{i,j,k,t} = \beta m_{i,j,k,t-1} + (1 - \beta) \frac{\partial E_t}{\partial w_{i,j,k}}
+\end{equation}
+
+where $0 < \beta < 1$ is the momentum factor. This amounts to taking an exponential moving average of the gradient. Then the weight update equation at iteration $t$ is
+
+\begin{equation}
+\Delta w_{i,j,k} = - \alpha m_{i,j,k,t}
+\end{equation}
+
+Exponentially moving averages can be poor estimates early on, since we set $\Delta w_{i,j,k,0} = 0$, a high value of $\beta$ will mean that convergence to the correct gradient will be slow. We can multiply the original equation by a bias correction term $\frac{1}{1-\beta^t}$ to mitigate this effect, such that the equation becomes 
+
+\begin{equation}
+m_{i,j,k,t} = \frac{1}{1-\beta^t} (\beta m_{i,j,k,t-1} + (1 - \beta) \frac{\partial E_t}{\partial w_{i,j,k}} )
+\end{equation}
+
+which, for small values of $t$, boosts the value of $m_{i,j,k,t}$ to be nearer to the current value of $\frac{\partial E_t}{\partial w_{i,j,k}}$ than to $0$.
+
+The analogy with momentum comes from the equation for the inelastic collision between two point masses of mass $m_{1}$, $m_{2}$ traveling at speeds $v_{1}$, $v_{2}$ collide into a larger mass size $m_{1}+m_{2}$ which then travels at some unknown speed $v_{3}$. Then, conservation of momentum says that
+\begin{equation}
+(m_{1} + m_{2})v_{3} = m_{1} v_{1} + m_{2} v_{2}
+\end{equation}
+\begin{equation}
+v_{3} = \frac{m_{1}}{m_{1} + m_{2}} v_{1} + \frac{m_{2}}{m_{1} + m_{2}} v_{2}
+\end{equation}
+then, if we see the value of the cost function $E_{t}$ as a position in space and $m_{i,j,k,t}$ as the value of the current rate at which the position $E_{t}$ is changing, then the computed change in the cost function is effectively computed by calculating a series of collisions between point masses that are in constant ratio to one another ($\beta = \frac{m_{1}}{m_{1} + m_{2}}$).

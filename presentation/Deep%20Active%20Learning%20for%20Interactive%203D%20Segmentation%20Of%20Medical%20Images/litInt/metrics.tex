@@ -1,0 +1,15 @@
+There are two main metrics to be compared - the time taken for the new segmentation to appear after the user has re-labelled certain pixels (refinement time), and the accuracy of said segmentation. For the accuracy, the Dice coefficient is usually used, which is given by
+
+\begin{equation}
+D = \frac{2|X \land Y|}{|X| + |Y|}
+\end{equation}
+
+where X is the set of pixels which are actually part of the object, and Y is the set of pixels labelled as part of the object by the algorithm. The two metrics are linked, since a less accurate segmentation result will require further user interaction. Since user interaction is on the order of seconds, accuracy will often be more important to overall time efficiency than refinement time.
+
+A comparison of accuracies in \cite{BIFSeg} suggests that P-Net (dilated convolution) performs better with some organs and FCN (deconvolution) with others. 
+
+GrabCut is an extension to Graph Cuts which has proved to be particularly effective, using Gaussian Mixture Models rather than histograms in order to learn from the image \cite{grabCut}. Wang et al. find that BIFSeg improves the Dice coefficient over GrabCut, which confirms that the spatial relationships which are learned by the CNN are effective in improving the accuracy of the Graph Cuts algorithm.  
+
+BIFSeg and DeepIGeoS were built by the same team, and they have used various metrics to compare the two \cite{BIFSeg}. Both frameworks significantly outperform the traditional (non-CNN) methods for image segmentation, as well as non-interactive CNN frameworks.
+
+Since BIFSeg continues learning with user interactions, DeepIGeoS is faster in terms of machine time, however, over most object classes BIFSeg produces significantly (p < 0.05) more accurate results. They also find that BIFSeg is better at generalizing to previously unseen object classes.

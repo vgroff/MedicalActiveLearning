@@ -1,0 +1,32 @@
+One cannot hope to be able to set all of the $w_{i,j,k}$ manually (nor do we know what the end function should look like), but we can let the network set them itself, a process called "learning". For this, we need a series of $\vec{i}$'s and $\vec{o}$'s that the network can learn from (a dataset). An $\vec{i}$ is entered into the input layer, this is fed forward until it reaches the  output layer. These outputs $\vec{\tilde{o}}$ and the actual desired outputs $\vec{o}$ are then taken as input to the error function $E(\vec{\tilde{o}}, \vec{o})$, which is some function which should increase the more different $\vec{\tilde{o}}$ and $\vec{o}$ are, representing how "wrong" the current ouput $\vec{\tilde{o}}$ is. We can then calculate $\frac{\partial E}{\partial w_{i,j,k}}$ for each weight and we find that the value of this gradient for a certain layer depends on the value of the layers after it, so we must start at the output layer and propagate backwards, hence this algorithm is known as "back-propagation" \cite{backProp}. We can then do this over multiple inputs $\vec{i}$ and take an average of the gradients. These gradients tell us how we need to change each $w_{i,j,k}$ (if at all) in order to reduce the error. Thus we can shift each weight by a factor $\alpha$ (the learning rate) of the negative of the gradient in order to reduce the error,
+
+\begin{equation}
+\Delta w_{i,j,k} = - \alpha \frac{\partial E}{\partial w_{i,j,k}}
+\end{equation}
+
+a process known as stochastic gradient descent (SGD). The bias term $b_{i,j}$ is also trained with the same process.
+Repeating this process multiple times will eventually lead us to a local minimum in the error function, at which point the network will stop improving and it may be used for classification.  
+
+We must decide what function we want to approximate. One of the most common uses for neural networks is classification. Here, $\vec{i}$ becomes a set of features, and each of the $o_{i}$ represents a class. We can use a softmax function to transform the raw numbers $o_{i}$ into probability values, such that the probability $P_{i}$ that the inputs belong in the $i$th class is
+
+\begin{equation}
+P_{i}(\vec{o}) = \frac{e^{o_{i}}}{\sum_{i} e^{o_{i}}}
+\end{equation}
+then, if an input $\vec{i}$ is definitely class $k$, we want our output to approximate the function $P_{i} = \delta_{i,k}$ where
+\begin{equation}
+\delta_{i,j} = 1 \text{ iff } i = j \text{, otherwise } \delta_{i,j} = 0 
+\end{equation}
+
+the softmax function offers an advantage over using a simple linear ratio: the probabilities don't just depend on the relative values of $o_{i}$s but on their absolute value as well. $\vec{o}$s where the $o_{i}$s are in the same ratio to each other but increasingly large in absolute value will have probability distributions increasingly skewed towards whichever $o_{i}$ is largest, as the exponential nature of the softmax function means the largest value of $e^{o_{i}}$ will eventually dominate all others in the sum such that $P_{i}$ tends to 1 for the largest $o_i$ and to 0 for all others. In the case of softmax, the cost function usually used is cross-entropy, where the cost for each class probability is 
+
+\begin{equation}
+E(P_{i}) = - \tilde{P_{i}} \log(P_{i}) 
+\end{equation} 
+
+where $\tilde{P_{i}} $ is the actual probability value, which is 1 for the correct class, 0 for the others. The overall cost is then the sum over each class cost, which reduces to 
+
+\begin{equation}
+E = \sum_{i} E(P_{i}) = - \log(P_{j}) 
+\end{equation}
+
+where $j$ is the index of the correct class. The negative log then maps $P_{j}$ from the probability range $(0,1)$ to a cost $E$ in the range $(\infty,0)$ mapping incorrect predictions to an infinitely high cost and correct predictions to 0 cost.

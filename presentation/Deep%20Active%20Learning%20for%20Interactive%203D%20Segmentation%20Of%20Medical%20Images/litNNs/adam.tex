@@ -1,0 +1,33 @@
+Adam is another addition onto gradient descent \cite{Adam}. As well as keeping an exponential average of the gradient $m_{i,j,k,t}$ with decay $\beta_1$, it keeps an exponential average of the gradient squared $v_{i,j,k,t}$ with decay $\beta_2$. For the sake of notational brevity, suppose that $m_t$ and $v_t$ are the values of $m_{i,j,k,t}$, $v_{i,j,k,t}$ from some weight $w = w_{i,j,k}$ at iteration t. The gradient update rule then becomes 
+\begin{equation}
+\Delta w = - \alpha \frac{m_{t}}{\sqrt[]{v_{t}}}
+\end{equation}
+$m_t$ and $v_t$ are measures of the expectation values $\mathbf{E}[\frac{\partial E_t}{\partial w}]$ and $\mathbf{E}[(\frac{\partial E_t}{\partial w})^2]$, which means that
+
+\begin{equation}
+\mathbf{E}[\frac{\partial E_t}{\partial w}] - \mathbf{E}[(\frac{\partial E_t}{\partial w})^2] = \sigma^2 = v_t - m_t^2 
+\end{equation}
+
+where $\sigma$ is the standard deviation of the function $\frac{\partial E_t}{\partial w}$. We can then re-write $\sqrt[]{v_{t}}$ as 
+
+\begin{equation}
+\sqrt[]{v_t} = \sqrt[]{\sigma^2 + m_t^2}
+\end{equation}
+
+then the gradient descent update rule becomes 
+
+\begin{equation}
+\Delta w = - \alpha \frac{m_{t}}{\sqrt[]{\sigma^2 + m_t^2}}
+\end{equation}
+
+Looking at edge cases gives an idea of the behaviour,
+
+\begin{equation} \frac{m_{t}}{\sqrt[]{v_{t}}} = \frac{m_{t}}{\sqrt[]{\sigma^2 + m_t^2}}  \begin{cases} 
+      \approx \frac{m_{t}}{|m_t|} = \pm 1 & \sigma << m_t \\
+      \approx \frac{m_t}{\sigma} & \sigma >> m_t \\
+   \end{cases}
+\end{equation}
+
+so if the standard deviation is small compared to the mean, the gradient will update by $\pm \alpha$, but if the standrd deviation is large, it will be updated by $-\alpha \frac{m_t}{\sigma}$. $\frac{\sigma}{m_t} = c_v$ is the coefficient of variation, a measured of spread in data, thus we can write the update rate as $-\frac{\alpha}{c_v}$, such that the size of the update to the weights is inversely proportional to the level of variation in the gradients. \textbf{PEOPLE WHO DID THIS} call this coefficient $\frac{m_{t}}{\sqrt[]{v_{t}}}$ the signal-to-noise ratio, and weights with a higher signal-to-noise ratio learn faster than those with a lower one. Thus each weight adapts its own learning rate depending on how noisy (or not) the gradient is. Part of the intuition is that features which are sparse in the data may often be the useful, but their sparseness means that they are weakly learned. Features which are useful however will have a high SNR irrespective of their sparseness, which means they will be updated more strongly by the Adam algorithm then they would by SGD.
+
+Adam often trains much faster than SGD, but will often generalise more poorly.  

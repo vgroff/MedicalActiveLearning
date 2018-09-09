@@ -1,0 +1,46 @@
+\documentclass[a4paper]{article}
+
+%% Language and font encodings
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+
+%% Sets page size and margins
+\usepackage[a4paper,top=3cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+%% Useful packages
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\usepackage{enumitem}
+\usepackage{hyperref}
+
+\usepackage{newclude}
+
+\title{Deep Active Learning for Interactive 3D Segmentation Of Medical Images}
+\author{Vincent Groff}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Convolutional neural networks have shown great successes in image recognition and segmentation. They could improve the efficiency of segmentation of medical imagery, a common task in some medical professions. On their own they are not sufficiently reliable for such an important task. As a result, we use an interactive frameworks so that the user can make corrections. We also offer transfer learning for building CNNs on previously unseen datasets. We review some frameworks for interactive medical segmentation and choose one that we modify for our purposes and host online, in order to allow the framework to be used by users with less powerful computers. 
+\end{abstract}
+
+
+\include*{1.introduction}
+\include*{2.litReview}
+\include*{3.design}
+\include*{4.results}
+\include*{5.conclusion}
+\include*{6.ethics}
+
+
+
+
+
+\bibliographystyle{unsrt}
+\bibliography{sample}
+
+\end{document}

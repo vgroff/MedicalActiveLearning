@@ -1,0 +1,8 @@
+
+Uneven data can lead to overfitting, and it is common for data to be uneven in the world of medical imaging where imaging techniques and instruments may have very different settings. Data normalization is one way to minimize this. In the case of grayscale images, the most common method is known as whitening. This is a simple linear transform setting the mean of each image to 0 and the standard deviation to 1, with each pixel value $x$ being transformed as follows:
+
+\begin{equation}
+x \rightarrow \frac{x - \mu}{\sigma}
+\end{equation}
+
+where $\mu$ is the mean and $\sigma$ is the standard deviation of the pixel values.

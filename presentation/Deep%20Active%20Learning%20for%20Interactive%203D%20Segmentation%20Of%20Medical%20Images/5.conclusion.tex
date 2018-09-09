@@ -1,0 +1,28 @@
+%\section{Prototype}
+%We invite the reader to try out the prototype website on the following link \url{http://51.140.154.2:8080}, which should be available for as long as the writers have access to Azure Web Service.
+
+
+\section{Further Work}
+As mentioned above, the most immediate piece of follow-up work would be to perform timed tests with users, in order to compare this framework to competing ones. 
+
+Evidence suggests that modern neural networks with softmax output have a tendency to be poorly calibrated \cite{calibration} - their confidence in their own predictive power is often significantly higher than their accuracy. Their overconfidence translates into making extreme predictions, either close to 0 or close to 1, and therefore the validity of reading these outputs as probabilities has been questioned. In many cases, such as classifiers, the actual probability values are irrelevant to the algorithm. However, in using the CRF, we assume that the output of the final softmax layer of the CNN is in fact a probability. Having an uneven probability distribution is likely to decrease the effectiveness of the CRF, since extreme probability values cause regional penalties to be correspondingly extreme and therefore pairwise terms have a limited effect. Guo et al. \cite{calibration} analyze the issue of overconfidence and propose a simple and effective solution which they call temperature scaling. The input to the softmax layer is divided by a single learned parameter $T > 0$, which works to soften the networks confidence. As $T \rightarrow \infty$, the predictions are pushed towards maximal uncertainty such that $o_i \rightarrow \frac{1}{K}$ where $K$ is the number of classes. $T$ is learned over the validation set after the network has been trained. This would be very simple to implement, by stripping off the final softmax layer once training is complete, and then manually training $T$ over the validation set. 
+
+We would also propose altering $T$ during fine-tuning. The current segmentation would be used as an estimate of the accuracy of the CNN, at which point $T$ can be learned over the various pixels in the particular image. More inaccurate CNNs would then have a larger $T$, and would therefore hand more power over to the CRF, as desired. 
+
+It has been mentioned already that we have not yet implemented a time-saving feature of BIFSeg, that is, saving outputs from non-trainable parts of the network in order to cut down on inference times during fine-tuning. This is a simple procedure and Keras offers the necessary interfaces.
+
+To develop this webpage prototype into a fully working program would require hosting it on several severs and/or servers with multiple GPUs, so that multiple users can use the CNNs simultaneously. Keras with Tensorflow is able to handle using multiple GPUs simultaneously.
+
+At the time of writing, there is no way to export the segmentations from the website back into NIFTI format, which would be desirable for further processing such as medical analysis or 3D rendering. NIFTI-Reader-JS unfortunately does not offer a NIFTI writer, and time constraints have meant that we have not yet been able to deal with this. This is, however, a practical detail which should cause no difficulties.
+
+Medical imagery is private and sensitive data, and as such, the images should be sent to the server using the Transport Layer Security (TLS) protocol, which ensures both privacy and integrity of data sent across HTTP \cite{TLS}. This has not been implemented yet, but it should not present any problems.
+
+\section{Conclusion}
+
+We have produced a website based on the BIFSeg framework with several well motivated modifications as well as offering transfer learning to the underlying CNN. We have shown that the framework can produce highly accurate segmentations even on unseen objects, by using a general CNN we trained on several organs and with the help of user interaction. We have shown that transfer learning is extremely useful for this framework, since the AI can increase it's performance significantly on object types with only 4 training images and 50-100 epochs of learning, which for most image sizes requires a maximum of 2-3 hours of training, and often much less. The CNN has then seen the previously unseen object type, and will provide much more accurate results on said object type with significantly less user interaction. We therefore conclude that this framework would allow medical staff to produce fast and accurate segmentations on 3D medical images, by minimizing the most serious issues of CNNs, namely their inability to generalize to objects they have not seen before and their computational cost during inference and training.   
+
+
+
+
+
+
