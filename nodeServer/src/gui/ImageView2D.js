@@ -9,7 +9,7 @@ function enableBodyScroll() {
     body.style.overflowY = 'auto'
 }
 
-
+// Displays a 2D image and interacts with the underlying image object
 export class ImageView2D extends Component {
     
     constructor(props) {
@@ -44,7 +44,8 @@ export class ImageView2D extends Component {
     setImageIndex(index) {
 	this.setState({nextImageIndex: index})
     }
-    
+
+    // Switch to the next or previous image 
     nextImage(dir) {
 	if (this.props.images.length && this.drawingRect == false) {
 	    this.props.images[this.state.currImageIndex].resetTempMask()
@@ -59,6 +60,7 @@ export class ImageView2D extends Component {
 	}
     }
 
+    // Turn the temporary mask into a permanent one
     markMask() {
 	if (this.props.images.length) {
 	    var rect = this.refs.canvas.getBoundingClientRect()
@@ -70,18 +72,20 @@ export class ImageView2D extends Component {
 	}
     }
 
+    // Move the mask or bounding box depending on whats happening
     handleMouseMove(x, y) {
 	if (this.props.images.length) {
 	    if (this.props.action==="segment") {
 		this.refs.canvas.style.cursor = "default";
 		var rect = this.refs.canvas.getBoundingClientRect()
-		//console.log(this.props.maskLabel)
 		this.props.images[this.state.currImageIndex].updateTempMask(
 		    x - rect.left, y - rect.top, this.props.maskLabel, this.props.brushSize)
 		if (this.mouseDown === true) {
+		    // Keep adding to the mask if mouse is down
 		    this.markMask()
 		}
 		else {
+		    // Otherwise just update
 		    this.forceUpdate()
 		}
 	    }
@@ -89,11 +93,13 @@ export class ImageView2D extends Component {
 		this.refs.canvas.style.cursor = "crosshair";
 		var rect = this.refs.canvas.getBoundingClientRect()
 		if (this.drawingRect === true) {
+		    // If drawing the rectangle, move the end coordinate
 		    this.props.images[this.state.currImageIndex].setRectEndCoords(x - rect.left,
 										  y - rect.top)
 		    this.forceUpdate()
 		}
 		else {
+		    // If resizing, find which side to resize and then change the rect
 		    x = x - rect.left
 		    y = y - rect.top
 		    var threshold = 6
@@ -148,6 +154,7 @@ export class ImageView2D extends Component {
 	}
     }
 
+    // Handle a mouse click
     handleMouseDown(x, y) {
 	this.mouseDown = true
 	if (this.props.action==="segment") {
@@ -181,6 +188,7 @@ export class ImageView2D extends Component {
 	}
     }
 
+    // Reset things when the mouse leaves the canvas
     handleMouseOut() {
 	if (this.props.images.length) {
 	    if (this.props.action==="segment") {

@@ -1,0 +1,4 @@
+Train on 1 samples, validate on 20 samples
+Epoch 1/1
+
+1/1 [==============================] - 36s 36s/step - loss: 0.0861 - acc: 0.9671 - weighted_dice_coefficient_loss: -0.8630 - val_loss: 0.1829 - val_acc: 0.9530 - val_weighted_dice_coefficient_loss: -0.6941

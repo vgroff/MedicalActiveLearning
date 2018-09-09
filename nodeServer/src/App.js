@@ -5,6 +5,11 @@ import {convertNifti, getImageData} from "./utils/images/nifti.js"
 import {DropDown, RadioList} from "./utils/gui/baseComponents.js"
 import {range} from "./utils/misc.js"
 
+////////////////////////////////////////////////////////////
+//////////////// Functions for CNN calls ///////////////////
+////////////////////////////////////////////////////////////
+
+// Fuction making API call for getting a segmentation
 async function fetchSeg(imgArr, labelArr, action, CNNName) {
     if (CNNName === undefined) {
 	CNNName = 1
@@ -25,6 +30,7 @@ async function fetchSeg(imgArr, labelArr, action, CNNName) {
     return res
 }
 
+// Function for making API call querying the CNN database
 async function queryDatabase(action, name1, name2) {
     var body = JSON.stringify({"action":action, "name1":name1, "name2":name2})
     console.log("Making server request...")
@@ -41,6 +47,7 @@ async function queryDatabase(action, name1, name2) {
     return res
 }
 
+// Functin for making API call to train a CNN
 async function trainCNN(cnnName, epochs, lr) {
     var body = JSON.stringify({"CNNName":cnnName, "epochs":epochs, "lr":lr})
     console.log("Making server request...")
@@ -54,9 +61,10 @@ async function trainCNN(cnnName, epochs, lr) {
 	body: body
     })
     res = await res.text()
+    // Download the resulting loss 
     var blob = new Blob([res], {type:"text/plain"}) 
     var blobUrl = URL.createObjectURL(blob);
-    var link = document.createElement("a"); // Or maybe get it from the current document
+    var link = document.createElement("a"); 
     link.href = blobUrl;
     link.download = "trainingLog.txt";
     var clickEvent = new MouseEvent("click", {
@@ -67,6 +75,7 @@ async function trainCNN(cnnName, epochs, lr) {
     link.dispatchEvent(clickEvent)
 }
 
+// Functin for making API call to upload an image to a dataset
 async function uploadImg(cnnName, img, label) {
     var body = JSON.stringify({"CNNName":cnnName, "image":JSON.stringify(img), "label":JSON.stringify(label)})
     console.log("Making server request...")
@@ -82,6 +91,14 @@ async function uploadImg(cnnName, img, label) {
     res = await res.text()
     return res
 }
+
+
+////////////////////////////////////////////////////////////
+////////////////////// Main Component //////////////////////
+////////////////////////////////////////////////////////////
+// The component which controls the high level functionality and
+// HTML structure, but specifics of logic and HTML are done by
+// smaller sub components
 
 class App extends Component {
     
@@ -107,6 +124,7 @@ class App extends Component {
 
     }
 
+    // Load an image to the program
     loadImage(file) {
 	console.log("Image loading...")
 	this.state.loading = true
@@ -125,6 +143,7 @@ class App extends Component {
 		this.colourBias = 0
 		this.setMaskLabel(1)
 		var window
+		// Calculate an estimate  of the window/level
 		if (meanVal > maxVal/2) {
 		    window = 2*(maxVal - meanVal)
 		}
@@ -138,6 +157,7 @@ class App extends Component {
 				   window: window, level: meanVal, specialAction: null,
 				   graphCutsText:"Graph Cuts Segmentation", maskColourIndexes:[0]},
 				  function() {
+				      // Pre-render the images
 				      this.refs.imageView.preRender()
 				      this.setState({loading: false})
 				  }.bind(this))
@@ -147,7 +167,8 @@ class App extends Component {
 	}.bind(this)
 	var data = fr.readAsArrayBuffer(file)
     }
-    
+
+    // Load a mask to an image
     loadMask(file) {
 	console.log("mask loading")
 	var fr = new FileReader()
@@ -157,6 +178,7 @@ class App extends Component {
 		console.log("msk", imgs)
 		this.addNewMask()
 		var currImg = this.images[this.state.imageIndex]
+		// Copy the mask over
 		for (var nImg = 0; nImg < imgs.length; nImg++) {
 		    for (var y = 0; y < imgs[0].length; y++) {
 			for (var x = 0; x < imgs[0][0].length; x++) {
@@ -165,6 +187,7 @@ class App extends Component {
 			}
 		    }
 		}
+		// Reset the active mask if in the middle of a special action
 		if (this.specialMask !== null) {
 		    this.setActiveMask(this.specialMask)
 		}
@@ -175,6 +198,7 @@ class App extends Component {
 	var data = fr.readAsArrayBuffer(file)
     }
 
+    // get CNN names from sever
     getCNNs() {
 	queryDatabase("allNets", "", "").then(function(cnnNames) {
 	    cnnNames = JSON.parse(cnnNames)
@@ -182,7 +206,7 @@ class App extends Component {
 	}.bind(this)).catch(function(e) {console.log(e)})
     }
 
-
+    // Add a new CNN to database
     addNewCNN() {
 	var cnnName = this.state.CNNName
 	var option = "addNew"
@@ -207,6 +231,7 @@ class App extends Component {
 	this.setState({tempWindow:window})
     }
 
+    // Apple the window and level to pre-rendered images
     levelWindowPreRender() {
 	var window = parseFloat(this.state.tempWindow)
 	var level  = parseFloat(this.state.tempLevel)
@@ -228,6 +253,7 @@ class App extends Component {
 	}
     }
 
+    // Set mask label, adding the bias for colour index
     setMaskLabel(label) {
 	var maskIndex = Math.abs(label + this.colourBias)
 	this.setState({maskLabel: label, maskIndex: maskIndex})
@@ -250,7 +276,7 @@ class App extends Component {
 	}
     }
 
-
+    // Make the calls to crop the iamge, and set as new image
     cropImage() {
 	var currImg = this.images[this.state.imageIndex]
 	var newImg = currImg.cropToBoundingRect()
@@ -261,6 +287,7 @@ class App extends Component {
 	this.setState({imageIndex: currNames.length - 1, imageNames: currNames})
     }
 
+    // Add a new mask to the current image, setting visibility and index values
     addNewMask() {
 	var currImg = this.images[this.state.imageIndex]
 	currImg.addNewMask()
@@ -276,7 +303,7 @@ class App extends Component {
 		       maskColourIndexes: maskColours})
     }
 
-    
+    // Function to hide a component depending on bool
     hideIfTrue(bool, display){
 	if (bool === true) {
 	    return "none"
@@ -286,6 +313,7 @@ class App extends Component {
 	}
     }
 
+    // Perform and save the result of graph cuts algorithm
     graphCuts() {
 	this.setState({callState: "Calling server..."})
 	if (this.state.specialAction === null) {
@@ -322,6 +350,7 @@ class App extends Component {
 	}
     }
 
+    // Stop adding more scribbles to graph cuts
     endGraphCuts() {
 	if (this.state.specialAction === 1) {
 	    this.colourBias = 0
@@ -329,6 +358,7 @@ class App extends Component {
 	}
     }
 
+    // Peform a CNN only segmentation
     cnnSeg() {
 	this.setState({callState: "Calling server..."})
 	if (this.state.specialAction === null) {
@@ -350,6 +380,7 @@ class App extends Component {
 	}
     }
 
+    // Perform a CNN+CRF segmentation
     cnnGraphSeg(BIFSeg) {
 	this.setState({callState: "Calling server..."})
 	var cnn = this.state.CNNNames[this.state.cnnIndex]
@@ -447,26 +478,6 @@ class App extends Component {
 	uploadImg(cnnName, imgArr, labelArr)
     }
 
-    printPic() {
-	var currImg = this.images[this.state.imageIndex]
-	var imgArr = currImg.getImgArr()
-	console.log(imgArr)
-	var labelArr = currImg.getMaskArr(this.state.activeMask)
-	console.log("Making server request...")
-	fetch("/segment", {
-	    method: 'POST',
-	    headers: {
-		'Accept': 'application/json',
-		'Content-Type': 'application/json'
-	    },
-	    body: JSON.stringify({"image": JSON.stringify(imgArr),
-				  "scribbles":JSON.stringify(labelArr),
-				  "action": "print"})
-	}).then(function(response) {
-	    console.log("Response recieved")
-	    return response.text()
-	}.bind(this))	
-    }
 
     
     render() {

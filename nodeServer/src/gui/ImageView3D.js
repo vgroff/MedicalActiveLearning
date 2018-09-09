@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import {ImageView2D} from "./ImageView2D.js"
 
-
+// Container holding 3 2D Image containers
 export class ImageView3D extends Component {
 
     constructor(props) {

@@ -7,7 +7,7 @@ function rgbToHex(r, g, b) {
     return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
 }
 
-
+// Image for the logic of a 2D image
 export class Image {
     
     constructor(data, pixHeight, pixWidth) {
@@ -37,6 +37,7 @@ export class Image {
 	this.preRenderWindow = null
     }
 
+    // Draw the image on the canvas
     drawImage(canvas, canvasSize, level, window, maskVisibility, maskColours) {
 	//console.log("draw", level, window)
 	// Get the dimensions
@@ -69,7 +70,7 @@ export class Image {
 	// Clear the canvas
 	var ctx = canvas.getContext("2d")
 	ctx.clearRect(0, 0, width*scale, height*scale);
-	
+	// Draw the image
 	if (this.preRender !== null && this.preRenderLevel === level
 	    && this.preRenderWindow === window) {
 	    ctx.drawImage(this.preRender, 0, 0)
@@ -77,7 +78,6 @@ export class Image {
 	else {
 	    this.drawImageOnly(canvas, canvasSize, level, window, maskVisibility, maskColours)
 	}
-	//console.log("drawing mask")
 	// Draw the image onto the canvas
 	for (var row = 0; row < height; row++) {
 	    for (var col = 0; col < width; col++) { 
@@ -191,6 +191,7 @@ export class Image {
 	}
     }
 
+    // Pre render the images
     preRenderImage(canvasSize, level, window) {
 	var canvas = document.createElement("canvas")
 	this.drawImageOnly(canvas, canvasSize, level, window)
@@ -199,6 +200,7 @@ export class Image {
 	this.preRenderWindow = window
     }
 
+    // Reset the temporary mask to the permanent mask
     resetTempMask() {
 	for (var row = 0; row < this.data.length; row++) {
 	    for (var col = 0; col < this.data[0].length; col++) {
@@ -228,6 +230,7 @@ export class Image {
 	this.resetTempMask()
     }
 
+    // Convert temporary mask to permanent
     addToMask() {
 	for (var row = 0; row < this.data.length; row++) {
 	    for (var col = 0; col < this.data[0].length; col++) {
@@ -241,6 +244,7 @@ export class Image {
 	}
     }
 
+    // Update the temporary mask depending on the brush
     updateTempMask(mouseX, mouseY, val, brushSize) {
 	// set mouseX/Y to middle of pixel
 	mouseY = (Math.floor(mouseY/(this.pixHeight*this.scale))+0.5)*this.pixHeight*this.scale
@@ -265,8 +269,7 @@ export class Image {
 	}
     }
 
-
-
+    // Set the ending coordinates of the rectangle
     setRectEndCoords(x, y, width, height) {
 	let colX = this.coordToColX(x)
 	let rowY = this.coordToRowY(y)

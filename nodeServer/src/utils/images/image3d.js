@@ -1,5 +1,6 @@
 import {Image} from "./image.js"
 
+// Holds the 2D images and provides method for altering each of the views
 export class Image3D {
     
     constructor(dataX, pixHeight, pixWidth, pixDepth) {
@@ -25,6 +26,7 @@ export class Image3D {
 	this.setupEvents()
     }
 
+    // Build an array of images
     imgArray(nImages, height, width, pixHeight, pixWidth) {
 	var images = []
 	for (var nImg = 0; nImg < nImages; nImg++) {
@@ -56,6 +58,7 @@ export class Image3D {
 	return imgArr
     }
 
+    // Return the 3D mask array 
     getMaskArr(maskIndex) {
 	var currImg = this
 	var labelArr = []
@@ -99,6 +102,7 @@ export class Image3D {
 	}
     }
 
+    // Set up events on the 2D images in order to update the 3D image when a change is made
     setupEvents() {
 	for (var nImg = 0; nImg < this.nImages; nImg++) {
 	    var img = this.imagesX[nImg]
@@ -141,12 +145,14 @@ export class Image3D {
 	}
     }
 
+    // Set a pixel value in all 3 axis
     setPixel(nImg, row, col, val) {
 	this.imagesX[nImg].data[row][col] = val
 	this.imagesY[col].data[(this.nImages-1) - nImg][row] = val
 	this.imagesZ[row].data[(this.nImages-1) - nImg][col] = val
     }
 
+    // Set a mask value in all 3 axis
     setMask(nImg, row, col, val, mask) {
 	this.imagesX[nImg].masks[mask][row][col] = val
 	this.imagesY[col].masks[mask][(this.nImages-1) - nImg][row] = val
@@ -156,6 +162,7 @@ export class Image3D {
 	this.imagesZ[row].tempMask[(this.nImages-1) - nImg][col] = val
     }
 
+    // Copy mask into maskIndeth mask
     copyMask(mask, maskIndex) {
 	for (var nImg = 0; nImg < this.nImages; nImg++) {
 	    for (var y = 0; y < this.height; y++) {
@@ -166,6 +173,7 @@ export class Image3D {
 	}
     }
 
+    // Set the edges of the bounding rectanle
     setBoundingRect(nImg1, row1, col1, nImg2, row2, col2) {
 	this.boundingRect = [nImg1, col1, row1, nImg2, col2, row2]
 	var img1 = (this.nImages) - nImg1
@@ -214,6 +222,7 @@ export class Image3D {
 	}
     }
 
+    // Produce an image that is a cropped version of the original
     cropToBoundingRect() {
 	var img1 = (this.nImages) - this.boundingRect[0]
 	var img2 = (this.nImages) - this.boundingRect[3]
@@ -238,6 +247,7 @@ export class Image3D {
 	    col2 = temp
 	}
 	var data = []
+	// Loop, only adding those in cropped region
 	for (var img = img1; img < img2; img++) {
 	    data.push([])
 	    for (var row = row1; row < row2; row++) {
@@ -249,6 +259,7 @@ export class Image3D {
 	}
 	var croppedImg = new Image3D(data, this.pixHeight, this.pixWidth, this.pixDepth)
 	var masks = []
+	// Transfer masks over
 	for (var i = 0; i < this.imagesX[0].masks.length; i++) {
 	    if (i > 0) {
 		croppedImg.addNewMask()
