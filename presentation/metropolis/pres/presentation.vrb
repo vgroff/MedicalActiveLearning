@@ -1,10 +1,9 @@
-\frametitle{BIFSeg}
+\frametitle{Transfer Learning - Spleen}
 
-  \textbf{Framework:}
-  \begin{enumerate}
-  \item Produce a small number $n$ of segmentations with some generalized CNN
-  \item Add these to a dataset
-  \item Train a new CNN through transfer learning on said dataset
-  \item Use the new
-  \end{enumerate}
+ \begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.22]{pictures/transferSpleen}
+    \caption{Comparison of transfer learning and learning from scratch learning on the spleen with 4 training images and 6 validation images}
+    \label{fig:spleenPlot}
+  \end{figure}
 

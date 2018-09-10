@@ -28,6 +28,12 @@
 \end{frame}
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Segmentation %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \section{3D Image Segmentation}
 
 \begin{frame}[fragile]{Medical Image Segmentation}
@@ -210,6 +216,12 @@
 \end{frame}
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% CNNs %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \section{Convolutional Neural Networks}
 
 \begin{frame}[fragile]{Convolutional Neural Networks}
@@ -274,6 +286,12 @@
   \textbf{Segmentation Layers} encourage earlier layers to produce segmentations
   
 \end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% AIMS AND DESIGN %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Aims and Design}
 
@@ -368,7 +386,7 @@
 \end{frame}
 
 
-\begin{frame}[fragile]{BIFSeg}
+\begin{frame}[fragile]{Design}
 
   \textbf{BIFSeg works on unseen object types} - though it
   needs a CNN that has learned \textbf{generalisable features}
@@ -387,22 +405,165 @@
   
 \end{frame}
 
+% Do dice loss function
+% Do Isensee
+% Do gridcuts
 
-\begin{frame}[fragile]{BIFSeg}
-  
-  \textbf{Framework:}
-  \begin{enumerate}
-  \item Produce a small number $n$ of segmentations with some generalized CNN
-  \item Add these to a dataset
-  \item Train a new CNN through transfer learning on said dataset
-  \item Use the new 
-  \end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Results %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Results}
+
+\begin{frame}[fragile]{Seen objects}
+
+  Evaluate performance on \textbf{seen} objects
+
+  Train and test on left atrium images
+
+  \textbf{Dice Scores}
+  \begin{itemize}
+  \item Initial Prediction - $0.872 \pm 0.025$
+  \item After User Interaction - $0.9112 \pm 0.018$
+  \end{itemize}
   
 \end{frame}
+
+\begin{frame}[fragile]{Seen objects}
+
+  \begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.23]{pictures/heartLoss}
+    \caption{Loss plot for weighted dice coefficient loss on left atrium data 
+    }
+    \label{fig:spleenPlot}
+  \end{figure}
+  
+ 
+\end{frame}
+
+\begin{frame}[fragile]{Seen objects}
+
+  Evaluate performance on \textbf{seen} objects
+
+  First train a generalised CNN
+
+  \begin{table}[h!]
+    \centering
+    \begin{tabular}{|l|l|}
+      \hline
+      Organ Type   & Dice Score         \\ \hline
+      Left Atrium  & $0.616 \pm 0.025$ \\ 
+      Prostate     & $0.873 \pm 0.054$ \\ 
+      Hippocampus  & $0.487 \pm 0.125$ \\ \hline
+      All          & $0.617 \pm 0.054$ \\ \hline
+    \end{tabular}
+    \caption{Validation scores for the generalized segmentation CNN on the organs it was trained on}
+    \label{tab:resGen}
+  \end{table}
+
+  
+\end{frame}
+
+\begin{frame}[fragile]{Seen objects}
+
+  \begin{table}[h!]
+    \centering
+    \begin{tabular}{|l|l|l|}
+      \hline
+      Organ Type   & Dice Score (CNN)  & Dice Score (CNN+CRF) \\ \hline
+      Liver        & $0.516 \pm 0.019$ & $0.532 \pm 0.022$\\ 
+      Spleen       & $0.417 \pm 0.033$ & $0.484 \pm 0.037$ \\ \hline
+    \end{tabular}
+    \caption{Dice scores by the generalized segmentation CNN on unseen object types with and without the CRF}
+    \label{tab:resGenUnseen}
+  \end{table}
+
+
+  \begin{table}[h!]
+    \centering
+    \begin{tabular}{|l|l|l|}
+      \hline
+      Organ Type   & Dice Score (10 scribbles) & Dice Score (15 scribbles) \\ \hline
+      Liver        & $0.873 \pm 0.029$ & $0.891 \pm 0.021$\\ 
+      Spleen       & $0.892 \pm 0.018$ & $0.918 \pm 0.016$ \\ \hline
+    \end{tabular}
+    \caption{Dice scores by the generalized segmentation CNN on unseen object types, after fine-tuning with user interaction}
+    \label{tab:resGenBIFUnseen}
+  \end{table}
+  
+\end{frame}
+
+
+%
+% Unseen object types
+%
+
+
+\begin{frame}[fragile]{}
+  
+ \begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.38]{pictures/genBIFSEG2}
+    \caption{Segmentation of unseen object type (liver) using BIFSeg. In \textit{blue} is the ground truth,
+      in \textit{yellow} are background scribbles, in \textit{green} foreground scribbles and in \textit{red} the final segmentation.
+      Final Dice score over the 3D image was 0.884
+    }
+    \label{fig:spleenPlot}
+  \end{figure}
+  
+\end{frame}
+
+%
+% Transfer Learning
+%
+
+\begin{frame}[fragile]{Transfer Learning - Liver}
+  
+ \begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.21]{pictures/transferLiver}
+    \caption{Comparison of transfer learning and learning from scratch on the liver with 4 training images and 6 validation images}
+    \label{fig:liverPlot}
+  \end{figure}
+  
+\end{frame}
+
+\begin{frame}[fragile]{Transfer Learning - Spleen}
+  
+ \begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.22]{pictures/transferSpleen}
+    \caption{Comparison of transfer learning and learning from scratch on the spleen with 4 training images and 6 validation images}
+    \label{fig:spleenPlot}
+  \end{figure}
+  
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Further Work %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Further Work}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Conclusion %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Conclusion}
 
 % REFERENCES!!!!!!!1 ESP ON IMAGES!!!!!!!!
 % Maxflow needs to be more precise - breath first search? what about augmenting?
 % camel pic from graph cuts algorithm
+% HEart performance on liver and spleen
 
 % Extra slides:
 % - Residual blocks
@@ -416,5 +577,13 @@
 % Isensee
 % BIFSeg
 % GridCuts
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Extra Slides %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 \end{document}

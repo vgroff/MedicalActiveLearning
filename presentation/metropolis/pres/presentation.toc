@@ -2,3 +2,6 @@
 \beamer@sectionintoc {1}{3D Image Segmentation}{3}{0}{1}
 \beamer@sectionintoc {2}{Convolutional Neural Networks}{21}{0}{2}
 \beamer@sectionintoc {3}{Aims and Design}{28}{0}{3}
+\beamer@sectionintoc {4}{Results}{38}{0}{4}
+\beamer@sectionintoc {5}{Further Work}{46}{0}{5}
+\beamer@sectionintoc {6}{Conclusion}{47}{0}{6}
