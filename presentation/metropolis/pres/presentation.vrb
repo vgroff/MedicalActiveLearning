@@ -1,9 +1,9 @@
-\frametitle{Transfer Learning - Spleen}
+\frametitle{Conditional Random Fields}
 
- \begin{figure}[h!]
-    \centering
-    \includegraphics[scale=0.22]{pictures/transferSpleen}
-    \caption{Comparison of transfer learning and learning from scratch learning on the spleen with 4 training images and 6 validation images}
-    \label{fig:spleenPlot}
-  \end{figure}
+  \textbf{Maxflow:} Finding the maximal flow from source to sink
+
+  The edges that are saturated in maxflow are those in the minimal cost cut.
+
+  \pause
+  Solve with \textbf{Breadth First Search}, by gradually saturating edges
 

@@ -6,6 +6,8 @@
 \usepackage{booktabs}
 \usepackage[scale=2]{ccicons}
 
+\usepackage{amssymb}
+
 \usepackage{pgfplots}
 \usepgfplotslibrary{dateplot}
 
@@ -59,12 +61,8 @@
 
     \textbf{Aim:} Separate the set of \textit{background} pixels (\textbf{B}) from the set of \textit{object} pixels (\textbf{O})
   
-    \textbf{Define a cost function to be minimized over image $\mathbf{X}$}
-\end{frame}
-
-
-\begin{frame}[fragile]{Conditional Random Fields}
-
+    \textbf{Define a cost function to be minimized over image $\mathbf{X}$} \cite{graphCuts}
+    \pause
     \begin{equation}
       E(\mathbf{X}) = \sum_{i} R_{i} + \lambda \sum_{i} \sum_{j} B_{ij}
       \label{eq:costFunc}
@@ -75,36 +73,30 @@
     \item $B_{ij}$ - \textbf{Boundary Penalty Term} - penalty depending on properties of pixels $i$ and $j$
     \item $\lambda > 0$ - a relative weighting
     \end{itemize}
-    
 \end{frame}
-
 
 \begin{frame}[fragile]{Conditional Random Fields}
 
+  
   $R_{i}$ - \textbf{Regional Penalty Term}
 
   Map (0,1) probabilities to ($\infty$, 0) penalties with negative log
-  \pause  
   \begin{equation} R_{i} = \begin{cases} 
       -\log P(i \in O) & i \in \mathbf{O} \\
       -\log P(i \in B) & i \in \mathbf{B} \\
    \end{cases}
   \end{equation}
-    
-\end{frame}
 
-
-\begin{frame}[fragile]{Conditional Random Fields}
-
+  \pause
+  
   $B_{ij}$ - \textbf{Boundary Penalty Term}
 
   Want to encourage boundaries at discontinuities in intensity
   
   \textbf{Penalize boundaries that are placed between similar pixels}
 
-  \pause  
   \begin{equation} B_{ij} = \begin{cases}
-      0 & y_{i} \neq y_{j} \\
+      0 & y_{i} = y_{j} \\
       \frac{1}{r_{ij}} e^{\frac{-(X_{i}-X_{j})^2}{2\sigma^2}} & y_{i} \neq y_{j} \\
     \end{cases}
     \label{eq:boundTerm}
@@ -116,54 +108,6 @@
   \item $r_{ij}$ - euclidean distance between pixels $i$ and $j$
   \end{itemize}
     
-\end{frame}
-
-\begin{frame}[fragile]{Conditional Random Fields}
-
-  \textbf{How do we solve it?}
-
-  Represent the image as a graph with
-  \begin{itemize}
-  \item One node per pixel
-  \item One source node (object)
-  \item One sink (background)
-  \end{itemize}
-
-  \pause
-  and
-  
-  \begin{itemize}
-  \item Edges between pixels have a cost $\lambda \frac{1}{r_{ij}} e^{\frac{-(X_{i}-X_{j})^2}{2\sigma^2}}$
-  \item Edges between pixels and the source terminal cost  $-\log P(i \in B)$
-  \item Edges between pixels and the sink terminal cost  $-\log P(i \in O)$
-  \end{itemize}
-  
-  \textbf{A minimum cost cut} which severs the source from the sink will now minimize the cost function
-  
-\end{frame}
-
-\begin{frame}[fragile]{Conditional Random Fields}
-  
-  \begin{figure}[h!]
-    \centering
-    \includegraphics[scale=0.49]{pictures/graphCuts2}
-    \caption{Minimum cost cut}
-    \label{fig:minCut}
-  \end{figure}
-
-  
-\end{frame}
-
-
-\begin{frame}[fragile]{Conditional Random Fields}
-
-  \textbf{Maxflow:} Finding the maximal flow from source to sink
-
-  The edges that are saturated in maxflow are those in the minimal cost cut.
-
-  \pause
-  Solve with \textbf{Breadth First Search}, by gradually saturating edges
-  
 \end{frame}
 
 
@@ -200,7 +144,8 @@
   \begin{figure}[h!]
     \centering
     \includegraphics[scale=0.25]{pictures/grabcuts2}
-    \caption{Grabcut algorithm in difficult cases}
+    \caption{Grabcut algorithm in difficult cases. In \textit{yellow} the ground truth, in \textit{green}
+    the algorithms guess \cite{BIFSeg}}
     \label{fig:minCut}
   \end{figure}
   
@@ -242,25 +187,20 @@
   
 \end{frame}
 
-\begin{frame}[fragile]{Convolutional Neural Networks}
-
-  \textbf{Classification CNNs -} gradually extract larger features from smaller ones
-
-  \pause
-  \textbf{U-Net -} gradually re-combine those features to produce a segmentation map
-  
-\end{frame}
-
-
 \begin{frame}[fragile]{Segmentation CNNs}
+  
+  \textbf{Classification CNNs -} gradually extract larger features from smaller ones
+  \pause
+  
+  \textbf{U-Net CNNs -} gradually re-combine those features to produce a segmentation map
 
   \begin{figure}[h!]
     \centering
-    \includegraphics[scale=0.40]{pictures/U-Net}
-    \caption{The U-Net architecture}
+    \includegraphics[scale=0.25]{pictures/U-Net}
+    \caption{The U-Net architecture \cite{uNet}}
     \label{fig:minCut}
   \end{figure}
-  
+
 \end{frame}
 
 \begin{frame}[fragile]{Segmentation CNNs}
@@ -279,7 +219,7 @@
   \begin{figure}[h!]
     \centering
     \includegraphics[scale=0.53]{pictures/isensee}
-    \caption{The Isensee et al. architecture}
+    \caption{The Isensee et al. architecture \cite{UResNet}}
     \label{fig:minCut}
   \end{figure}
 
@@ -312,7 +252,8 @@
 
 \begin{frame}[fragile]{BIFSeg}
 
-  \textbf{Bounding-box Image-specific Fine-Tuning Segmentations} (BIFSeg)
+  \textbf{Bounding-box Image-specific Fine-Tuning Segmentations} (BIFSeg) \cite{BIFSeg}
+
   Combines CNN and CRF
 
   Leverages user corrections
@@ -394,7 +335,7 @@
   Performs better and with less user interaction on seen object types
 
   \pause
-  \textbf{Transfer learning}
+  \textbf{Unseen Types - Transfer learning}
   \begin{enumerate}
   \item Start by using a CNN trained in generalised segmentation
   \item After $n$ images have been segmented, add them to a dataset
@@ -402,12 +343,40 @@
   \item Repeat steps 2 and 3 until all images have been segmented
   \end{enumerate}
 
+\end{frame}
+
+%% \begin{frame}[fragile]{Design}
+  
+%%   \begin{table}[h!]
+%%     \centering
+%%     \begin{tabular}{|l|l|}
+%%       \hline
+%%       \textbf{Problem}   & \textbf{Solution}         \\ \hline
+%%       Computationally expensive  & Run on web server \\ 
+%%       Poor generalisation  & BIFSeg \\ 
+%%       Need large datasets  & Transfer Learning \\ \hline
+%%     \end{tabular}
+%%     \label{tab:resGen}
+%%   \end{table}
+
+%% \end{frame}
+
+\begin{frame}[fragile]{Design}
+  
+
+  \textbf{Disadvantages}
+  \begin{enumerate}
+  \item Computationally expensive \onslide<2->{\checkmark (Web Server)}
+  \item Poor generalisation to unseen types \onslide<3->{\checkmark (BIFSeg)}
+  \item Need large datasets  \onslide<4->{\checkmark (Transfer Learning)}
+  \end{enumerate}
   
 \end{frame}
 
+
 % Do dice loss function
-% Do Isensee
 % Do gridcuts
+% Transfer learning
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -418,63 +387,54 @@
 
 \section{Results}
 
-\begin{frame}[fragile]{Seen objects}
+\begin{frame}[fragile]{Seen object types}
 
   Evaluate performance on \textbf{seen} objects
 
-  Train and test on left atrium images
+  Train left atrium images
 
-  \textbf{Dice Scores}
-  \begin{itemize}
-  \item Initial Prediction - $0.872 \pm 0.025$
-  \item After User Interaction - $0.9112 \pm 0.018$
-  \end{itemize}
-  
-\end{frame}
-
-\begin{frame}[fragile]{Seen objects}
-
-  \begin{figure}[h!]
-    \centering
-    \includegraphics[scale=0.23]{pictures/heartLoss}
-    \caption{Loss plot for weighted dice coefficient loss on left atrium data 
-    }
-    \label{fig:spleenPlot}
-  \end{figure}
-  
  
-\end{frame}
-
-\begin{frame}[fragile]{Seen objects}
-
-  Evaluate performance on \textbf{seen} objects
-
-  First train a generalised CNN
-
   \begin{table}[h!]
     \centering
     \begin{tabular}{|l|l|}
       \hline
-      Organ Type   & Dice Score         \\ \hline
-      Left Atrium  & $0.616 \pm 0.025$ \\ 
-      Prostate     & $0.873 \pm 0.054$ \\ 
-      Hippocampus  & $0.487 \pm 0.125$ \\ \hline
-      All          & $0.617 \pm 0.054$ \\ \hline
+      Organ   & Dice Score         \\ \hline
+      Left Atrium (Initial Prediction)  & $0.872 \pm 0.025$ \\ 
+      Left Atrium (With 6 scribbles)     & $0.912 \pm 0.018$ \\ 
+      Liver and Spleen (Initial Prediction)  & $0.093 \pm 0.043$ \\ \hline
     \end{tabular}
     \caption{Validation scores for the generalized segmentation CNN on the organs it was trained on}
     \label{tab:resGen}
   \end{table}
-
   
 \end{frame}
 
-\begin{frame}[fragile]{Seen objects}
+
+
+%
+% Unseen object types
+%
+
+\begin{frame}[fragile]{Unseen Object Types}
+
+  Evaluate performance on \textbf{unseen} objects
+
+  First train a generalised segmentation CNN on:
+  \begin{itemize}
+  \item Left Atrium
+  \item Prostate
+  \item Hippocampus
+  \end{itemize}
+  
+\end{frame}
+
+\begin{frame}[fragile]{Unseen Object Types}
 
   \begin{table}[h!]
     \centering
     \begin{tabular}{|l|l|l|}
       \hline
-      Organ Type   & Dice Score (CNN)  & Dice Score (CNN+CRF) \\ \hline
+      Organ        & Dice Score (CNN)  & Dice Score (CNN+CRF) \\ \hline
       Liver        & $0.516 \pm 0.019$ & $0.532 \pm 0.022$\\ 
       Spleen       & $0.417 \pm 0.033$ & $0.484 \pm 0.037$ \\ \hline
     \end{tabular}
@@ -487,7 +447,7 @@
     \centering
     \begin{tabular}{|l|l|l|}
       \hline
-      Organ Type   & Dice Score (10 scribbles) & Dice Score (15 scribbles) \\ \hline
+      Organ        & Dice Score (10 scribbles) & Dice Score (15 scribbles) \\ \hline
       Liver        & $0.873 \pm 0.029$ & $0.891 \pm 0.021$\\ 
       Spleen       & $0.892 \pm 0.018$ & $0.918 \pm 0.016$ \\ \hline
     \end{tabular}
@@ -498,13 +458,7 @@
 \end{frame}
 
 
-%
-% Unseen object types
-%
-
-
-\begin{frame}[fragile]{}
-  
+\begin{frame}[fragile]{Unseen Object Types} 
  \begin{figure}[h!]
     \centering
     \includegraphics[scale=0.38]{pictures/genBIFSEG2}
@@ -520,6 +474,18 @@
 %
 % Transfer Learning
 %
+
+\begin{frame}[fragile]{Transfer Learning}
+
+  Evaluate performance of \textbf{transfer learning}
+
+  Train 2 CNNs on a \textbf{small dataset} (4 training, 6 validation)
+  \begin{itemize}
+  \item Train one starting from scratch
+  \item Train one starting from generalised CNN (transfer learning)
+  \end{itemize}
+
+\end{frame}
 
 \begin{frame}[fragile]{Transfer Learning - Liver}
   
@@ -551,6 +517,19 @@
 
 \section{Further Work}
 
+\begin{frame}[fragile]{Further Work}
+  
+
+  \textbf{Further Work}
+  \begin{itemize}
+  \item Timed tests with users comparing different frameworks
+  \item Temperature scaling for smoother probability distribution
+  \item TLS
+  \item Multiple servers with GPUs
+  \end{itemize}
+  
+\end{frame}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -560,10 +539,30 @@
 
 \section{Conclusion}
 
+\begin{frame}[fragile]{Conclusion}
+
+  \textbf{Minimized disadvantages of CNNs}
+
+  \textbf{Disadvantages}
+  \begin{enumerate}
+  \item Computationally expensive \checkmark (Web Server)
+  \item Poor generalisation to unseen types \checkmark (BIFSeg)
+  \item Need large datasets \checkmark (Transfer Learning)
+  \end{enumerate}
+  
+\end{frame}
+
+\begin{frame}[allowframebreaks]{References}
+
+  \bibliographystyle{unsrt}
+  \bibliography{sample}
+
+\end{frame}
+
 % REFERENCES!!!!!!!1 ESP ON IMAGES!!!!!!!!
-% Maxflow needs to be more precise - breath first search? what about augmenting?
-% camel pic from graph cuts algorithm
-% HEart performance on liver and spleen
+% Maxflow needs to be more precise - breath first search? what about augmenting paths?
+% Make video!!
+% Make further work slides
 
 % Extra slides:
 % - Residual blocks
@@ -585,5 +584,87 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%
+% Solving CRF
+%
+
+\begin{frame}[fragile]{Conditional Random Fields}
+
+  \textbf{How do we solve it?}
+
+  Represent the image as a graph with
+  \begin{itemize}
+  \item One node per pixel
+  \item One source node (object)
+  \item One sink (background)
+  \end{itemize}
+
+  \pause
+  and
+  
+  \begin{itemize}
+  \item Edges between pixels have a cost $\lambda \frac{1}{r_{ij}} e^{\frac{-(X_{i}-X_{j})^2}{2\sigma^2}}$
+  \item Edges between pixels and the source terminal cost  $-\log P(i \in B)$
+  \item Edges between pixels and the sink terminal cost  $-\log P(i \in O)$
+  \end{itemize}
+  
+  \textbf{A minimum cost cut} which severs the source from the sink will now minimize the cost function
+  
+\end{frame}
+
+\begin{frame}[fragile]{Conditional Random Fields}
+  
+  \begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.49]{pictures/graphCuts2}
+    \caption{Minimum cost cut}
+    \label{fig:minCut}
+  \end{figure}
+
+  
+\end{frame}
+
+
+\begin{frame}[fragile]{Conditional Random Fields}
+
+  \textbf{Maxflow:} Finding the maximal flow from source to sink
+
+  The edges that are saturated in maxflow are those in the minimal cost cut.
+
+  \pause
+  Solve with \textbf{Breadth First Search}, by gradually saturating edges
+  
+\end{frame}
+
 
 \end{document}
+
+\begin{frame}[fragile]{Seen Object Types}
+
+  \begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.23]{pictures/heartLoss}
+    \caption{Loss plot for weighted dice coefficient loss on left atrium data 
+    }
+    \label{fig:spleenPlot}
+  \end{figure}
+  
+ 
+\end{frame}
+
+\begin{frame}[fragile]{Unseen Object Types}
+
+  \begin{table}[h!]
+    \centering
+    \begin{tabular}{|l|l|}
+      \hline
+      Organ        & Dice Score         \\ \hline
+      Left Atrium  & $0.616 \pm 0.025$ \\ 
+      Prostate     & $0.873 \pm 0.054$ \\ 
+      Hippocampus  & $0.487 \pm 0.125$ \\ \hline
+      All          & $0.617 \pm 0.054$ \\ \hline
+    \end{tabular}
+    \caption{Validation scores for the generalized segmentation CNN on the organs it was trained on}
+    \label{tab:resGen}
+  \end{table}
+  \end{frame}

@@ -79,6 +79,27 @@ import SimpleITK as sitk
 import os
 import numpy as np
 
+def writeNIFTI(arr, folder, name, meta, vals):
+    new_sitk = sitk.GetImageFromArray(arr)
+    for i, m in enumerate(meta):
+        new_sitk.SetMetaData(m, vals[i])
+    for m in meta:
+        print(new_sitk.GetMetaData(m))
+    #new_sitk.CopyInformation(copy)
+    path = os.path.join(folder, "{}.nii.gz".format(name))
+    sitk.WriteImage(new_sitk, path)
+
+
+def writeNIFTI2(arr, folder, name):#, copy):
+    new_sitk = sitk.GetImageFromArray(arr)
+    #new_sitk.CopyInformation(copy)
+    path = os.path.join(folder, "{}.nii.gz".format(name))
+    sitk.WriteImage(new_sitk, path)
+
+def writeNIFTI3(img, folder, name):
+    path = os.path.join(folder, "{}.nii.gz".format(name))
+    sitk.WriteImage(img, path)
+
 folder=  "/home/vincent/Documents/imperial/individual project/datasets/decathlon/Task09_Spleen"
 dataset = getDatasetInfo(folder )
 dataPoint = dataset[0]
@@ -97,8 +118,36 @@ img *= maxVal
 label[label > 1] = 1
 label = zoom(label, 0.5, order=1, anti_aliasing=True, multichannel=False)
 label = np.rint(label).astype(np.int8)
-writeNIFTI(img, "SpleensWhole", "img")
-writeNIFTI(label, "SpleensWhole", "label")
+#metaData = ["pixDims[0]", "pixDims[1]", "pixDims[2]", "pixDims[3]"]
+#vals = ["1", "0.79", "0.79", "5"]
+
+#metaData = ["pixdim[{}]".format(i) for i in range(8)]
+#vals = []
+#for meta in metaData:
+#    vals.append(img_sitk.GetMetaData(meta))
+#print(vals)
+
+writeNIFTI2(img, "SpleensWhole", "img")
+writeNIFTI2(label, "SpleensWhole", "label")
+
+#print(img.shape)
+#filt = sitk.ResampleImageFilter()
+#filt.SetSize([256,256,26])
+#img = filt.Execute(img_sitk)
+#img = sitk.GetArrayFromImage(img).astype(np.float32)
+#print(img.shape)
+#writeNIFTI3(img, "SpleensWhole", "img")
+
+# metaData = ["dim[{}]".format(i) for i in range(4)]
+# vals = ["1", str(img.shape[0]), str(img.shape[1]), str(img.shape[2])]
+# for i, meta in enumerate(metaData):
+#     print(img_sitk.GetMetaData(meta), vals[i])
+#     img_sitk.SetMetaData(meta, vals[i])
+#     #vals.append(img_sitk.GetMetaData(meta))
+# print(vals)
+
+# writeNIFTI2(img, "SpleensWhole", "img", img_sitk)
+# writeNIFTI2(label, "SpleensWhole", "label", img_sitk)
 
 # folder = "/home/vincent/Documents/imperial/individual project/datasets/decathlon/Task02_Heart"
 # outputFolder = "trash"

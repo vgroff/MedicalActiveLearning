@@ -1,0 +1,30 @@
+\begin{thebibliography}{1}
+
+\bibitem{graphCuts}
+Yuri Boykov and Marrie-Pierre Jolly.
+\newblock Interactive graph cuts for optimal boundary \& region segmentation of
+  objects in n-d images.
+\newblock {\em Proceedings of International Conference on Computer Vision},
+  I:105--112, 2001.
+
+\bibitem{BIFSeg}
+Guotai Wang, Wenqi Li, Maria~A. Zuluaga, Rosalind Pratt, Premal~A. Patel,
+  Michael Aertsen, Tom Doel, Anna~L. David, Jan Deprest, Sébastien Ourselin,
+  and Tom Vercauteren.
+\newblock Interactive medical image segmentation using deep learning with
+  image-specific fine-tuning.
+\newblock {\em IEEE}, 2018.
+
+\bibitem{uNet}
+Olaf Ronneberger, Philipp Fischer, and Thomas Brox.
+\newblock U-net: Convolutional networks for biomedical image segmentation.
+\newblock {\em arXiv:1505.04597}, 2015.
+
+\bibitem{UResNet}
+Fabian Isensee, Wolfgang~Wick Philipp~Kickingereder, Martin Bendszus, and
+  Klaus~H. Maier-Hein.
+\newblock Brain tumor segmentation and radiomics survival prediction:
+  Contribution to the brats 2017 challenge.
+\newblock {\em MICCAI BraTS 2017 proceedings}, pages 100--107, 2017.
+
+\end{thebibliography}

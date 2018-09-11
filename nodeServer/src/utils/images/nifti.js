@@ -97,6 +97,7 @@ export function getImageData(data,  norm) {
 	}
 	console.log("MEAN", mean/(counts), dataX)
 	let pixDims = niftiHeader.pixDims
+	pixDims[3] = 5/0.79
 	return [dataX, pixDims[2], pixDims[1], pixDims[3], mean/counts, max]
     }
     else {

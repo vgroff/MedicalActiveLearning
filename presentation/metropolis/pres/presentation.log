@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015/Debian) (preloaded format=pdflatex 2017.10.25)  10 SEP 2018 01:47
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015/Debian) (preloaded format=pdflatex 2017.10.25)  10 SEP 2018 17:38
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1000,31 +1000,28 @@ LaTeX Warning: Label `fig:minCut' multiply defined.
 LaTeX Warning: Label `fig:minCut' multiply defined.
 
 
+LaTeX Warning: Label `fig:spleenPlot' multiply defined.
+
+
 LaTeX Warning: Label `fig:minCut' multiply defined.
-
-
-LaTeX Warning: Label `fig:spleenPlot' multiply defined.
-
-
-LaTeX Warning: Label `fig:spleenPlot' multiply defined.
 
 )
 \openout1 = `presentation.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 21.
-LaTeX Font Info:    ... okay on input line 21.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 21.
-LaTeX Font Info:    ... okay on input line 21.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 21.
-LaTeX Font Info:    ... okay on input line 21.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 21.
-LaTeX Font Info:    ... okay on input line 21.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 21.
-LaTeX Font Info:    ... okay on input line 21.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 21.
-LaTeX Font Info:    ... okay on input line 21.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 21.
-LaTeX Font Info:    ... okay on input line 21.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -1090,7 +1087,7 @@ e
 ))
 ABD: EveryShipout initializing macros
 \AtBeginShipoutBox=\box60
-Package hyperref Info: Link coloring OFF on input line 21.
+Package hyperref Info: Link coloring OFF on input line 23.
 
 (/usr/share/texlive/texmf-dist/tex/latex/hyperref/nameref.sty
 Package: nameref 2012/10/27 v2.43 Cross-referencing by name of section
@@ -1100,66 +1097,66 @@ Package: gettitlestring 2010/12/03 v1.4 Cleanup title references (HO)
 )
 \c@section@level=\count186
 )
-LaTeX Info: Redefining \ref on input line 21.
-LaTeX Info: Redefining \pageref on input line 21.
-LaTeX Info: Redefining \nameref on input line 21.
+LaTeX Info: Redefining \ref on input line 23.
+LaTeX Info: Redefining \pageref on input line 23.
+LaTeX Info: Redefining \nameref on input line 23.
 
 (./presentation.out) (./presentation.out)
 \@outlinefile=\write5
 \openout5 = `presentation.out'.
 
 LaTeX Font Info:    Overwriting symbol font `operators' in version `normal'
-(Font)                  OT1/cmr/m/n --> OT1/cmss/m/n on input line 21.
+(Font)                  OT1/cmr/m/n --> OT1/cmss/m/n on input line 23.
 LaTeX Font Info:    Overwriting symbol font `operators' in version `bold'
-(Font)                  OT1/cmr/bx/n --> OT1/cmss/bx/n on input line 21.
+(Font)                  OT1/cmr/bx/n --> OT1/cmss/bx/n on input line 23.
 \symnumbers=\mathgroup6
 \sympureletters=\mathgroup7
 LaTeX Font Info:    Overwriting math alphabet `\mathrm' in version `normal'
-(Font)                  OT1/cmss/m/n --> OT1/cmr/m/n on input line 21.
-LaTeX Font Info:    Redeclaring math alphabet \mathbf on input line 21.
+(Font)                  OT1/cmss/m/n --> OT1/cmr/m/n on input line 23.
+LaTeX Font Info:    Redeclaring math alphabet \mathbf on input line 23.
 LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `normal'
-(Font)                  OT1/cmr/bx/n --> OT1/cmss/bx/n on input line 21.
+(Font)                  OT1/cmr/bx/n --> OT1/cmss/bx/n on input line 23.
 LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `bold'
-(Font)                  OT1/cmr/bx/n --> OT1/cmss/bx/n on input line 21.
-LaTeX Font Info:    Redeclaring math alphabet \mathsf on input line 21.
+(Font)                  OT1/cmr/bx/n --> OT1/cmss/bx/n on input line 23.
+LaTeX Font Info:    Redeclaring math alphabet \mathsf on input line 23.
 LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `normal'
-(Font)                  OT1/cmss/m/n --> OT1/cmss/m/n on input line 21.
+(Font)                  OT1/cmss/m/n --> OT1/cmss/m/n on input line 23.
 LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `bold'
-(Font)                  OT1/cmss/bx/n --> OT1/cmss/m/n on input line 21.
-LaTeX Font Info:    Redeclaring math alphabet \mathit on input line 21.
+(Font)                  OT1/cmss/bx/n --> OT1/cmss/m/n on input line 23.
+LaTeX Font Info:    Redeclaring math alphabet \mathit on input line 23.
 LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `normal'
-(Font)                  OT1/cmr/m/it --> OT1/cmss/m/it on input line 21.
+(Font)                  OT1/cmr/m/it --> OT1/cmss/m/it on input line 23.
 LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `bold'
-(Font)                  OT1/cmr/bx/it --> OT1/cmss/m/it on input line 21.
-LaTeX Font Info:    Redeclaring math alphabet \mathtt on input line 21.
+(Font)                  OT1/cmr/bx/it --> OT1/cmss/m/it on input line 23.
+LaTeX Font Info:    Redeclaring math alphabet \mathtt on input line 23.
 LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `normal'
-(Font)                  OT1/cmtt/m/n --> OT1/cmtt/m/n on input line 21.
+(Font)                  OT1/cmtt/m/n --> OT1/cmtt/m/n on input line 23.
 LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `bold'
-(Font)                  OT1/cmtt/m/n --> OT1/cmtt/m/n on input line 21.
+(Font)                  OT1/cmtt/m/n --> OT1/cmtt/m/n on input line 23.
 LaTeX Font Info:    Overwriting symbol font `numbers' in version `bold'
-(Font)                  OT1/cmss/m/n --> OT1/cmss/bx/n on input line 21.
+(Font)                  OT1/cmss/m/n --> OT1/cmss/bx/n on input line 23.
 LaTeX Font Info:    Overwriting symbol font `pureletters' in version `bold'
-(Font)                  OT1/cmss/m/it --> OT1/cmss/bx/it on input line 21.
+(Font)                  OT1/cmss/m/it --> OT1/cmss/bx/it on input line 23.
 LaTeX Font Info:    Overwriting math alphabet `\mathrm' in version `bold'
-(Font)                  OT1/cmss/bx/n --> OT1/cmr/bx/n on input line 21.
+(Font)                  OT1/cmss/bx/n --> OT1/cmr/bx/n on input line 23.
 LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `bold'
-(Font)                  OT1/cmss/bx/n --> OT1/cmss/bx/n on input line 21.
+(Font)                  OT1/cmss/bx/n --> OT1/cmss/bx/n on input line 23.
 LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `bold'
-(Font)                  OT1/cmss/m/n --> OT1/cmss/bx/n on input line 21.
+(Font)                  OT1/cmss/m/n --> OT1/cmss/bx/n on input line 23.
 LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `bold'
-(Font)                  OT1/cmss/m/it --> OT1/cmss/bx/it on input line 21.
+(Font)                  OT1/cmss/m/it --> OT1/cmss/bx/it on input line 23.
 LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `bold'
-(Font)                  OT1/cmtt/m/n --> OT1/cmtt/bx/n on input line 21.
-LaTeX Font Info:    Redeclaring symbol font `pureletters' on input line 21.
+(Font)                  OT1/cmtt/m/n --> OT1/cmtt/bx/n on input line 23.
+LaTeX Font Info:    Redeclaring symbol font `pureletters' on input line 23.
 LaTeX Font Info:    Overwriting symbol font `pureletters' in version `normal'
 (Font)                  OT1/cmss/m/it --> OT1/mathkerncmss/m/sl on input line 2
-1.
+3.
 LaTeX Font Info:    Overwriting symbol font `pureletters' in version `bold'
 (Font)                  OT1/cmss/bx/it --> OT1/mathkerncmss/m/sl on input line 
-21.
+23.
 LaTeX Font Info:    Overwriting symbol font `pureletters' in version `bold'
 (Font)                  OT1/mathkerncmss/m/sl --> OT1/mathkerncmss/bx/sl on inp
-ut line 21.
+ut line 23.
 
 (/usr/share/texlive/texmf-dist/tex/latex/beamer/translator/dicts/translator-bas
 ic-dictionary/translator-basic-dictionary-English.dict
@@ -1185,40 +1182,40 @@ Dictionary: translator-numbers-dictionary, Language: English
 orem-dictionary/translator-theorem-dictionary-English.dict
 Dictionary: translator-theorem-dictionary, Language: English 
 )
-LaTeX Info: Redefining \includegraphics on input line 21.
+LaTeX Info: Redefining \includegraphics on input line 23.
 
 Package pgfplots notification 'compat/show suggested version=true': you might b
 enefit from \pgfplotsset{compat=1.13} (current compat level: 1.9).
 
 (./presentation.nav)
-Overfull \vbox (13.79993pt too high) detected at line 23
+Overfull \vbox (13.79993pt too high) detected at line 25
  []
 
 [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] (./presentation.toc)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 28--28
+Overfull \hbox (0.4pt too wide) in paragraph at lines 30--30
 [][]  
  []
 
 
 LaTeX Font Warning: Font shape `OT1/cmss/m/n' in size <4> not available
-(Font)              size <5> substituted on input line 28.
+(Font)              size <5> substituted on input line 30.
 
 [2
 
 ]
-LaTeX Font Info:    Try loading font information for U+msa on input line 37.
+LaTeX Font Info:    Try loading font information for U+msa on input line 39.
  (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Try loading font information for U+msb on input line 37.
+LaTeX Font Info:    Try loading font information for U+msb on input line 39.
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
 LaTeX Font Info:    Try loading font information for OT1+mathkerncmss on input 
-line 37.
+line 39.
 
 (/usr/share/texlive/texmf-dist/tex/latex/sansmathaccent/ot1mathkerncmss.fd
 File: ot1mathkerncmss.fd 2013/03/27 Fontinst v1.933 font definitions for OT1/ma
@@ -1236,7 +1233,7 @@ File: pictures/seg.png Graphic file (type png)
 Package pdftex.def Info: pictures/seg.png used on input line 8.
 (pdftex.def)             Requested size: 87.12395pt x 81.50305pt.
 )
-Overfull \hbox (0.4pt too wide) in paragraph at lines 55--55
+Overfull \hbox (0.4pt too wide) in paragraph at lines 57--57
 [][]  
  []
 
@@ -1248,7 +1245,7 @@ File: pictures/seg.png Graphic file (type png)
 Package pdftex.def Info: pictures/seg.png used on input line 8.
 (pdftex.def)             Requested size: 87.12395pt x 81.50305pt.
 )
-Overfull \hbox (0.4pt too wide) in paragraph at lines 55--55
+Overfull \hbox (0.4pt too wide) in paragraph at lines 57--57
 [][]  
  []
 
@@ -1257,27 +1254,25 @@ Overfull \hbox (0.4pt too wide) in paragraph at lines 55--55
 ]
 \openout4 = `presentation.vrb'.
 
- (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 63--63
+ (./presentation.vrb
+LaTeX Font Info:    Try loading font information for OMS+cmss on input line 13.
+
+LaTeX Font Info:    No file OMScmss.fd. on input line 13.
+
+
+LaTeX Font Warning: Font shape `OMS/cmss/m/n' undefined
+(Font)              using `OMS/cmsy/m/n' instead
+(Font)              for symbol `textbullet' on input line 13.
+
+)
+Overfull \hbox (0.4pt too wide) in paragraph at lines 76--76
 [][]  
  []
 
 [6
 
-]
-\openout4 = `presentation.vrb'.
-
- (./presentation.vrb
-LaTeX Font Info:    Try loading font information for OMS+cmss on input line 9.
-LaTeX Font Info:    No file OMScmss.fd. on input line 9.
-
-
-LaTeX Font Warning: Font shape `OMS/cmss/m/n' undefined
-(Font)              using `OMS/cmsy/m/n' instead
-(Font)              for symbol `textbullet' on input line 9.
-
-)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 79--79
+] (./presentation.vrb)
+Overfull \hbox (0.4pt too wide) in paragraph at lines 76--76
 [][]  
  []
 
@@ -1287,14 +1282,14 @@ Overfull \hbox (0.4pt too wide) in paragraph at lines 79--79
 \openout4 = `presentation.vrb'.
 
  (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 94--94
+Overfull \hbox (0.4pt too wide) in paragraph at lines 91--91
 [][]  
  []
 
 [8
 
 ] (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 94--94
+Overfull \hbox (0.4pt too wide) in paragraph at lines 91--91
 [][]  
  []
 
@@ -1304,14 +1299,14 @@ Overfull \hbox (0.4pt too wide) in paragraph at lines 94--94
 \openout4 = `presentation.vrb'.
 
  (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 119--119
+Overfull \hbox (0.4pt too wide) in paragraph at lines 116--116
 [][]  
  []
 
 [10
 
 ] (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 119--119
+Overfull \hbox (0.4pt too wide) in paragraph at lines 116--116
 [][]  
  []
 
@@ -1321,14 +1316,14 @@ Overfull \hbox (0.4pt too wide) in paragraph at lines 119--119
 \openout4 = `presentation.vrb'.
 
  (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 143--143
+Overfull \hbox (0.4pt too wide) in paragraph at lines 136--136
 [][]  
  []
 
 [12
 
 ] (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 143--143
+Overfull \hbox (0.4pt too wide) in paragraph at lines 136--136
 [][]  
  []
 
@@ -1338,166 +1333,110 @@ Overfull \hbox (0.4pt too wide) in paragraph at lines 143--143
 \openout4 = `presentation.vrb'.
 
  (./presentation.vrb
-<pictures/graphCuts2.png, id=133, 393.47pt x 390.45876pt>
-File: pictures/graphCuts2.png Graphic file (type png)
-
-<use pictures/graphCuts2.png>
-Package pdftex.def Info: pictures/graphCuts2.png used on input line 5.
-(pdftex.def)             Requested size: 192.80197pt x 191.32646pt.
-)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 155--155
-[][]  
- []
-
-
-Overfull \vbox (14.51228pt too high) detected at line 155
- []
-
-[14
-
- <./pictures/graphCuts2.png (PNG copy)>]
-\openout4 = `presentation.vrb'.
-
- (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 167--167
-[][]  
- []
-
-[15
-
-] (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 167--167
-[][]  
- []
-
-[16
-
-]
-\openout4 = `presentation.vrb'.
-
- (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 187--187
-[][]  
- []
-
-[17
-
-] (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 187--187
-[][]  
- []
-
-[18
-
-]
-\openout4 = `presentation.vrb'.
-
- (./presentation.vrb
-<pictures/grabcuts1.png, id=160, 776.9025pt x 251.94125pt>
+<pictures/grabcuts1.png, id=136, 776.9025pt x 251.94125pt>
 File: pictures/grabcuts1.png Graphic file (type png)
 
 <use pictures/grabcuts1.png>
 Package pdftex.def Info: pictures/grabcuts1.png used on input line 7.
 (pdftex.def)             Requested size: 194.22514pt x 62.98515pt.
 
-<pictures/grabcuts2.png, id=161, 560.0925pt x 251.94125pt>
+<pictures/grabcuts2.png, id=137, 560.0925pt x 251.94125pt>
 File: pictures/grabcuts2.png Graphic file (type png)
 
 <use pictures/grabcuts2.png>
 Package pdftex.def Info: pictures/grabcuts2.png used on input line 13.
 (pdftex.def)             Requested size: 140.02278pt x 62.98515pt.
-pdfTeX warning (ext4): destination with the same identifier (name{fig:minCut}) 
-has been already used, duplicate ignored
-<to be read again> 
-                   \relax 
-l.15     \label{fig:minCut}
-                           )
-Overfull \hbox (0.4pt too wide) in paragraph at lines 207--207
+)
+Overfull \hbox (0.4pt too wide) in paragraph at lines 157--157
 [][]  
  []
 
-[19
+
+Overfull \vbox (9.75592pt too high) detected at line 157
+ []
+
+[14
 
  <./pictures/grabcuts1.png (PNG copy)> <./pictures/grabcuts2.png (PNG copy)>]
 \openout4 = `presentation.vrb'.
 
  (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 216--216
+Overfull \hbox (0.4pt too wide) in paragraph at lines 166--166
+[][]  
+ []
+
+[15
+
+] [16
+
+]
+\openout4 = `presentation.vrb'.
+
+ (./presentation.vrb)
+Overfull \hbox (0.4pt too wide) in paragraph at lines 193--193
+[][]  
+ []
+
+[17
+
+]
+\openout4 = `presentation.vrb'.
+
+ (./presentation.vrb
+<pictures/U-Net.png, id=163, 733.74126pt x 492.84125pt>
+File: pictures/U-Net.png Graphic file (type png)
+
+<use pictures/U-Net.png>
+Package pdftex.def Info: pictures/U-Net.png used on input line 10.
+(pdftex.def)             Requested size: 183.43486pt x 123.21pt.
+pdfTeX warning (ext4): destination with the same identifier (name{fig:minCut}) 
+has been already used, duplicate ignored
+<to be read again> 
+                   \relax 
+l.12     \label{fig:minCut}
+                           )
+Overfull \hbox (0.4pt too wide) in paragraph at lines 209--209
+[][]  
+ []
+
+
+Overfull \vbox (0.24005pt too high) detected at line 209
+ []
+
+[18
+
+ <./pictures/U-Net.png (PNG copy)>] (./presentation.vrb
+File: pictures/U-Net.png Graphic file (type png)
+
+<use pictures/U-Net.png>
+Package pdftex.def Info: pictures/U-Net.png used on input line 10.
+(pdftex.def)             Requested size: 183.43486pt x 123.21pt.
+)
+Overfull \hbox (0.4pt too wide) in paragraph at lines 209--209
+[][]  
+ []
+
+
+Overfull \vbox (0.24005pt too high) detected at line 209
+ []
+
+[19
+
+]
+\openout4 = `presentation.vrb'.
+
+ (./presentation.vrb)
+Overfull \hbox (0.4pt too wide) in paragraph at lines 220--220
 [][]  
  []
 
 [20
 
-] [21
-
-]
-\openout4 = `presentation.vrb'.
-
- (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 243--243
-[][]  
- []
-
-[22
-
-]
-\openout4 = `presentation.vrb'.
-
- (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 252--252
-[][]  
- []
-
-[23
-
-] (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 252--252
-[][]  
- []
-
-[24
-
 ]
 \openout4 = `presentation.vrb'.
 
  (./presentation.vrb
-<pictures/U-Net.png, id=194, 733.74126pt x 492.84125pt>
-File: pictures/U-Net.png Graphic file (type png)
-
-<use pictures/U-Net.png>
-Package pdftex.def Info: pictures/U-Net.png used on input line 5.
-(pdftex.def)             Requested size: 293.4913pt x 197.133pt.
-pdfTeX warning (ext4): destination with the same identifier (name{fig:minCut}) 
-has been already used, duplicate ignored
-<to be read again> 
-                   \relax 
-l.7     \label{fig:minCut}
-                          )
-Overfull \hbox (0.4pt too wide) in paragraph at lines 264--264
-[][]  
- []
-
-
-Overfull \vbox (20.31882pt too high) detected at line 264
- []
-
-[25
-
- <./pictures/U-Net.png (PNG copy)>]
-\openout4 = `presentation.vrb'.
-
- (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 275--275
-[][]  
- []
-
-[26
-
-]
-\openout4 = `presentation.vrb'.
-
- (./presentation.vrb
-<pictures/isensee.png, id=206, 590.205pt x 268.00125pt>
+<pictures/isensee.png, id=184, 590.205pt x 268.00125pt>
 File: pictures/isensee.png Graphic file (type png)
 
 <use pictures/isensee.png>
@@ -1514,39 +1453,43 @@ has been already used, duplicate ignored
                    \relax 
 l.7     \label{fig:minCut}
                           )
-Overfull \hbox (0.4pt too wide) in paragraph at lines 288--288
+Overfull \hbox (0.4pt too wide) in paragraph at lines 233--233
 [][]  
  []
 
-[27
 
- <./pictures/isensee.png (PNG copy)>] [28
+Overfull \vbox (0.2701pt too high) detected at line 233
+ []
+
+[21
+
+ <./pictures/isensee.png (PNG copy)>] [22
 
 ]
 \openout4 = `presentation.vrb'.
 
  (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 311--311
+Overfull \hbox (0.4pt too wide) in paragraph at lines 256--256
 [][]  
  []
 
-[29
+[23
 
 ]
 \openout4 = `presentation.vrb'.
 
  (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 327--327
+Overfull \hbox (0.4pt too wide) in paragraph at lines 273--273
 [][]  
  []
 
-[30
+[24
 
 ]
 \openout4 = `presentation.vrb'.
 
  (./presentation.vrb
-<pictures/heartBifSeg2.png, id=227, 512.91624pt x 393.47pt>
+<pictures/heartBifSeg2.png, id=208, 512.91624pt x 393.47pt>
 File: pictures/heartBifSeg2.png Graphic file (type png)
 
 <use pictures/heartBifSeg2.png>
@@ -1558,74 +1501,125 @@ has been already used, duplicate ignored
                    \relax 
 l.8     \label{fig:minCut}
                           )
-Overfull \hbox (0.4pt too wide) in paragraph at lines 339--339
+Overfull \hbox (0.4pt too wide) in paragraph at lines 285--285
 [][]  
  []
 
 
-Overfull \vbox (26.58408pt too high) detected at line 339
+Overfull \vbox (26.58408pt too high) detected at line 285
  []
 
-[31
+[25
 
  <./pictures/heartBifSeg2.png>]
 \openout4 = `presentation.vrb'.
 
  (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 360--360
+Overfull \hbox (0.4pt too wide) in paragraph at lines 306--306
+[][]  
+ []
+
+[26
+
+] (./presentation.vrb)
+Overfull \hbox (0.4pt too wide) in paragraph at lines 306--306
+[][]  
+ []
+
+[27
+
+]
+\openout4 = `presentation.vrb'.
+
+ (./presentation.vrb)
+Overfull \hbox (0.4pt too wide) in paragraph at lines 332--332
+[][]  
+ []
+
+[28
+
+] (./presentation.vrb)
+Overfull \hbox (0.4pt too wide) in paragraph at lines 332--332
+[][]  
+ []
+
+[29
+
+]
+\openout4 = `presentation.vrb'.
+
+ (./presentation.vrb)
+Overfull \hbox (0.4pt too wide) in paragraph at lines 351--351
+[][]  
+ []
+
+[30
+
+] (./presentation.vrb)
+Overfull \hbox (0.4pt too wide) in paragraph at lines 351--351
+[][]  
+ []
+
+[31
+
+]
+\openout4 = `presentation.vrb'.
+
+ (./presentation.vrb)
+Overfull \hbox (0.4pt too wide) in paragraph at lines 379--379
 [][]  
  []
 
 [32
 
 ] (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 360--360
+Overfull \hbox (0.4pt too wide) in paragraph at lines 379--379
 [][]  
  []
 
 [33
 
-]
-\openout4 = `presentation.vrb'.
-
- (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 386--386
+] (./presentation.vrb)
+Overfull \hbox (0.4pt too wide) in paragraph at lines 379--379
 [][]  
  []
 
 [34
 
 ] (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 386--386
+Overfull \hbox (0.4pt too wide) in paragraph at lines 379--379
 [][]  
  []
 
 [35
 
+] [36
+
 ]
 \openout4 = `presentation.vrb'.
 
  (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 406--406
-[][]  
- []
-
-[36
-
-] (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 406--406
+Overfull \hbox (0.4pt too wide) in paragraph at lines 415--415
 [][]  
  []
 
 [37
 
-] [38
+]
+\openout4 = `presentation.vrb'.
+
+ (./presentation.vrb)
+Overfull \hbox (0.4pt too wide) in paragraph at lines 434--434
+[][]  
+ []
+
+[38
 
 ]
 \openout4 = `presentation.vrb'.
 
  (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 433--433
+Overfull \hbox (0.4pt too wide) in paragraph at lines 463--463
 [][]  
  []
 
@@ -1635,33 +1629,24 @@ Overfull \hbox (0.4pt too wide) in paragraph at lines 433--433
 \openout4 = `presentation.vrb'.
 
  (./presentation.vrb
-<pictures/heartLoss.png, id=280, 1387.584pt x 738.5994pt>
-File: pictures/heartLoss.png Graphic file (type png)
+<pictures/genBIFSEG2.png, id=295, 803.0pt x 325.215pt>
+File: pictures/genBIFSEG2.png Graphic file (type png)
 
-<use pictures/heartLoss.png>
-Package pdftex.def Info: pictures/heartLoss.png used on input line 5.
-(pdftex.def)             Requested size: 319.1376pt x 169.87428pt.
-
-Overfull \hbox (11.84773pt too wide) in paragraph at lines 5--7
- [] 
- []
-
+<use pictures/genBIFSEG2.png>
+Package pdftex.def Info: pictures/genBIFSEG2.png used on input line 4.
+(pdftex.def)             Requested size: 305.14317pt x 123.58298pt.
 )
-Overfull \hbox (0.4pt too wide) in paragraph at lines 446--446
+Overfull \hbox (0.4pt too wide) in paragraph at lines 477--477
 [][]  
- []
-
-
-Overfull \vbox (6.86003pt too high) detected at line 446
  []
 
 [40
 
- <./pictures/heartLoss.png>]
+ <./pictures/genBIFSEG2.png>]
 \openout4 = `presentation.vrb'.
 
  (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 469--469
+Overfull \hbox (0.4pt too wide) in paragraph at lines 493--493
 [][]  
  []
 
@@ -1670,53 +1655,25 @@ Overfull \hbox (0.4pt too wide) in paragraph at lines 469--469
 ]
 \openout4 = `presentation.vrb'.
 
- (./presentation.vrb)
-Overfull \hbox (0.4pt too wide) in paragraph at lines 498--498
-[][]  
- []
-
-[42
-
-]
-\openout4 = `presentation.vrb'.
-
  (./presentation.vrb
-<pictures/genBIFSEG2.png, id=302, 803.0pt x 325.215pt>
-File: pictures/genBIFSEG2.png Graphic file (type png)
-
-<use pictures/genBIFSEG2.png>
-Package pdftex.def Info: pictures/genBIFSEG2.png used on input line 5.
-(pdftex.def)             Requested size: 305.14317pt x 123.58298pt.
-pdfTeX warning (ext4): destination with the same identifier (name{fig:spleenPlo
-t}) has been already used, duplicate ignored
-<to be read again> 
-                   \relax 
-l.10     \label{fig:spleenPlot}
-                               ) [43
-
- <./pictures/genBIFSEG2.png>]
-\openout4 = `presentation.vrb'.
-
-
-(./presentation.vrb
-<pictures/transferLiver.png, id=310, 1387.584pt x 738.5994pt>
+<pictures/transferLiver.png, id=309, 1387.584pt x 738.5994pt>
 File: pictures/transferLiver.png Graphic file (type png)
 
 <use pictures/transferLiver.png>
 Package pdftex.def Info: pictures/transferLiver.png used on input line 5.
 (pdftex.def)             Requested size: 291.40123pt x 155.11044pt.
 )
-Overfull \hbox (0.4pt too wide) in paragraph at lines 533--533
+Overfull \hbox (0.4pt too wide) in paragraph at lines 504--504
 [][]  
  []
 
-[44
+[42
 
  <./pictures/transferLiver.png>]
 \openout4 = `presentation.vrb'.
 
  (./presentation.vrb
-<pictures/transferSpleen.png, id=318, 1387.584pt x 738.5994pt>
+<pictures/transferSpleen.png, id=317, 1387.584pt x 738.5994pt>
 File: pictures/transferSpleen.png Graphic file (type png)
 
 <use pictures/transferSpleen.png>
@@ -1728,15 +1685,113 @@ t}) has been already used, duplicate ignored
                    \relax 
 l.7     \label{fig:spleenPlot}
                               )
-Overfull \hbox (0.4pt too wide) in paragraph at lines 544--544
+Overfull \hbox (0.4pt too wide) in paragraph at lines 515--515
+[][]  
+ []
+
+[43
+
+ <./pictures/transferSpleen.png>] [44
+
+]
+\openout4 = `presentation.vrb'.
+
+ (./presentation.vrb)
+Overfull \hbox (0.4pt too wide) in paragraph at lines 536--536
 [][]  
  []
 
 [45
 
- <./pictures/transferSpleen.png>] [46
+] [46
 
-] [47
+]
+\openout4 = `presentation.vrb'.
+
+ (./presentation.vrb)
+Overfull \hbox (0.4pt too wide) in paragraph at lines 558--558
+[][]  
+ []
+
+[47
+
+] (./presentation.bbl
+Missing character: There is no Ã in font cmss10!
+Missing character: There is no © in font cmss10!
+)
+Overfull \hbox (0.4pt too wide) in paragraph at lines 565--565
+[][]  
+ []
+
+[48
+
+ </usr/share/texlive/texmf-dist/tex/latex/beamer/art/beamericonarticle.pdf>]
+Overfull \hbox (0.4pt too wide) in paragraph at lines 565--565
+[][]  
+ []
+
+[49
+
+
+]
+\openout4 = `presentation.vrb'.
+
+ (./presentation.vrb)
+Overfull \hbox (0.4pt too wide) in paragraph at lines 618--618
+[][]  
+ []
+
+[50
+
+] (./presentation.vrb)
+Overfull \hbox (0.4pt too wide) in paragraph at lines 618--618
+[][]  
+ []
+
+[51
+
+]
+\openout4 = `presentation.vrb'.
+
+ (./presentation.vrb
+<pictures/graphCuts2.png, id=373, 393.47pt x 390.45876pt>
+File: pictures/graphCuts2.png Graphic file (type png)
+
+<use pictures/graphCuts2.png>
+Package pdftex.def Info: pictures/graphCuts2.png used on input line 5.
+(pdftex.def)             Requested size: 192.80197pt x 191.32646pt.
+pdfTeX warning (ext4): destination with the same identifier (name{fig:minCut}) 
+has been already used, duplicate ignored
+<to be read again> 
+                   \relax 
+l.7     \label{fig:minCut}
+                          )
+Overfull \hbox (0.4pt too wide) in paragraph at lines 630--630
+[][]  
+ []
+
+
+Overfull \vbox (14.51228pt too high) detected at line 630
+ []
+
+[52
+
+ <./pictures/graphCuts2.png (PNG copy)>]
+\openout4 = `presentation.vrb'.
+
+ (./presentation.vrb)
+Overfull \hbox (0.4pt too wide) in paragraph at lines 642--642
+[][]  
+ []
+
+[53
+
+] (./presentation.vrb)
+Overfull \hbox (0.4pt too wide) in paragraph at lines 642--642
+[][]  
+ []
+
+[54
 
 ]
 \tf@nav=\write6
@@ -1748,11 +1803,11 @@ Overfull \hbox (0.4pt too wide) in paragraph at lines 544--544
 \tf@snm=\write8
 \openout8 = `presentation.snm'.
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 588.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 588.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 645.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 645.
  (./presentation.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 588.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 588.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 645.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 645.
 Package rerunfilecheck Info: File `presentation.out' has not changed.
 (rerunfilecheck)             Checksum: 2BCFB53728807F6CB91A6C4667B4584D;304.
 
@@ -1766,13 +1821,13 @@ LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
 LaTeX Warning: There were multiply-defined labels.
 
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 588.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 645.
  ) 
 Here is how much of TeX's memory you used:
- 30468 strings out of 493029
- 734613 string characters out of 6136233
- 938291 words of memory out of 5000000
- 33159 multiletter control sequences out of 15000+600000
+ 30551 strings out of 493029
+ 736691 string characters out of 6136233
+ 937292 words of memory out of 5000000
+ 33212 multiletter control sequences out of 15000+600000
  14723 words of font info for 53 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  71i,13n,95p,1758b,737s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -1788,11 +1843,12 @@ c/amsfonts/cm/cmssi10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/ams
 fonts/cm/cmssi8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/
 cm/cmssi9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cms
 y10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy5.pfb
->
-Output written on presentation.pdf (47 pages, 1219176 bytes).
+></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msam10.pfb>
+
+Output written on presentation.pdf (54 pages, 1175514 bytes).
 PDF statistics:
- 408 PDF objects out of 1000 (max. 8388607)
- 320 compressed objects within 4 object streams
- 110 named destinations out of 1000 (max. 500000)
- 146 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 468 PDF objects out of 1000 (max. 8388607)
+ 370 compressed objects within 4 object streams
+ 128 named destinations out of 1000 (max. 500000)
+ 141 words of extra memory for PDF output out of 10000 (max. 10000000)
 
