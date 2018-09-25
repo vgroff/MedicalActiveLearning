@@ -1,3 +1,3 @@
 
 
-![](genBIFSEG2.jpg?raw=True "Title")
+![](./genBIFSEG2.jpg?raw=True "Title")
